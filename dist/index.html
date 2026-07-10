@@ -1021,6 +1021,7 @@
     .recovery-control-head strong { color: var(--text); font-size: 13px; }
     .recovery-control-head output { color: var(--accent); font-size: 12.5px; font-weight: 700; }
     .recovery-control input[type="range"] {
+      --fec-progress: 33.333%;
       appearance: none;
       -webkit-appearance: none;
       width: calc(100% - 52px);
@@ -1038,7 +1039,11 @@
       height: 7px;
       border: 0;
       border-radius: 999px;
-      background: color-mix(in oklab, var(--accent) 48%, var(--line-strong));
+      background: linear-gradient(
+        to right,
+        color-mix(in oklab, var(--accent) 92%, white 8%) 0 var(--fec-progress),
+        color-mix(in oklab, var(--line-strong) 68%, var(--field)) var(--fec-progress) 100%
+      );
     }
     .recovery-control input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
@@ -1054,7 +1059,12 @@
       height: 7px;
       border: 0;
       border-radius: 999px;
-      background: color-mix(in oklab, var(--accent) 48%, var(--line-strong));
+      background: color-mix(in oklab, var(--line-strong) 68%, var(--field));
+    }
+    .recovery-control input[type="range"]::-moz-range-progress {
+      height: 7px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--accent) 92%, white 8%);
     }
     .recovery-control input[type="range"]::-moz-range-thumb {
       width: 16px;
@@ -1184,15 +1194,15 @@
     }
     /* Settings launcher (gear chip in header) */
     .panel-action.settings-launcher {
-      max-width: 190px;
-      padding-inline: 10px;
+      width: 38px;
+      min-width: 38px;
+      height: 38px;
+      max-width: none;
+      padding: 0;
+      justify-content: center;
     }
     .panel-action.settings-launcher svg { width: 16px; height: 16px; flex-shrink: 0; }
-    .panel-action.settings-launcher span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    .panel-action.settings-launcher span { display: none; }
     .setting-note {
       font-family: var(--font-mono);
       font-size: 11px;
@@ -2584,14 +2594,16 @@
     }
 
     .preview-canvas-row {
-      grid-template-columns: minmax(0, 1fr) minmax(124px, 148px);
+      grid-template-columns: minmax(0, 1fr);
       gap: 10px;
-      width: 100%;
-      max-width: 560px;
+      width: min(100%, 520px);
+      max-width: 520px;
       align-items: stretch;
+      justify-items: center;
     }
     .preview-canvas-row .canvas-box {
       align-self: stretch;
+      justify-self: center;
     }
     .variant-strip {
       display: none !important;
@@ -10220,6 +10232,8 @@ self.onmessage = async event => {
         "Максимальный запас восстановления; изображение будет крупнее."
       ];
       const index = Math.max(0, Math.min(3, Number($("fecLevel").value) || 0));
+      $("fecLevel").style.setProperty("--fec-progress", `${(index / 3) * 100}%`);
+      $("fecLevel").setAttribute("aria-valuetext", FEC_PROFILES[keys[index]].label);
       $("fecProfile").value = keys[index];
       $("fecLevelValue").textContent = FEC_PROFILES[keys[index]].label;
       $("fecNote").textContent = notes[index];
