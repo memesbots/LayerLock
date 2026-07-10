@@ -29,14 +29,18 @@ Passwords, master keys and plaintext are never written into PNG, SVG, ZIP settin
 
 ## Visual Frame
 
-The visual grid has a three-cell synchronization margin. It contains four high-contrast corner brackets and timing tracks with two cadences. Payload cells begin after this margin. The top-left bracket is asymmetric and establishes orientation.
+The current private-development profile emits one visual form: a four-class monochrome mosaic. Grid size and pixels per cell are selected automatically. The visual grid has a three-cell synchronization margin with four high-contrast corner brackets and timing tracks. Payload cells begin after this margin. The top-left bracket is asymmetric and establishes orientation.
 
 Scanner 3 first detects a dense candidate region, estimates its quadrilateral, applies projective rectification, calibrates color centroids from the embedded calibration symbols and then validates the binary header before FEC or decryption.
 
 ## Error Correction
 
-The payload is split into chunks, protected with parity chunks over GF(256), checksummed per chunk and interleaved byte-wise. Failed chunk CRC values are treated as erasures. The global CRC validates the recovered encrypted container before decryption.
+The payload is split into chunks, protected with parity chunks over GF(256), checksummed per chunk and interleaved byte-wise. Failed chunk CRC values are treated as erasures. The global CRC validates the recovered encrypted container before decryption. Four user-facing recovery levels map to 10%, 18%, 28% and 40% parity targets, with automatic minimum parity counts based on payload size.
 
-## Compatibility
+## Camera Decode
 
-Decoders must reject unknown KDF, envelope, pack, FEC or slot versions. A new incompatible format requires a new version and new published test vectors.
+Camera frames are first checked for severe exposure, contrast and blur problems. Fast center decoding runs before the general locator. Frames with detected anchors are projectively rectified; up to three aligned frames may be fused by per-channel median before another decode attempt. The density locator runs less frequently in a Worker so UI input remains responsive.
+
+## Versioning
+
+Decoders reject unknown KDF, envelope, pack, FEC or slot versions. The format is still in private development, so pre-release images are not a compatibility target. A public release must freeze the version and publish test vectors before compatibility guarantees begin.
