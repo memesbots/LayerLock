@@ -6,12 +6,6 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
   <title>LayerLock</title>
   <style>
-    /* ============================================================
-       LayerLock — Aurora Vault
-       Innovative, glass-morphic, responsive design system.
-       Preserves every className/id from the original markup.
-       ============================================================ */
-
     :root {
       color-scheme: dark;
 
@@ -79,7 +73,6 @@
       font-family: var(--font-sans);
     }
 
-    /* Light theme — soft off-white, neumorphic-lite */
     body.light {
       color-scheme: light;
       --bg-0: #eef1f6;
@@ -987,9 +980,55 @@
     .recovery-control-head strong { color: var(--text); font-size: 13px; }
     .recovery-control-head output { color: var(--accent); font-size: 12.5px; font-weight: 700; }
     .recovery-control input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
       width: 100%;
-      accent-color: var(--accent);
+      height: 24px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: pan-x;
+    }
+    .recovery-control input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border: 0;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--accent) 34%, var(--line-strong));
+    }
+    .recovery-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      margin-top: -7px;
+      border: 3px solid var(--panel);
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
+    }
+    .recovery-control input[type="range"]::-moz-range-track {
+      height: 4px;
+      border: 0;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--accent) 34%, var(--line-strong));
+    }
+    .recovery-control input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border: 3px solid var(--panel);
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: none;
+    }
+    .recovery-control input[type="range"]:focus,
+    .recovery-control input[type="range"]:hover,
+    .recovery-control input[type="range"]:active {
+      outline: 0;
+      filter: none;
+      box-shadow: none;
     }
     .recovery-scale {
       display: grid;
@@ -1420,6 +1459,16 @@
       color: var(--danger);
       border-color: color-mix(in oklab, var(--danger) 58%, var(--line));
       background: color-mix(in oklab, var(--danger) 11%, var(--field));
+    }
+    .verify-actions button.ok:not(.icon):hover:not(:disabled) {
+      color: var(--ok);
+      border-color: color-mix(in oklab, var(--ok) 62%, var(--line));
+      background: color-mix(in oklab, var(--ok) 15%, var(--field));
+    }
+    .verify-actions button.bad:not(.icon):hover:not(:disabled) {
+      color: var(--danger);
+      border-color: color-mix(in oklab, var(--danger) 64%, var(--line));
+      background: color-mix(in oklab, var(--danger) 14%, var(--field));
     }
     .verify-actions button:disabled { opacity: .5; cursor: not-allowed; }
     .verify-actions button.icon { display: inline-flex; align-items: center; gap: 6px; width: auto; padding: 6px 12px; }
@@ -2921,6 +2970,13 @@
             </select>
             <span id="kdfNote" class="setting-note">Argon2id + HKDF-SHA-256 · 64 MiB · 3 прохода</span>
           </label>
+          <label>Количество цветов
+            <select id="mode">
+              <option value="1">2 цвета</option>
+              <option value="2" selected>4 цвета</option>
+            </select>
+            <span class="setting-note">Два цвета проще для печати и камеры; четыре дают больше емкости.</span>
+          </label>
           <div class="hidden" aria-hidden="true">
               <select id="gridSize" tabindex="-1">
                 <option value="auto" selected>Авто</option>
@@ -2936,9 +2992,6 @@
                 <option value="192">192 x 192</option>
                 <option value="224">224 x 224</option>
                 <option value="256">256 x 256</option>
-              </select>
-              <select id="mode" tabindex="-1">
-                <option value="2" selected>Моно, 4 цвета</option>
               </select>
           </div>
           <select id="shape" class="hidden" aria-hidden="true" tabindex="-1">
@@ -2992,7 +3045,7 @@
           <div class="background-controls">
             <label>Фон
               <select id="bgMode">
-                <option value="palette" selected>По палитре</option>
+                <option value="palette" selected>Стандартный</option>
                 <option value="custom">Свой цвет</option>
                 <option value="none">Прозрачный</option>
               </select>
@@ -3040,7 +3093,7 @@
             </div>
             <div class="info-card">
               <h3>Как создается изображение</h3>
-              <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id в отдельном потоке; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” добавляет выбираемый запас Reed-Solomon, после чего данные распределяются по четырехцветной монохромной сетке.</p>
+              <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id в отдельном потоке; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” добавляет выбираемый запас Reed-Solomon, после чего данные распределяются по двух- или четырехцветной монохромной сетке.</p>
             </div>
             <div class="info-card">
               <h3>Скачивание</h3>
@@ -7536,7 +7589,7 @@ self.onmessage = async event => {
       const colors = 1 << render.mode;
       const background = render.backgroundMode === "none"
         ? "Прозрачный"
-        : (render.backgroundMode === "custom" ? `Свой цвет: ${render.backgroundColor}` : "По палитре");
+        : (render.backgroundMode === "custom" ? `Свой цвет: ${render.backgroundColor}` : "Стандартный");
       const checksums = [];
       for (const file of files) {
         checksums.push(`SHA-256  ${await sha256Hex(file.data)}  ${file.name}`);
@@ -8161,6 +8214,172 @@ self.onmessage = async event => {
       return cropCanvas(source, sx, sy, side, side);
     }
 
+    function paperBoundsCandidate(source) {
+      const w = source.width, h = source.height;
+      if (Math.min(w, h) < 160) return null;
+      const ratio = Math.min(1, 640 / Math.max(w, h));
+      const dw = Math.max(64, Math.round(w * ratio));
+      const dh = Math.max(64, Math.round(h * ratio));
+      const canvas = document.createElement("canvas");
+      canvas.width = dw;
+      canvas.height = dh;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(source, 0, 0, dw, dh);
+      const data = ctx.getImageData(0, 0, dw, dh).data;
+      const lum = (x, y) => {
+        const p = (y * dw + x) * 4;
+        return data[p] * .2126 + data[p + 1] * .7152 + data[p + 2] * .0722;
+      };
+      const inset = Math.max(2, Math.round(Math.min(dw, dh) * .025));
+      const corners = [
+        lum(inset, inset), lum(dw - 1 - inset, inset),
+        lum(inset, dh - 1 - inset), lum(dw - 1 - inset, dh - 1 - inset)
+      ];
+      const background = corners.reduce((sum, value) => sum + value, 0) / corners.length;
+      const spread = Math.max(...corners) - Math.min(...corners);
+      if (background < 228 || spread > 42) return null;
+      const columns = new Uint16Array(dw);
+      const rows = new Uint16Array(dh);
+      const darkThreshold = background - 26;
+      for (let y = 0; y < dh; y += 2) {
+        for (let x = 0; x < dw; x += 2) {
+          if (lum(x, y) >= darkThreshold) continue;
+          columns[x]++;
+          rows[y]++;
+        }
+      }
+      const bounds = scores => {
+        let max = 0;
+        for (const score of scores) max = Math.max(max, score);
+        if (!max) return null;
+        const threshold = Math.max(2, max * .16);
+        let first = -1, last = -1;
+        for (let i = 0; i < scores.length; i++) {
+          const local = (scores[i - 1] || 0) + scores[i] + (scores[i + 1] || 0);
+          if (local < threshold) continue;
+          if (first < 0) first = i;
+          last = i;
+        }
+        return first >= 0 ? [first, last] : null;
+      };
+      const bx = bounds(columns), by = bounds(rows);
+      if (!bx || !by) return null;
+      const bw = (bx[1] - bx[0] + 1) / ratio;
+      const bh = (by[1] - by[0] + 1) / ratio;
+      const aspect = Math.max(bw, bh) / Math.max(1, Math.min(bw, bh));
+      if (aspect > 1.35 || Math.min(bw, bh) < Math.min(w, h) * .15) return null;
+      const side = Math.min(Math.min(w, h), Math.max(bw, bh) * 1.025);
+      const cx = (bx[0] + bx[1] + 1) / (2 * ratio);
+      const cy = (by[0] + by[1] + 1) / (2 * ratio);
+      return cropCanvas(
+        source,
+        Math.max(0, Math.min(w - side, cx - side / 2)),
+        Math.max(0, Math.min(h - side, cy - side / 2)),
+        side,
+        side
+      );
+    }
+
+    function estimatePaperQuad(source) {
+      const ratio = Math.min(1, 640 / Math.max(source.width, source.height));
+      const width = Math.max(64, Math.round(source.width * ratio));
+      const height = Math.max(64, Math.round(source.height * ratio));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(source, 0, 0, width, height);
+      const data = ctx.getImageData(0, 0, width, height).data;
+      const luminance = (x, y) => {
+        const p = (y * width + x) * 4;
+        return data[p] * .2126 + data[p + 1] * .7152 + data[p + 2] * .0722;
+      };
+      const inset = Math.max(2, Math.round(Math.min(width, height) * .025));
+      const corners = [
+        luminance(inset, inset), luminance(width - 1 - inset, inset),
+        luminance(inset, height - 1 - inset), luminance(width - 1 - inset, height - 1 - inset)
+      ];
+      const background = corners.reduce((sum, value) => sum + value, 0) / corners.length;
+      if (background < 228 || Math.max(...corners) - Math.min(...corners) > 42) return null;
+      const threshold = background - 38;
+      const top = new Int32Array(width).fill(height);
+      const bottom = new Int32Array(width).fill(-1);
+      const left = new Int32Array(height).fill(width);
+      const right = new Int32Array(height).fill(-1);
+      let count = 0, minX = width, maxX = -1, minY = height, maxY = -1;
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          if (luminance(x, y) >= threshold) continue;
+          count++;
+          top[x] = Math.min(top[x], y);
+          bottom[x] = Math.max(bottom[x], y);
+          left[y] = Math.min(left[y], x);
+          right[y] = Math.max(right[y], x);
+          minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+        }
+      }
+      if (count < 100 || maxX <= minX || maxY <= minY) return null;
+      const fitLine = points => {
+        if (points.length < 12) return null;
+        let sx = 0, sy = 0, sxx = 0, sxy = 0;
+        for (const [x, y] of points) { sx += x; sy += y; sxx += x * x; sxy += x * y; }
+        const denominator = points.length * sxx - sx * sx;
+        if (Math.abs(denominator) < 1e-6) return null;
+        const slope = (points.length * sxy - sx * sy) / denominator;
+        return { slope, offset: (sy - slope * sx) / points.length };
+      };
+      const xInset = Math.max(3, Math.round((maxX - minX) * .10));
+      const yInset = Math.max(3, Math.round((maxY - minY) * .10));
+      const topPoints = [], bottomPoints = [], leftPoints = [], rightPoints = [];
+      for (let x = minX + xInset; x <= maxX - xInset; x++) {
+        if (top[x] < height) topPoints.push([x, top[x]]);
+        if (bottom[x] >= 0) bottomPoints.push([x, bottom[x]]);
+      }
+      for (let y = minY + yInset; y <= maxY - yInset; y++) {
+        if (left[y] < width) leftPoints.push([y, left[y]]);
+        if (right[y] >= 0) rightPoints.push([y, right[y]]);
+      }
+      const topLine = fitLine(topPoints), bottomLine = fitLine(bottomPoints);
+      const leftLine = fitLine(leftPoints), rightLine = fitLine(rightPoints);
+      if (!topLine || !bottomLine || !leftLine || !rightLine) return null;
+      const intersect = (horizontal, vertical) => {
+        const solved = solveLinearSystem(
+          [[-horizontal.slope, 1], [1, -vertical.slope]],
+          [horizontal.offset, vertical.offset]
+        );
+        return solved && { x: solved[0] / ratio, y: solved[1] / ratio };
+      };
+      const quad = [
+        intersect(topLine, leftLine), intersect(topLine, rightLine),
+        intersect(bottomLine, rightLine), intersect(bottomLine, leftLine)
+      ];
+      if (quad.some(point => !point)) return null;
+      const sideLengths = quad.map((point, index) => {
+        const next = quad[(index + 1) % 4];
+        return Math.hypot(point.x - next.x, point.y - next.y);
+      });
+      const aspect = Math.max(...sideLengths) / Math.max(1, Math.min(...sideLengths));
+      const area = Math.abs(quad.reduce((sum, point, index) => {
+        const next = quad[(index + 1) % 4];
+        return sum + point.x * next.y - next.x * point.y;
+      }, 0)) / 2;
+      if (aspect > 1.45 || area < source.width * source.height * .08) return null;
+      return quad;
+    }
+
+    function paperPerspectiveCandidate(source) {
+      const quad = estimatePaperQuad(source);
+      if (!quad) return null;
+      for (const factor of [1, 1.01, 1.02]) {
+        const canvas = warpPerspectiveCanvas(source, expandedQuad(quad, source, factor), 512);
+        if (!canvas) continue;
+        const decoded = tryDecodeSourceVariants(canvas, false) || tryDecodeBoundedCandidate(canvas);
+        if (decoded) return { decoded, canvas };
+      }
+      return null;
+    }
+
     function denseRegionCandidates(source) {
       const w = source.width, h = source.height;
       const out = [];
@@ -8504,6 +8723,18 @@ self.onmessage = async event => {
       return null;
     }
 
+    function tryDecodeBoundedCandidate(source) {
+      let found = tryDecodeSourceVariants(source, false);
+      if (found) return found;
+      for (const inset of [.024, .018, .03, .01, .04, .06]) {
+        const square = centeredSquareCanvas(source, inset);
+        if (!square) continue;
+        found = tryDecodeSourceVariants(square, false);
+        if (found) return found;
+      }
+      return null;
+    }
+
     function scanner3TryCandidate(source) {
       const quad = estimateMarkerQuad(source);
       if (!quad) return null;
@@ -8569,7 +8800,9 @@ self.onmessage = async event => {
       const id = randomHex(6);
       const baseName = safeName($("vaultName").value);
       const selectedShape = "mosaic";
-      const paletteHex = ["#000000", "#555555", "#aaaaaa", "#ffffff"];
+      const paletteHex = mode === 1
+        ? ["#000000", "#ffffff"]
+        : ["#000000", "#555555", "#aaaaaa", "#ffffff"];
       const baseRender = {
         syms: new Uint8Array(syms),
         grid,
@@ -8711,7 +8944,7 @@ self.onmessage = async event => {
     }
 
     function tryDecodeGrid(scanSource, grid) {
-      for (const mode of [2]) {
+      for (const mode of [2, 1]) {
         for (const rot of [0, 180, 90, 270]) {
           if (!headerLooksValid(scanSource, grid, mode, rot)) continue;
           const syms = sampleGridFromImage(scanSource, grid, mode, rot);
@@ -8796,10 +9029,22 @@ self.onmessage = async event => {
         await yieldScannerFrame();
       }
 
+      const paperRectified = paperPerspectiveCandidate(canvas);
+      if (paperRectified) return complete(paperRectified.decoded, "paper-quad");
+
+      const paper = paperBoundsCandidate(canvas);
+      if (paper) {
+        found = tryDecodeBoundedCandidate(paper);
+        if (found) return complete(found, "paper-inset");
+        const rectified = scanner3TryCandidate(paper);
+        if (rectified) return complete(rectified.decoded, "paper-perspective");
+        await yieldScannerFrame();
+      }
+
       const projected = projectionBoundsCandidate(canvas);
       if (projected) {
-        found = tryDecodeSourceVariants(projected, false);
-        if (found) return complete(found, "projection-fast");
+        found = tryDecodeBoundedCandidate(projected);
+        if (found) return complete(found, "projection-inset");
         const rectified = scanner3TryCandidate(projected);
         if (rectified) return complete(rectified.decoded, "projection-perspective");
         await yieldScannerFrame();
@@ -9161,6 +9406,11 @@ self.onmessage = async event => {
       const crop = cropCanvas(frame, region.sx, region.sy, region.side, region.side);
       let decoded = tryDecodeSourceVariants(crop, false);
       if (decoded) return { decoded, candidate: crop };
+      const projected = projectionBoundsCandidate(crop);
+      if (projected) {
+        decoded = tryDecodeBoundedCandidate(projected);
+        if (decoded) return { decoded, candidate: projected };
+      }
       const rectified = scanner3TryCandidate(crop);
       if (rectified) return { decoded: rectified.decoded, candidate: rectified.canvas };
       decoded = scanner2TryCandidate(crop);
@@ -9798,9 +10048,8 @@ self.onmessage = async event => {
       swipeDx = 0;
     });
     function applyPalettePreset() {
-      $("mode").value = "2";
       $("palettePreset").value = "mono";
-      const mode = 2;
+      const mode = Number($("mode").value);
       const preset = "mono";
       const palettes = {
         mono: {
@@ -9833,8 +10082,9 @@ self.onmessage = async event => {
     function syncSettingsSummary() {
       const profile = selectedKdfProfile();
       const fec = selectedFecProfile();
-      $("settingsSummary").textContent = `${profile.label} защита · ${fec.label.toLowerCase()} восстановление`;
-      $("openSettingsBtn").title = `Настройки: ${profile.label.toLowerCase()} защита паролей, ${fec.label.toLowerCase()} восстановление`;
+      const colors = 1 << Number($("mode").value);
+      $("settingsSummary").textContent = `${profile.label} защита · ${fec.label.toLowerCase()} восстановление · ${colors} цвета`;
+      $("openSettingsBtn").title = `Настройки: ${profile.label.toLowerCase()} защита паролей, ${fec.label.toLowerCase()} восстановление, ${colors} цвета`;
     }
 
     function syncFecLevel() {
