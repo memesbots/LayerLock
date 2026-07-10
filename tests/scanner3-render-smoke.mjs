@@ -28,7 +28,9 @@ const exposed = `
       chooseGrid, chooseScale, renderSigil, decodePackageFromCanvas,
       centeredCameraRegion, decodeCameraRegion, makeSettingsReport, state,
       scanner2LocateRegions, cropCanvas, scanner3TryCandidate, scanner2TryCandidate,
-      makeDegradedRender, assessCameraQuality, fuseAlignedCameraFrames
+      makeDegradedRender, assessCameraQuality, fuseAlignedCameraFrames,
+      projectionBoundsCandidate, paperBoundsCandidate, tryDecodeSourceVariants,
+      estimatePaperQuad, paperPerspectiveCandidate, tryDecodeBoundedCandidate
     };
     return;
 `;
@@ -64,6 +66,21 @@ for (const kind of ["scaled", "faded"]) {
   assert.equal(degraded.body.kind, "locked", `${kind} quality test failed`);
 }
 
+const binaryMode = 1;
+const binaryGrid = core.chooseGrid(frame.length + 13, binaryMode);
+const binaryRender = {
+  ...render,
+  syms: core.wrapPayload(frame, core.crc32(body), binaryMode, binaryGrid),
+  grid: binaryGrid,
+  mode: binaryMode,
+  scale: core.chooseScale(binaryGrid),
+  paletteHex: ["#000000", "#ffffff"]
+};
+const binaryCode = createCanvas(1, 1);
+core.renderSigil(binaryCode, binaryRender);
+const binaryDirect = await core.decodePackageFromCanvas(binaryCode);
+assert.equal(binaryDirect.body.kind, "locked", "two-color decode failed");
+
 const screenshot = createCanvas(1360, 900);
 const screenshotContext = screenshot.getContext("2d");
 screenshotContext.fillStyle = "#d7dbe2";
@@ -76,7 +93,21 @@ const screenshotRegions = await core.scanner2LocateRegions(screenshot);
 assert(screenshotRegions.regions.length > 0, "Scanner 2 found no screenshot candidate regions");
 const located = await core.decodePackageFromCanvas(screenshot);
 assert.equal(located.body.kind, "locked", "full screenshot decode failed");
-assert(["projection-fast", "projection-perspective", "scanner3-perspective"].includes(located.scanPath), `unexpected scan path: ${located.scanPath}`);
+assert(["projection-fast", "projection-perspective", "projection-inset", "scanner3-perspective"].includes(located.scanPath), `unexpected scan path: ${located.scanPath}`);
+
+const paper = createCanvas(1200, 1000);
+const paperContext = paper.getContext("2d");
+paperContext.fillStyle = "#ffffff";
+paperContext.fillRect(0, 0, paper.width, paper.height);
+paperContext.save();
+paperContext.translate(600, 500);
+paperContext.rotate(Math.PI / 90);
+paperContext.imageSmoothingEnabled = true;
+paperContext.drawImage(code, -300, -300, 600, 600);
+paperContext.restore();
+const paperResult = await core.decodePackageFromCanvas(paper);
+assert.equal(paperResult.body.kind, "locked", "white-paper decode failed");
+assert(["paper-quad", "paper-fast", "paper-perspective", "paper-inset", "projection-fast", "projection-perspective", "projection-inset", "scanner3-perspective"].includes(paperResult.scanPath), `unexpected paper scan path: ${paperResult.scanPath}`);
 
 const camera = createCanvas(960, 540);
 const cameraContext = camera.getContext("2d");
