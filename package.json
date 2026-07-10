@@ -1,0 +1,11 @@
+{
+  "name": "layerlock",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/v6-core-smoke.mjs && node tests/scanner3-render-smoke.mjs"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^0.1.100"
+  }
+}
