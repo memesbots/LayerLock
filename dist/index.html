@@ -970,6 +970,37 @@
       gap: 12px;
     }
     .settings-body .row > *:only-child { grid-column: 1 / -1; }
+    .recovery-control {
+      display: grid;
+      gap: 9px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: color-mix(in oklab, var(--field) 66%, transparent);
+    }
+    .recovery-control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .recovery-control-head strong { color: var(--text); font-size: 13px; }
+    .recovery-control-head output { color: var(--accent); font-size: 12.5px; font-weight: 700; }
+    .recovery-control input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .recovery-scale {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.2;
+      text-align: center;
+    }
+    .recovery-note { color: var(--text-dim); font-size: 11.5px; line-height: 1.4; }
     @media (max-width: 480px) {
       .settings-body .row { grid-template-columns: 1fr; }
     }
@@ -1197,11 +1228,11 @@
     /* Preview canvas + variant strip layout. */
     .preview-canvas-row {
       display: grid;
-      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      grid-template-columns: minmax(0, 1fr);
       gap: 8px;
       align-items: start;
       justify-content: center;
-      width: min(100%, 660px);
+      width: min(100%, 520px);
       margin: 0 auto;
     }
     .preview-canvas-row .canvas-box {
@@ -1375,9 +1406,21 @@
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
-      transition: color .2s, border-color .2s;
+      transition: color .22s, border-color .22s, background .22s, box-shadow .22s;
     }
     .verify-actions button:not(.icon):hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+    .verify-actions button.checking { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 48%, var(--line)); }
+    .verify-actions button.ok {
+      color: var(--ok);
+      border-color: color-mix(in oklab, var(--ok) 54%, var(--line));
+      background: color-mix(in oklab, var(--ok) 12%, var(--field));
+      box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ok) 10%, transparent);
+    }
+    .verify-actions button.bad {
+      color: var(--danger);
+      border-color: color-mix(in oklab, var(--danger) 58%, var(--line));
+      background: color-mix(in oklab, var(--danger) 11%, var(--field));
+    }
     .verify-actions button:disabled { opacity: .5; cursor: not-allowed; }
     .verify-actions button.icon { display: inline-flex; align-items: center; gap: 6px; width: auto; padding: 6px 12px; }
     .verify-actions button.icon span { font-size: 12.5px; font-weight: 500; }
@@ -2446,6 +2489,7 @@
       align-self: stretch;
     }
     .variant-strip {
+      display: none !important;
       gap: 6px;
       align-self: stretch;
     }
@@ -2869,17 +2913,16 @@
         </div>
         <div class="settings-body">
 
-          <label>Стойкость
+          <label>Защита паролей
             <select id="kdfProfile">
-              <option value="fast">Быстро</option>
-              <option value="normal" selected>Надежно</option>
-              <option value="max">Максимально</option>
+              <option value="fast">Обычная</option>
+              <option value="normal" selected>Усиленная</option>
+              <option value="max">Максимальная</option>
             </select>
             <span id="kdfNote" class="setting-note">Argon2id + HKDF-SHA-256 · 64 MiB · 3 прохода</span>
           </label>
-          <div class="row">
-            <label>Размер сетки
-              <select id="gridSize">
+          <div class="hidden" aria-hidden="true">
+              <select id="gridSize" tabindex="-1">
                 <option value="auto" selected>Авто</option>
                 <option value="24">24 x 24</option>
                 <option value="32">32 x 32</option>
@@ -2894,24 +2937,15 @@
                 <option value="224">224 x 224</option>
                 <option value="256">256 x 256</option>
               </select>
-            </label>
-            <label>Режим
-              <select id="mode">
-                <option value="1">Контрастный, 2 Цвета</option>
-                <option value="2">Емкий, 4 Цвета</option>
-                <option value="3" selected>Яркий, 8 Цветов</option>
+              <select id="mode" tabindex="-1">
+                <option value="2" selected>Моно, 4 цвета</option>
               </select>
-            </label>
           </div>
           <select id="shape" class="hidden" aria-hidden="true" tabindex="-1">
             <option value="mosaic" selected>Мозаика</option>
-            <option value="round">Аватар</option>
-            <option value="tile">Знак</option>
-            <option value="diamond">Эмблема</option>
           </select>
-          <div class="row">
-            <label>Пикселей на ячейку
-              <select id="scale">
+          <div class="hidden" aria-hidden="true">
+              <select id="scale" tabindex="-1">
                 <option value="auto" selected>Авто</option>
                 <option value="4">4</option>
                 <option value="6">6</option>
@@ -2922,26 +2956,34 @@
                 <option value="14">14</option>
                 <option value="16">16</option>
               </select>
-            </label>
-            <label>Устойчивость носителя
-              <select id="fecProfile">
-                <option value="screen">Экран</option>
-                <option value="balanced" selected>Универсально</option>
-                <option value="print">Печать</option>
-              </select>
-            </label>
           </div>
-          <label>Палитра
-            <select id="palettePreset">
-              <option value="mono" selected>Моно-Устойчивая</option>
-              <option value="bright">Яркая</option>
+          <div class="recovery-control">
+            <div class="recovery-control-head">
+              <strong>Восстановление повреждений</strong>
+              <output id="fecLevelValue" for="fecLevel">Стандартное</output>
+            </div>
+            <input id="fecLevel" type="range" min="0" max="3" step="1" value="1" aria-label="Запас восстановления">
+            <div class="recovery-scale" aria-hidden="true">
+              <span>Минимум</span><span>Стандарт</span><span>Повышенный</span><span>Максимум</span>
+            </div>
+            <span id="fecNote" class="recovery-note">Добавляет умеренный запас данных для восстановления частично поврежденного изображения.</span>
+            <select id="fecProfile" class="hidden" aria-hidden="true" tabindex="-1">
+              <option value="minimal">Минимальное</option>
+              <option value="standard" selected>Стандартное</option>
+              <option value="enhanced">Повышенное</option>
+              <option value="maximum">Максимальное</option>
             </select>
-          </label>
-          <div id="swatches" class="swatches">
+          </div>
+          <div class="hidden" aria-hidden="true">
+            <select id="palettePreset" tabindex="-1">
+              <option value="mono" selected>Моно-Устойчивая</option>
+            </select>
+          </div>
+          <div id="swatches" class="swatches hidden" aria-hidden="true">
             <input id="c0" type="color" value="#000000" title="символ 0">
-            <input id="c1" type="color" value="#242424" title="символ 1">
-            <input id="c2" type="color" value="#494949" title="символ 2">
-            <input id="c3" type="color" value="#6d6d6d" title="символ 3">
+            <input id="c1" type="color" value="#555555" title="символ 1">
+            <input id="c2" type="color" value="#aaaaaa" title="символ 2">
+            <input id="c3" type="color" value="#ffffff" title="символ 3">
             <input id="c4" type="color" value="#929292" title="символ 4">
             <input id="c5" type="color" value="#b6b6b6" title="символ 5">
             <input id="c6" type="color" value="#dbdbdb" title="символ 6">
@@ -2998,18 +3040,18 @@
             </div>
             <div class="info-card">
               <h3>Как создается изображение</h3>
-              <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id в отдельном потоке; настройка “Стойкость” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. Затем данные получают контроль повреждений, выбранный FEC-запас и распределяются по визуальной сетке.</p>
+              <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id в отдельном потоке; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” добавляет выбираемый запас Reed-Solomon, после чего данные распределяются по четырехцветной монохромной сетке.</p>
             </div>
             <div class="info-card">
               <h3>Скачивание</h3>
-              <p>PNG и SVG скачивают выбранный вариант изображения. ZIP собирает все варианты форм в отдельных папках PNG и SVG, повторно проверяет контейнеры и добавляет “Настройки.txt” с параметрами и SHA-256 файлов. Ключи и пароли туда не записываются.</p>
+              <p>PNG и SVG скачивают мозаику. ZIP повторно проверяет ее, сохраняет один PNG, один SVG и добавляет “Настройки.txt” с параметрами и SHA-256 файлов. Ключи и пароли туда не записываются.</p>
               <div class="info-example">Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip</div>
             </div>
           </div>
           <div id="infoReadPage" class="info-page">
             <div class="info-card">
               <h3>Как загрузить</h3>
-              <p>Выберите “Файл”, “Камера”, перетащите картинку в зону загрузки или вставьте ее через Ctrl+V. Scanner 3 находит контейнер внутри полного скриншота, выравнивает перспективу и калибрует цвета по рамке. Видео остается только в памяти устройства. Если загружено не то изображение, кнопка поверх превью сбросит чтение и вернет чистый экран загрузки.</p>
+              <p>Выберите “Файл”, “Камера”, перетащите картинку в зону загрузки или вставьте ее через Ctrl+V. Быстрый проход ищет полный квадрат по границам, Scanner 3 выравнивает перспективу и калибрует четыре оттенка. Камера подсказывает проблемы со светом и резкостью, а несколько выровненных кадров могут объединяться для более уверенного чтения. Видео остается только в памяти устройства.</p>
             </div>
             <div class="info-card">
               <h3>Два этапа доступа</h3>
@@ -6008,9 +6050,9 @@
     const ENVELOPE_VERSION = 3;
     const SCAN_MARGIN = 3;
     const KDF_PROFILES = {
-      fast: { label: "Быстро", memory: 32768, iterations: 2, parallelism: 1 },
-      normal: { label: "Надежно", memory: 65536, iterations: 3, parallelism: 1 },
-      max: { label: "Максимально", memory: 131072, iterations: 4, parallelism: 1 }
+      fast: { label: "Обычная", memory: 32768, iterations: 2, parallelism: 1 },
+      normal: { label: "Усиленная", memory: 65536, iterations: 3, parallelism: 1 },
+      max: { label: "Максимальная", memory: 131072, iterations: 4, parallelism: 1 }
     };
     const KDF_ID = 3;
     const KDF_NAME = "Argon2id-v1.3";
@@ -6021,9 +6063,10 @@
       container: "LayerLock:v6:key:container"
     };
     const FEC_PROFILES = {
-      screen: { label: "Экран", ratio: 0.12, minimum: 2 },
-      balanced: { label: "Универсально", ratio: 0.22, minimum: 3 },
-      print: { label: "Печать", ratio: 0.35, minimum: 4 }
+      minimal: { label: "Минимальное", ratio: 0.10, minimum: 2 },
+      standard: { label: "Стандартное", ratio: 0.18, minimum: 3 },
+      enhanced: { label: "Повышенное", ratio: 0.28, minimum: 4 },
+      maximum: { label: "Максимальное", ratio: 0.40, minimum: 6 }
     };
     const NOTE_RAW = 0;
     const NOTE_GZIP = 1;
@@ -6031,12 +6074,7 @@
     const PAYLOAD_VERSION = 2;
     const FEC_MAGIC = [0x4c, 0x4c, 0x46, 0x32]; // LLF2
     const candidates = [24, 32, 40, 48, 64, 80, 96, 128, 160, 192, 224, 256];
-    const SHAPES = [
-      ["mosaic", "Мозаика"],
-      ["round", "Аватар"],
-      ["tile", "Знак"],
-      ["diamond", "Эмблема"]
-    ];
+    const SHAPES = [["mosaic", "Мозаика"]];
     const enc = new TextEncoder();
     const dec = new TextDecoder();
     const $ = id => document.getElementById(id);
@@ -6066,6 +6104,9 @@
       cameraBusy: false,
       cameraStartedAt: 0,
       cameraAccepted: false,
+      cameraFrameCounter: 0,
+      cameraAlignedFrames: [],
+      lastRecovery: null,
       argon2Worker: null,
       argon2RequestId: 0,
       argon2Pending: new Map()
@@ -6144,7 +6185,7 @@
     }
 
     function selectedFecProfile() {
-      return FEC_PROFILES[$("fecProfile").value] || FEC_PROFILES.balanced;
+      return FEC_PROFILES[$("fecProfile").value] || FEC_PROFILES.standard;
     }
 
     function syncKdfNote() {
@@ -6187,7 +6228,7 @@
       return "fresh";
     }
 
-    function setVerifyButton(mode) {
+    function setVerifyButton(mode, detail = "") {
       const btn = $("verifyBtn");
       clearTimeout(state.verifyResetTimer);
       btn.classList.remove("checking", "ok", "bad");
@@ -6198,13 +6239,11 @@
       } else if (mode === "ok") {
         btn.disabled = false;
         btn.classList.add("ok");
-        btn.textContent = "Проверено";
-        state.verifyResetTimer = setTimeout(() => setVerifyButton("idle"), 2800);
+        btn.textContent = detail ? `Проверено · ${detail}` : "Проверено";
       } else if (mode === "bad") {
         btn.disabled = false;
         btn.classList.add("bad");
-        btn.textContent = "Ошибка";
-        state.verifyResetTimer = setTimeout(() => setVerifyButton("idle"), 5200);
+        btn.textContent = detail ? `Не прошло · ${detail}` : "Ошибка проверки";
       } else {
         btn.disabled = !state.lastRender;
         btn.textContent = "Проверить";
@@ -6937,7 +6976,14 @@ self.onmessage = async event => {
         const joined = new Uint8Array(dataChunks * chunkSize);
         for (let i = 0; i < dataChunks; i++) joined.set(chunks[i], i * chunkSize);
         const data = joined.subarray(0, dataLen);
-        return crc32(data) === globalCrc ? data : null;
+        if (crc32(data) !== globalCrc) return null;
+        state.lastRecovery = {
+          recovered: missingData.length,
+          dataChunks,
+          parityChunks,
+          damaged: ok.filter(value => !value).length
+        };
+        return data;
       } catch (_) {
         return null;
       }
@@ -7503,6 +7549,8 @@ self.onmessage = async event => {
         `Формат контейнера: v${ENVELOPE_VERSION}`,
         `Формат пакета: v${PACK_VERSION}`,
         `Формат слоя: v${SLOT_VERSION}`,
+        "Визуальный режим: Мозаика",
+        "Геометрия: автоматически",
         `Сетка: ${render.grid} x ${render.grid}`,
         `Пикселей на ячейку: ${render.scale}`,
         `Размер изображения: ${renderPixelSize(render)} x ${renderPixelSize(render)} px`,
@@ -7514,9 +7562,9 @@ self.onmessage = async event => {
         `KDF-память: ${kdf.memory / 1024} MiB`,
         `KDF-проходы: ${kdf.iterations}`,
         `KDF-параллелизм: ${kdf.parallelism}`,
-        `FEC: ${fec.label || "Пользовательский"}`,
-        `FEC-запас: ${Math.round((fec.ratio || 0) * 100)}%`,
-        `FEC-минимум блоков: ${fec.minimum}`,
+        `Восстановление повреждений: ${fec.label || "Пользовательское"}`,
+        `Reed-Solomon, запас: ${Math.round((fec.ratio || 0) * 100)}%`,
+        `Минимум резервных блоков: ${fec.minimum}`,
         "Сжатие текста: автоматическое (raw / gzip / deflate)",
         "",
         "Секреты, мастер-ключ и пароли слоев в этот файл не записываются.",
@@ -7526,6 +7574,15 @@ self.onmessage = async event => {
         ...checksums,
         ""
       ].join("\n");
+    }
+
+    async function buildZipFiles(render, root, stamp, generatedAt = new Date()) {
+      const files = [
+        { name: `${root}/PNG (${stamp})/${root}.png`, data: await pngBytesFromRender(render) },
+        { name: `${root}/SVG (${stamp})/${root}.svg`, data: makeSvg(render) }
+      ];
+      files.push({ name: `${root}/Настройки.txt`, data: await makeSettingsReport(render, files, generatedAt) });
+      return files;
     }
 
     function setActiveVariant(index) {
@@ -7849,7 +7906,7 @@ self.onmessage = async event => {
     function anchorBoundsCandidate(source) {
       const w = source.width, h = source.height;
       if (Math.min(w, h) < 120) return null;
-      const maxSide = 480;
+      const maxSide = 640;
       const ratio = Math.min(1, maxSide / Math.max(w, h));
       const dw = Math.max(1, Math.round(w * ratio));
       const dh = Math.max(1, Math.round(h * ratio));
@@ -8040,6 +8097,65 @@ self.onmessage = async event => {
       const pad = Math.max(bw, bh) * .04;
       const side = Math.min(Math.max(bw, bh) + pad * 2, Math.min(w, h));
       const cx = x + bw / 2, cy = y + bh / 2;
+      const sx = Math.max(0, Math.min(w - side, cx - side / 2));
+      const sy = Math.max(0, Math.min(h - side, cy - side / 2));
+      return cropCanvas(source, sx, sy, side, side);
+    }
+
+    function projectionBoundsCandidate(source) {
+      const w = source.width, h = source.height;
+      if (Math.min(w, h) < 120) return null;
+      const ratio = Math.min(1, 640 / Math.max(w, h));
+      const dw = Math.max(48, Math.round(w * ratio));
+      const dh = Math.max(48, Math.round(h * ratio));
+      const canvas = document.createElement("canvas");
+      canvas.width = dw;
+      canvas.height = dh;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(source, 0, 0, dw, dh);
+      const data = ctx.getImageData(0, 0, dw, dh).data;
+      const columns = new Float32Array(dw);
+      const rows = new Float32Array(dh);
+      const lum = (x, y) => {
+        const p = (y * dw + x) * 4;
+        return data[p] * .2126 + data[p + 1] * .7152 + data[p + 2] * .0722;
+      };
+      for (let y = 1; y < dh - 1; y += 2) {
+        for (let x = 1; x < dw - 1; x += 2) {
+          const value = lum(x, y);
+          const horizontal = Math.abs(value - lum(x + 1, y));
+          const vertical = Math.abs(value - lum(x, y + 1));
+          if (horizontal > 18) columns[x] += horizontal;
+          if (vertical > 18) rows[y] += vertical;
+        }
+      }
+      const bounds = scores => {
+        const smoothed = new Float32Array(scores.length);
+        let max = 0;
+        for (let i = 0; i < scores.length; i++) {
+          for (let k = -2; k <= 2; k++) smoothed[i] += scores[i + k] || 0;
+          max = Math.max(max, smoothed[i]);
+        }
+        if (!max) return null;
+        const threshold = max * .14;
+        let first = -1, last = -1;
+        for (let i = 0; i < smoothed.length; i++) {
+          if (smoothed[i] < threshold) continue;
+          if (first < 0) first = i;
+          last = i;
+        }
+        return first >= 0 && last - first > scores.length * .12 ? [first, last] : null;
+      };
+      const bx = bounds(columns), by = bounds(rows);
+      if (!bx || !by) return null;
+      const bw = (bx[1] - bx[0] + 1) / ratio;
+      const bh = (by[1] - by[0] + 1) / ratio;
+      const aspect = Math.max(bw, bh) / Math.max(1, Math.min(bw, bh));
+      if (aspect > 1.28 || Math.min(bw, bh) < Math.min(w, h) * .16) return null;
+      const pad = Math.max(bw, bh) * .012;
+      const side = Math.min(Math.min(w, h), Math.max(bw, bh) + pad * 2);
+      const cx = (bx[0] + bx[1] + 1) / (2 * ratio);
+      const cy = (by[0] + by[1] + 1) / (2 * ratio);
       const sx = Math.max(0, Math.min(w - side, cx - side / 2));
       const sy = Math.max(0, Math.min(h - side, cy - side / 2));
       return cropCanvas(source, sx, sy, side, side);
@@ -8338,7 +8454,7 @@ self.onmessage = async event => {
     }
 
     async function scanner2LocateRegions(source) {
-      const maxSide = 640;
+      const maxSide = 480;
       const ratio = Math.min(1, maxSide / Math.max(source.width, source.height));
       const width = Math.max(1, Math.round(source.width * ratio));
       const height = Math.max(1, Math.round(source.height * ratio));
@@ -8452,8 +8568,8 @@ self.onmessage = async event => {
       const syms = wrapPayload(payloadFrame, crc32(containerBytes), mode, grid);
       const id = randomHex(6);
       const baseName = safeName($("vaultName").value);
-      const selectedShape = $("shape").value;
-      const paletteHex = Array.from({ length: 8 }, (_, i) => $(`c${i}`).value);
+      const selectedShape = "mosaic";
+      const paletteHex = ["#000000", "#555555", "#aaaaaa", "#ffffff"];
       const baseRender = {
         syms: new Uint8Array(syms),
         grid,
@@ -8466,8 +8582,7 @@ self.onmessage = async event => {
         kdfProfile: { ...kdfProfile },
         fecProfile: { ...fecProfile }
       };
-      const orderedShapes = [selectedShape, ...SHAPES.map(([shape]) => shape).filter(shape => shape !== selectedShape)];
-      state.lastVariants = orderedShapes.map(shape => ({ ...baseRender, syms: new Uint8Array(syms), shape }));
+      state.lastVariants = [{ ...baseRender, syms: new Uint8Array(syms), shape: "mosaic" }];
       state.selectedVariant = 0;
       state.lastRender = state.lastVariants[0];
       state.lastEntries = entries.map(e => ({ ...e }));
@@ -8482,15 +8597,15 @@ self.onmessage = async event => {
       $("makeView").classList.add("has-output");
       $("makePreviewPane").classList.remove("hidden");
       $("canvas").closest(".canvas-box").classList.add("has-image");
-      onProgress("Готовлю варианты", 90);
-      renderVariantStrip();
+      onProgress("Проверяю мозаику", 90);
+      $("variantStrip").textContent = "";
       $("downloadPngBtn").disabled = false;
       $("downloadSvgBtn").disabled = false;
       $("downloadZipBtn").disabled = false;
       $("printBtn").disabled = false;
       $("verifyBtn").disabled = false;
       setVerifyButton("idle");
-      onProgress("Готово", 100);
+      onProgress("Мозаика создана", 92);
       const px = renderPixelSize(state.lastRender);
       setStatusHtml("makeStatus", `<strong>Детали:</strong> ${payloadFrame.length} байт, ${entries.length} слой(я), сетка ${grid} x ${grid}, изображение ${px} x ${px}.`, "ok");
     }
@@ -8522,6 +8637,59 @@ self.onmessage = async event => {
       }
     }
 
+    function makeDegradedRender(render, kind) {
+      const source = document.createElement("canvas");
+      renderSigil(source, render);
+      if (kind === "scaled") {
+        const small = document.createElement("canvas");
+        small.width = Math.max(96, Math.round(source.width * .68));
+        small.height = small.width;
+        const smallCtx = small.getContext("2d", { willReadFrequently: true });
+        smallCtx.imageSmoothingEnabled = true;
+        smallCtx.drawImage(source, 0, 0, small.width, small.height);
+        const restored = document.createElement("canvas");
+        restored.width = source.width;
+        restored.height = source.height;
+        const restoredCtx = restored.getContext("2d", { willReadFrequently: true });
+        restoredCtx.imageSmoothingEnabled = true;
+        restoredCtx.drawImage(small, 0, 0, restored.width, restored.height);
+        return restored;
+      }
+      const faded = document.createElement("canvas");
+      faded.width = source.width;
+      faded.height = source.height;
+      const ctx = faded.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(source, 0, 0);
+      const image = ctx.getImageData(0, 0, faded.width, faded.height);
+      for (let i = 0; i < image.data.length; i += 4) {
+        image.data[i] = 22 + image.data[i] * .82;
+        image.data[i + 1] = 22 + image.data[i + 1] * .82;
+        image.data[i + 2] = 22 + image.data[i + 2] * .82;
+      }
+      ctx.putImageData(image, 0, 0);
+      return faded;
+    }
+
+    async function stressTestRender(render) {
+      const total = 3;
+      let passed = 0;
+      await verifyRender(render);
+      passed++;
+      for (const kind of ["scaled", "faded"]) {
+        try {
+          const decoded = await decodePackageFromCanvas(makeDegradedRender(render, kind));
+          if (!decoded?.body) throw new Error("not decoded");
+          passed++;
+        } catch (_) {}
+      }
+      if (passed !== total) {
+        const error = new Error(`Мозаика прошла ${passed} из ${total} сценариев качества.`);
+        error.verificationScore = `${passed}/${total}`;
+        throw error;
+      }
+      return { passed, total };
+    }
+
     async function verifyAllVariants() {
       if (!state.lastVariants.length) throw new Error("Сначала создайте изображение.");
       for (const render of state.lastVariants) await verifyRenderCached(render);
@@ -8543,7 +8711,7 @@ self.onmessage = async event => {
     }
 
     function tryDecodeGrid(scanSource, grid) {
-      for (const mode of [3, 2, 1]) {
+      for (const mode of [2]) {
         for (const rot of [0, 180, 90, 270]) {
           if (!headerLooksValid(scanSource, grid, mode, rot)) continue;
           const syms = sampleGridFromImage(scanSource, grid, mode, rot);
@@ -8611,6 +8779,7 @@ self.onmessage = async event => {
     }
 
     async function decodePackageFromCanvas(canvas) {
+      state.lastRecovery = null;
       const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
       const complete = (found, path, scanCandidates = 0, locatorMs = 0) => ({
         ...found,
@@ -8624,6 +8793,15 @@ self.onmessage = async event => {
       if (aspect < 1.18) {
         found = tryDecodeSourceVariants(canvas, false);
         if (found) return complete(found, "direct");
+        await yieldScannerFrame();
+      }
+
+      const projected = projectionBoundsCandidate(canvas);
+      if (projected) {
+        found = tryDecodeSourceVariants(projected, false);
+        if (found) return complete(found, "projection-fast");
+        const rectified = scanner3TryCandidate(projected);
+        if (rectified) return complete(rectified.decoded, "projection-perspective");
         await yieldScannerFrame();
       }
 
@@ -8771,13 +8949,16 @@ self.onmessage = async event => {
       const { body, grid, mode, rot } = decoded;
       const ms = Math.max(1, Math.round(elapsedMs || decoded.scanMs || 1));
       const time = ms < 1000 ? `${ms} мс` : `${(ms / 1000).toFixed(1)} с`;
+      const recovery = state.lastRecovery?.recovered
+        ? ` Восстановлено блоков: ${state.lastRecovery.recovered}.`
+        : " Повреждений не обнаружено.";
       if (body.kind === "legacy") {
         state.readPack = body.pack;
         setReadLayerStage({ grid, mode, rot });
-        setStatus("readStatusWork", `Контейнер найден за ${time}: сетка ${grid}, режим ${1 << mode} цвета, поворот ${rot} градусов. Введите пароль слоя.`, "ok");
+        setStatus("readStatusWork", `Контейнер найден за ${time}: сетка ${grid}, режим ${1 << mode} цвета, поворот ${rot} градусов.${recovery} Введите пароль слоя.`, "ok");
         return;
       }
-      setStatus("readStatusWork", `Контейнер найден за ${time}: сетка ${grid}, режим ${1 << mode} цвета, поворот ${rot} градусов. Введите мастер-ключ.`, "ok");
+      setStatus("readStatusWork", `Контейнер найден за ${time}: сетка ${grid}, режим ${1 << mode} цвета, поворот ${rot} градусов.${recovery} Введите мастер-ключ.`, "ok");
     }
 
     async function loadImageFile(file, decodedHint = null) {
@@ -8833,6 +9014,8 @@ self.onmessage = async event => {
       clearTimeout(state.cameraTimer);
       state.cameraTimer = null;
       state.cameraBusy = false;
+      state.cameraAlignedFrames = [];
+      state.cameraFrameCounter = 0;
       if (state.cameraStream) {
         for (const track of state.cameraStream.getTracks()) track.stop();
       }
@@ -8857,7 +9040,7 @@ self.onmessage = async event => {
     function captureCameraFrame() {
       const video = $("cameraVideo");
       if (!video.videoWidth || !video.videoHeight) return null;
-      const maxSide = 960;
+      const maxSide = 720;
       const ratio = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
       const canvas = $("cameraFrameCanvas");
       canvas.width = Math.max(1, Math.round(video.videoWidth * ratio));
@@ -8898,17 +9081,96 @@ self.onmessage = async event => {
       };
     }
 
+    function assessCameraQuality(source) {
+      const size = 96;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size).data;
+      const lum = new Float32Array(size * size);
+      let sum = 0, squareSum = 0;
+      for (let i = 0, p = 0; i < lum.length; i++, p += 4) {
+        const value = data[p] * .2126 + data[p + 1] * .7152 + data[p + 2] * .0722;
+        lum[i] = value;
+        sum += value;
+        squareSum += value * value;
+      }
+      const mean = sum / lum.length;
+      const contrast = Math.sqrt(Math.max(0, squareSum / lum.length - mean * mean));
+      let edge = 0, samples = 0;
+      for (let y = 1; y < size - 1; y += 2) {
+        for (let x = 1; x < size - 1; x += 2) {
+          const i = y * size + x;
+          edge += Math.abs(lum[i] * 4 - lum[i - 1] - lum[i + 1] - lum[i - size] - lum[i + size]);
+          samples++;
+        }
+      }
+      const sharpness = edge / Math.max(1, samples);
+      if (mean < 22) return { blocked: true, message: "Слишком темно · добавьте света", mean, contrast, sharpness };
+      if (mean > 238) return { blocked: true, message: "Слишком ярко · уберите блик", mean, contrast, sharpness };
+      if (contrast < 13) return { blocked: true, message: "Недостаточно контраста · поднесите камеру ближе", mean, contrast, sharpness };
+      if (sharpness < 7) return { blocked: true, message: "Кадр размыт · зафиксируйте телефон", mean, contrast, sharpness };
+      return { blocked: false, message: "Качество кадра подходит", mean, contrast, sharpness };
+    }
+
+    function rectifyCameraForFusion(frame) {
+      const region = centeredCameraRegion(frame, .86);
+      const crop = cropCanvas(frame, region.sx, region.sy, region.side, region.side);
+      const quad = estimateMarkerQuad(crop);
+      if (!quad) return null;
+      const averageSide = quad.reduce((sum, point, index) => {
+        const next = quad[(index + 1) % 4];
+        return sum + Math.hypot(point.x - next.x, point.y - next.y) / 4;
+      }, 0);
+      return warpPerspectiveCanvas(crop, directionallyExpandedQuad(quad, crop, averageSide * .02), 512);
+    }
+
+    function fuseAlignedCameraFrames(frames) {
+      if (frames.length < 2) return null;
+      const output = document.createElement("canvas");
+      output.width = 512;
+      output.height = 512;
+      const ctx = output.getContext("2d", { willReadFrequently: true });
+      const images = frames.map(frame => frame.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, 512, 512).data);
+      const merged = ctx.createImageData(512, 512);
+      for (let i = 0; i < merged.data.length; i += 4) {
+        for (let channel = 0; channel < 3; channel++) {
+          const values = images.map(data => data[i + channel]).sort((a, b) => a - b);
+          merged.data[i + channel] = values.length === 2 ? Math.round((values[0] + values[1]) / 2) : values[Math.floor(values.length / 2)];
+        }
+        merged.data[i + 3] = 255;
+      }
+      ctx.putImageData(merged, 0, 0);
+      return output;
+    }
+
+    function tryFusedCameraFrame(frame) {
+      const aligned = rectifyCameraForFusion(frame);
+      if (!aligned) return null;
+      state.cameraAlignedFrames.push(aligned);
+      if (state.cameraAlignedFrames.length > 3) state.cameraAlignedFrames.shift();
+      const fused = fuseAlignedCameraFrames(state.cameraAlignedFrames);
+      if (!fused) return null;
+      const decoded = tryDecodeSourceVariants(fused, false);
+      return decoded ? { decoded, candidate: fused } : null;
+    }
+
     function decodeCameraRegion(frame, region) {
       const crop = cropCanvas(frame, region.sx, region.sy, region.side, region.side);
-      let decoded = scanner2TryCandidate(crop);
+      let decoded = tryDecodeSourceVariants(crop, false);
       if (decoded) return { decoded, candidate: crop };
       const rectified = scanner3TryCandidate(crop);
       if (rectified) return { decoded: rectified.decoded, candidate: rectified.canvas };
+      decoded = scanner2TryCandidate(crop);
+      if (decoded) return { decoded, candidate: crop };
       const candidate = normalizeCameraCandidate(crop);
-      decoded = scanner2TryCandidate(candidate);
+      decoded = tryDecodeSourceVariants(candidate, false);
       if (!decoded) {
         const normalizedRectified = scanner3TryCandidate(candidate);
         if (normalizedRectified) return { decoded: normalizedRectified.decoded, candidate: normalizedRectified.canvas };
+        decoded = scanner2TryCandidate(candidate);
       }
       return { decoded, candidate };
     }
@@ -8944,7 +9206,7 @@ self.onmessage = async event => {
       await loadImageFile(blob, result);
     }
 
-    function scheduleCameraScan(token, delay = 160) {
+    function scheduleCameraScan(token, delay = 90) {
       clearTimeout(state.cameraTimer);
       state.cameraTimer = setTimeout(() => {
         state.cameraTimer = null;
@@ -8962,8 +9224,10 @@ self.onmessage = async event => {
       }
       state.cameraBusy = true;
       try {
-        setCameraStatus("Определяю границы контейнера", 1);
-        const guideFractions = force ? [.7, .78, .86] : [.78];
+        state.cameraFrameCounter++;
+        const quality = assessCameraQuality(frame);
+        setCameraStatus(quality.message, quality.blocked ? 0 : 1);
+        const guideFractions = force ? [.7, .78, .86] : [.80];
         for (const fraction of guideFractions) {
           const direct = decodeCameraRegion(frame, centeredCameraRegion(frame, fraction));
           if (direct.decoded) {
@@ -8972,6 +9236,18 @@ self.onmessage = async event => {
           }
         }
 
+        const fused = tryFusedCameraFrame(frame);
+        if (fused) {
+          await acceptCameraCandidate(fused.candidate, fused.decoded);
+          return;
+        }
+        if (quality.blocked && !force) return;
+        if (!force && state.cameraFrameCounter % 2) {
+          setCameraStatus(state.cameraAlignedFrames.length > 1 ? "Совмещаю четкие кадры" : "Удерживайте контейнер внутри рамки", 1);
+          return;
+        }
+
+        setCameraStatus("Определяю границы контейнера", 1);
         const located = await scanner2LocateRegions(frame);
         let regions = located.regions.slice(0, 3).flatMap(region => [
           expandedCameraRegion(region, frame),
@@ -9223,6 +9499,17 @@ self.onmessage = async event => {
         $("variantStrip").textContent = "";
         setVerifyButton("idle");
         await makeVault(updateProgress);
+        updateProgress("Проверяю качество мозаики", 95);
+        try {
+          const result = await stressTestRender(state.lastRender);
+          state.verifyCache.add(verificationKey(state.lastRender));
+          setVerifyButton("ok", `${result.passed}/${result.total}`);
+          updateProgress("Готово · проверка пройдена", 100);
+        } catch (verificationError) {
+          setVerifyButton("bad", verificationError.verificationScore || "ошибка");
+          setStatus("makeStatus", verificationError.message, "bad");
+          updateProgress("Создано · проверка требует внимания", 100);
+        }
         $("canvas").closest(".preview-wrap").scrollIntoView({ behavior: "smooth", block: "start" });
       }
       catch (e) { handleError("makeStatus", e); }
@@ -9247,11 +9534,12 @@ self.onmessage = async event => {
     $("verifyBtn").addEventListener("click", async () => {
       setVerifyButton("checking");
       try {
-        await verifyRenderCached(state.lastRender);
-        setVerifyButton("ok");
-        showToast("Проверено. Все заполненные слои открываются.", "ok");
+        const result = await stressTestRender(state.lastRender);
+        state.verifyCache.add(verificationKey(state.lastRender));
+        setVerifyButton("ok", `${result.passed}/${result.total}`);
+        showToast("Проверено: слои открываются, масштабирование и потеря контраста пройдены.", "ok");
       } catch (e) {
-        setVerifyButton("bad");
+        setVerifyButton("bad", e.verificationScore || "ошибка");
         showToast(e.message, "bad");
       }
     });
@@ -9300,22 +9588,16 @@ self.onmessage = async event => {
     });
     $("downloadZipBtn").addEventListener("click", async () => {
       try {
-        setStatus("makeStatus", "Проверяю все варианты перед ZIP...");
-        await verifyAllVariants();
+        setStatus("makeStatus", "Проверяю мозаику перед ZIP...");
+        await verifyRenderCached(selectedRender());
         const stamp = fileStamp();
         const generatedAt = new Date();
         const root = safeName(state.lastBaseName);
-        const files = [];
-        for (let i = 0; i < state.lastVariants.length; i++) {
-          const render = state.lastVariants[i];
-          const num = String(i + 1).padStart(2, "0");
-          files.push({ name: `${root}/PNG (${stamp})/${root}-${num}.png`, data: await pngBytesFromRender(render) });
-          files.push({ name: `${root}/SVG (${stamp})/${root}-${num}.svg`, data: makeSvg(render) });
-        }
-        files.push({ name: `${root}/Настройки.txt`, data: await makeSettingsReport(selectedRender(), files, generatedAt) });
+        const render = selectedRender();
+        const files = await buildZipFiles(render, root, stamp, generatedAt);
         downloadBlob(makeZip(files), "application/zip", state.lastZipName);
         markSaved();
-        setStatus("makeStatus", "ZIP собран. Все 4 варианта проверены.", "ok");
+        setStatus("makeStatus", "ZIP собран. Мозаика проверена.", "ok");
       } catch (e) {
         handleError("makeStatus", e);
       }
@@ -9516,8 +9798,10 @@ self.onmessage = async event => {
       swipeDx = 0;
     });
     function applyPalettePreset() {
-      const mode = Number($("mode").value);
-      const preset = $("palettePreset").value;
+      $("mode").value = "2";
+      $("palettePreset").value = "mono";
+      const mode = 2;
+      const preset = "mono";
       const palettes = {
         mono: {
           1: ["#000000", "#ffffff"],
@@ -9549,9 +9833,23 @@ self.onmessage = async event => {
     function syncSettingsSummary() {
       const profile = selectedKdfProfile();
       const fec = selectedFecProfile();
-      const colors = 1 << Number($("mode").value);
-      $("settingsSummary").textContent = `${profile.label} · ${fec.label} · ${colors} цветов`;
-      $("openSettingsBtn").title = `Настройки: ${profile.label.toLowerCase()}, ${fec.label.toLowerCase()}, ${colors} цветов`;
+      $("settingsSummary").textContent = `${profile.label} защита · ${fec.label.toLowerCase()} восстановление`;
+      $("openSettingsBtn").title = `Настройки: ${profile.label.toLowerCase()} защита паролей, ${fec.label.toLowerCase()} восстановление`;
+    }
+
+    function syncFecLevel() {
+      const keys = ["minimal", "standard", "enhanced", "maximum"];
+      const notes = [
+        "Минимальный дополнительный объем для чистых цифровых копий.",
+        "Умеренный запас данных для восстановления частично поврежденного изображения.",
+        "Повышенный запас для фотографий, масштабирования и небольших дефектов.",
+        "Максимальный запас восстановления; изображение будет крупнее."
+      ];
+      const index = Math.max(0, Math.min(3, Number($("fecLevel").value) || 0));
+      $("fecProfile").value = keys[index];
+      $("fecLevelValue").textContent = FEC_PROFILES[keys[index]].label;
+      $("fecNote").textContent = notes[index];
+      syncSettingsSummary();
     }
 
     $("mode").addEventListener("change", () => {
@@ -9561,7 +9859,7 @@ self.onmessage = async event => {
     });
     $("palettePreset").addEventListener("change", applyPalettePreset);
     $("bgMode").addEventListener("change", syncBackgroundControls);
-    $("fecProfile").addEventListener("change", syncSettingsSummary);
+    $("fecLevel").addEventListener("input", syncFecLevel);
     $("kdfProfile").addEventListener("change", () => {
       syncKdfNote();
       syncSettingsSummary();
@@ -9572,6 +9870,7 @@ self.onmessage = async event => {
     syncColorControls();
     syncBackgroundControls();
     syncKdfNote();
+    syncFecLevel();
     syncSettingsSummary();
 
     /* ---------- Custom select enhancer ---------- */
