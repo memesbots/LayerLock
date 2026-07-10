@@ -480,7 +480,34 @@
       transition: border-color .2s, transform .1s;
     }
     .entry:hover { border-color: var(--line-strong); }
-    .entry-head { display: flex; align-items: center; justify-content: space-between; }
+    .entry-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .entry-title-toggle {
+      min-width: 0;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 0;
+      color: inherit;
+      background: transparent;
+      border: 0;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .entry-chevron {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+      color: var(--muted);
+      stroke: currentColor;
+      transition: transform .2s ease, color .2s ease;
+    }
+    .entry-title-toggle:hover .entry-chevron { color: var(--text-dim); }
+    .entry.is-collapsed { gap: 0; }
+    .entry.is-collapsed > :not(.entry-head) { display: none; }
+    .entry.is-collapsed .entry-chevron { transform: rotate(-90deg); }
     .entry-title,
     .entry-text-label {
       font-size: 12px;
@@ -510,6 +537,11 @@
     .entry.is-active .entry-title::before {
       background: var(--grad-accent);
       box-shadow: 0 0 8px var(--accent-glow);
+    }
+    .entry:has(.is-bad, .is-duplicate) .entry-title { color: var(--danger, #ef4444); }
+    .entry:has(.is-bad, .is-duplicate) .entry-title::before {
+      background: var(--danger, #ef4444);
+      box-shadow: 0 0 8px color-mix(in oklab, var(--danger, #ef4444) 38%, transparent);
     }
     .master-entry.is-active .entry-title {
       color: var(--ok);
@@ -643,12 +675,14 @@
     .field-check svg,
     .field-danger svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 2.4; }
     .field-danger { color: var(--danger, #ef4444); }
-    .pass-fieldset.has-value:not(.is-bad) .field-check,
-    .confirm-fieldset.is-ok .field-check,
+    .pass-fieldset.has-value:not(.is-bad):not(.is-duplicate) .field-check,
+    .confirm-fieldset.is-ok:not(.is-duplicate) .field-check,
     #readMasterField.is-ok .field-check,
     #readLayerField.is-ok .field-check,
     .pass-fieldset.is-bad .field-danger,
-    .confirm-fieldset.is-bad .field-danger { display: grid; }
+    .confirm-fieldset.is-bad .field-danger,
+    .pass-fieldset.is-duplicate .field-danger,
+    .confirm-fieldset.is-duplicate .field-danger { display: grid; }
     #readMasterField.is-ok {
       border-color: color-mix(in oklab, var(--ok) 58%, var(--line-strong));
       box-shadow: none;
@@ -659,6 +693,11 @@
       box-shadow: none;
     }
     .field-fieldset.is-bad > .field-legend { color: var(--danger, #ef4444); }
+    .field-fieldset.is-duplicate {
+      border-color: color-mix(in oklab, var(--danger, #ef4444) 70%, var(--line-strong));
+      box-shadow: none;
+    }
+    .field-fieldset.is-duplicate > .field-legend { color: var(--danger, #ef4444); }
 
     /* Strength meter */
     .strength { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
@@ -709,8 +748,10 @@
     }
     .pass-match[data-state="empty"],
     .pass-match[data-state="ok"] { display: none; }
-    .pass-match[data-state="bad"] { color: var(--danger, #ef4444); }
-    .pass-match[data-state="bad"] .pass-match-dot {
+    .pass-match[data-state="bad"],
+    .pass-match[data-state="duplicate"] { color: var(--danger, #ef4444); }
+    .pass-match[data-state="bad"] .pass-match-dot,
+    .pass-match[data-state="duplicate"] .pass-match-dot {
       background: var(--danger, #ef4444);
       box-shadow: 0 0 0 3px color-mix(in oklab, var(--danger, #ef4444) 22%, transparent);
     }
@@ -2342,6 +2383,16 @@
     #makeView .field-fieldset.is-bad > .field-legend,
     #makeView .field-fieldset.is-bad.valid > .field-legend,
     #makeView .field-fieldset.is-bad:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
+      color: var(--danger, #ef4444);
+    }
+    #makeView .field-fieldset.is-duplicate,
+    #makeView .field-fieldset.is-duplicate.valid,
+    body:not(.light) #makeView .field-fieldset.is-duplicate.valid {
+      border-color: color-mix(in oklab, var(--danger, #ef4444) 76%, var(--line-strong));
+    }
+    #makeView .field-fieldset.is-duplicate > .field-legend,
+    #makeView .field-fieldset.is-duplicate.valid > .field-legend,
+    #makeView .field-fieldset.is-duplicate:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
       color: var(--danger, #ef4444);
     }
     .field-fieldset > input,
@@ -6611,7 +6662,41 @@ self.onmessage = async event => {
         entry.classList.toggle("is-active", Boolean(pass));
         return;
       }
-      entry.classList.toggle("is-active", Boolean(pass && confirm && pass === confirm && text));
+      entry.classList.toggle("is-active", Boolean(pass && confirm && pass === confirm && text && !entry.querySelector(".is-duplicate")));
+    }
+    function syncDuplicatePasswords() {
+      const entries = [...document.querySelectorAll("#entries .entry")];
+      const groups = new Map();
+      for (const entry of entries) {
+        const passFieldset = entry.querySelector(".pass-fieldset");
+        const confirmFieldset = entry.querySelector(".confirm-fieldset");
+        const box = entry.querySelector(".pass-match");
+        passFieldset?.classList.remove("is-duplicate");
+        confirmFieldset?.classList.remove("is-duplicate");
+        if (box?.dataset.state === "duplicate") {
+          const pass = entry.querySelector(".entry-pass")?.value || "";
+          const confirm = entry.querySelector(".entry-pass-confirm")?.value || "";
+          box.dataset.state = !confirm ? "empty" : (pass === confirm ? "ok" : "bad");
+          box.querySelector(".pass-match-text").textContent = pass && confirm && pass !== confirm ? "Пароли не совпадают" : "";
+        }
+        const password = entry.querySelector(".entry-pass")?.value || "";
+        if (!password) continue;
+        if (!groups.has(password)) groups.set(password, []);
+        groups.get(password).push(entry);
+      }
+      for (const duplicates of groups.values()) {
+        if (duplicates.length < 2) continue;
+        for (const entry of duplicates) {
+          const pass = entry.querySelector(".entry-pass")?.value || "";
+          const confirm = entry.querySelector(".entry-pass-confirm")?.value || "";
+          entry.querySelector(".pass-fieldset")?.classList.add("is-duplicate");
+          if (confirm === pass) entry.querySelector(".confirm-fieldset")?.classList.add("is-duplicate");
+          const box = entry.querySelector(".pass-match");
+          box.dataset.state = "duplicate";
+          box.querySelector(".pass-match-text").textContent = "Этот пароль уже используется в другом слое";
+        }
+      }
+      entries.forEach(syncEntryState);
     }
     function updateMatch(entry) {
       const pass = entry.querySelector(".entry-pass").value;
@@ -6642,6 +6727,7 @@ self.onmessage = async event => {
         txt.textContent = "Пароли не совпадают";
       }
       syncEntryState(entry);
+      syncDuplicatePasswords();
     }
 
     function collectMasterKey() {
@@ -6665,12 +6751,21 @@ self.onmessage = async event => {
         if (entry.password !== entry.confirm) throw new Error(`Слой ${entry.index}: пароли не совпадают.`);
         if (!entry.text) throw new Error(`Слой ${entry.index}: введите текст.`);
       }
+      const passwordLayers = new Map();
+      for (const entry of entries) {
+        if (!passwordLayers.has(entry.password)) passwordLayers.set(entry.password, []);
+        passwordLayers.get(entry.password).push(entry.index);
+      }
+      const duplicateLayers = [...passwordLayers.values()].find(indexes => indexes.length > 1);
+      if (duplicateLayers) throw new Error(`Слои ${duplicateLayers.join(" и ")}: одинаковые пароли запрещены.`);
       return entries.map(({ password, text }) => ({ password, text }));
     }
 
     function focusFirstInvalidMakeField() {
       const focusInvalid = field => {
         if (!field) return false;
+        const entry = field.closest(".entry");
+        if (entry) setEntryCollapsed(entry, false);
         field.setAttribute("aria-invalid", "true");
         field.focus({ preventScroll: true });
         field.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -6685,6 +6780,13 @@ self.onmessage = async event => {
         if (!pass.value) return focusInvalid(pass);
         if (pass.value !== confirm.value) return focusInvalid(confirm);
         if (!text.value) return focusInvalid(text);
+      }
+      const passwordFields = [...document.querySelectorAll("#entries .entry-pass")];
+      const seenPasswords = new Map();
+      for (const field of passwordFields) {
+        if (!field.value) continue;
+        if (seenPasswords.has(field.value)) return focusInvalid(field);
+        seenPasswords.set(field.value, field);
       }
       return false;
     }
@@ -6709,13 +6811,26 @@ self.onmessage = async event => {
       if ($("layerCount")) $("layerCount").textContent = String(layers.length);
     }
 
+    function setEntryCollapsed(entry, collapsed) {
+      if (!entry || entry.classList.contains("master-entry")) return;
+      entry.classList.toggle("is-collapsed", collapsed);
+      const toggle = entry.querySelector(".entry-title-toggle");
+      if (toggle) toggle.setAttribute("aria-expanded", String(!collapsed));
+    }
+
     function makeEntry(real) {
+      [...$("entries").children].forEach(entry => setEntryCollapsed(entry, true));
       const idx = $("entries").children.length + 1;
       const wrap = document.createElement("div");
       wrap.className = "entry";
       wrap.innerHTML = `
         <div class="entry-head">
-          <div class="entry-title">Слой ${idx}</div>
+          <button class="entry-title-toggle" type="button" aria-expanded="true">
+            <span class="entry-title">Слой ${idx}</span>
+            <svg class="entry-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </button>
           <button class="icon entry-remove" type="button" title="Удалить">×</button>
         </div>
         <div class="field-fieldset pass-fieldset">
@@ -6785,10 +6900,14 @@ self.onmessage = async event => {
           </div>
         </div>
       `;
+      wrap.querySelector(".entry-title-toggle").addEventListener("click", () => {
+        setEntryCollapsed(wrap, !wrap.classList.contains("is-collapsed"));
+      });
       wrap.querySelector(".entry-remove").addEventListener("click", () => {
         if ($("entries").children.length > 1) {
           wrap.remove();
           syncLayerList();
+          syncDuplicatePasswords();
         }
       });
       wrap.querySelector(".entry-pass").addEventListener("input", () => updateStrength(wrap));
