@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
   <title>LayerLock</title>
   <style>
@@ -142,7 +142,11 @@
     * { box-sizing: border-box; }
     *::selection { background: color-mix(in oklab, var(--accent) 45%, transparent); color: var(--text); }
 
-    html, body { height: 100%; }
+    html, body {
+      height: 100%;
+      touch-action: pan-x pan-y;
+      overscroll-behavior-x: none;
+    }
     body {
       margin: 0;
       min-height: 100vh;
@@ -1030,6 +1034,37 @@
       padding: 8px 10px;
       border-radius: 9px;
       background: color-mix(in oklab, var(--bg-0) 44%, transparent);
+    }
+    #infoModal {
+      align-items: flex-start;
+      padding-top: 24px;
+    }
+    #infoModal .settings-modal-card {
+      margin-top: 0;
+      max-height: calc(100dvh - 48px);
+    }
+    #infoModal.info-make-mode {
+      --accent: #2f6bff;
+      --accent-strong: #1e5bff;
+      --accent-glow: rgba(47, 107, 255, 0.28);
+      --grad-accent: linear-gradient(180deg, #3d78ff 0%, #2560ff 100%);
+      --grad-accent-soft: rgba(47, 107, 255, 0.12);
+    }
+    #infoModal.info-read-mode {
+      --accent: #22b85c;
+      --accent-strong: #159447;
+      --accent-glow: rgba(34, 184, 92, 0.28);
+      --grad-accent: linear-gradient(180deg, #34cd72 0%, #18a950 100%);
+      --grad-accent-soft: rgba(34, 184, 92, 0.12);
+    }
+    @media (max-width: 720px) {
+      #infoModal {
+        align-items: flex-start;
+        padding: 12px;
+      }
+      #infoModal .settings-modal-card {
+        max-height: calc(100dvh - 24px);
+      }
     }
     /* Settings launcher (gear chip in header) */
     .panel-action.settings-launcher {
@@ -2075,7 +2110,7 @@
       display: none;
       animation: fsMenuIn .16s ease;
     }
-    .field-select.open .field-select-menu { display: block; }
+    .field-select-menu.open { display: block; }
     @keyframes fsMenuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     .field-select-option {
       display: flex; align-items: center;
@@ -7161,9 +7196,11 @@ self.onmessage = async event => {
     }
 
     function cornerAnchorCells(corner) {
+      const orientationCorner = corner === "tl";
       const cells = [
-        [0, 0, 1], [1, 0, 0],
-        [0, 1, 0], [1, 1, 1]
+        [0, 0, 1], [1, 0, 1], [2, 0, 1],
+        [0, 1, 1], [1, 1, orientationCorner ? 1 : 0], [2, 1, 0],
+        [0, 2, 1], [1, 2, 0], [2, 2, orientationCorner ? 1 : 0]
       ];
       const right = corner.includes("r");
       const bottom = corner.includes("b");
@@ -7560,7 +7597,9 @@ self.onmessage = async event => {
       const c = document.createElement("canvas");
       c.width = Math.max(1, Math.round(sw));
       c.height = Math.max(1, Math.round(sh));
-      c.getContext("2d", { willReadFrequently: true }).drawImage(source, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      const ctx = c.getContext("2d", { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(source, sx, sy, sw, sh, 0, 0, c.width, c.height);
       return c;
     }
 
@@ -7582,6 +7621,18 @@ self.onmessage = async event => {
       if (cropSide < 24) return null;
       const sx = (source.width - cropSide) / 2;
       const sy = (source.height - cropSide) / 2;
+      return cropCanvas(source, sx, sy, cropSide, cropSide);
+    }
+
+    function offsetSquareCanvas(source, insetRatio, offsetX, offsetY) {
+      const side = Math.min(source.width, source.height);
+      const cropSide = side * (1 - insetRatio * 2);
+      if (cropSide < 24) return null;
+      const baseX = (source.width - cropSide) / 2;
+      const baseY = (source.height - cropSide) / 2;
+      const shift = side * insetRatio;
+      const sx = Math.max(0, Math.min(source.width - cropSide, baseX + offsetX * shift));
+      const sy = Math.max(0, Math.min(source.height - cropSide, baseY + offsetY * shift));
       return cropCanvas(source, sx, sy, cropSide, cropSide);
     }
 
@@ -7723,19 +7774,56 @@ self.onmessage = async event => {
         let max = 0;
         for (const v of scores) if (v > max) max = v;
         if (!max) return null;
-        const threshold = max * .16;
-        let min = -1, maxI = -1;
-        for (let i = 0; i < scores.length; i++) {
+        const threshold = max * .12;
+        const maxGap = Math.max(6, Math.round(scores.length / 80));
+        let start = -1, last = -1, gap = 0, energy = 0;
+        let best = null;
+        const finish = () => {
+          if (start < 0 || last < start) return;
+          const length = last - start + 1;
+          const rank = energy * Math.sqrt(length);
+          if (!best || rank > best.rank) best = { start, last, rank };
+          start = -1;
+          last = -1;
+          gap = 0;
+          energy = 0;
+        };
+        for (let i = 0; i <= scores.length; i++) {
           const local = (scores[i - 1] || 0) + scores[i] + (scores[i + 1] || 0);
           if (local > threshold) {
-            if (min < 0) min = i;
-            maxI = i;
+            if (start < 0) start = i;
+            last = i;
+            gap = 0;
+            energy += local;
+          } else if (start >= 0 && gap < maxGap && i < scores.length) {
+            gap++;
+          } else {
+            finish();
           }
         }
-        return min < 0 ? null : [min, maxI];
+        return best ? [best.start, best.last] : null;
       };
-      const bx = bounds(col), by = bounds(row);
-      if (!bx || !by) return null;
+      let bx = bounds(col);
+      if (!bx) return null;
+      const scopedRows = new Float32Array(dh);
+      for (let y = 1; y < dh - 1; y += 2) {
+        for (let x = Math.max(1, bx[0]); x < Math.min(dw - 1, bx[1] + 1); x += 2) {
+          const l = lumAt(x, y);
+          const e = Math.abs(l - lumAt(x + 1, y)) + Math.abs(l - lumAt(x, y + 1));
+          if (e > 30) scopedRows[y] += e;
+        }
+      }
+      const by = bounds(scopedRows) || bounds(row);
+      if (!by) return null;
+      const scopedCols = new Float32Array(dw);
+      for (let y = Math.max(1, by[0]); y < Math.min(dh - 1, by[1] + 1); y += 2) {
+        for (let x = 1; x < dw - 1; x += 2) {
+          const l = lumAt(x, y);
+          const e = Math.abs(l - lumAt(x + 1, y)) + Math.abs(l - lumAt(x, y + 1));
+          if (e > 30) scopedCols[x] += e;
+        }
+      }
+      bx = bounds(scopedCols) || bx;
       let x = bx[0] / ratio, y = by[0] / ratio;
       let bw = (bx[1] - bx[0] + 1) / ratio, bh = (by[1] - by[0] + 1) / ratio;
       if (Math.min(bw, bh) < 80) return null;
@@ -7943,6 +8031,60 @@ self.onmessage = async event => {
         if (!duplicate) regions.push(candidate);
         if (regions.length >= 8) break;
       }
+
+      if (regions.length < 2) {
+        const stride = cols + 1;
+        const integral = new Float64Array((cols + 1) * (rows + 1));
+        for (let y = 0; y < rows; y++) {
+          let rowSum = 0;
+          for (let x = 0; x < cols; x++) {
+            rowSum += scores[y * cols + x];
+            integral[(y + 1) * stride + x + 1] = integral[y * stride + x + 1] + rowSum;
+          }
+        }
+        const windowSum = (x, y, side) => {
+          const right = x + side, bottom = y + side;
+          return integral[bottom * stride + right]
+            - integral[y * stride + right]
+            - integral[bottom * stride + x]
+            + integral[y * stride + x];
+        };
+        const minGridSide = Math.max(8, Math.round(Math.min(cols, rows) * .14));
+        const maxGridSide = Math.max(minGridSide, Math.floor(Math.min(cols, rows) * .92));
+        let densityBest = null;
+        for (let side = minGridSide; side <= maxGridSide; side += 2) {
+          const step = Math.max(1, Math.floor(side / 10));
+          for (let y = 0; y + side <= rows; y += step) {
+            for (let x = 0; x + side <= cols; x += step) {
+              const mean = windowSum(x, y, side) / (side * side);
+              const rank = mean * Math.sqrt(side);
+              if (mean < .07 || (densityBest && rank <= densityBest.rank)) continue;
+              densityBest = { x, y, side, rank };
+            }
+          }
+        }
+        if (densityBest) {
+          const coarse = densityBest;
+          for (let side = Math.max(minGridSide, coarse.side - 4); side <= Math.min(maxGridSide, coarse.side + 4); side++) {
+            for (let y = Math.max(0, coarse.y - 4); y <= Math.min(rows - side, coarse.y + 4); y++) {
+              for (let x = Math.max(0, coarse.x - 4); x <= Math.min(cols - side, coarse.x + 4); x++) {
+                const mean = windowSum(x, y, side) / (side * side);
+                const rank = mean * Math.sqrt(side);
+                if (rank > densityBest.rank) densityBest = { x, y, side, rank };
+              }
+            }
+          }
+          const denseCenterX = (densityBest.x + densityBest.side / 2) * block * scaleX;
+          const denseCenterY = (densityBest.y + densityBest.side / 2) * block * scaleY;
+          const denseSide = densityBest.side * block * Math.max(scaleX, scaleY);
+          for (const factor of [1.18, 1.1, 1]) {
+            const side = Math.min(Math.min(sourceWidth, sourceHeight), denseSide * factor);
+            const sx = Math.max(0, Math.min(sourceWidth - side, denseCenterX - side / 2));
+            const sy = Math.max(0, Math.min(sourceHeight - side, denseCenterY - side / 2));
+            regions.push({ sx, sy, side, score: densityBest.rank, fill: 0 });
+          }
+        }
+      }
       return { regions, elapsed: Date.now() - startedAt, width, height, block };
     }
 
@@ -8017,11 +8159,21 @@ self.onmessage = async event => {
     function scanner2TryCandidate(source) {
       let found = tryDecodeSourceVariants(source, false);
       if (found) return found;
-      for (const inset of [.025, .06, .1, .16]) {
+      const insets = [.01, .018, .025, .04, .06, .075, .1, .13, .16];
+      for (const inset of insets) {
         const square = centeredSquareCanvas(source, inset);
         if (!square) continue;
         found = tryDecodeSourceVariants(square, false);
         if (found) return found;
+      }
+      const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1], [-.7, -.7], [.7, -.7], [-.7, .7], [.7, .7]];
+      for (const inset of [.018, .025, .04, .06, .075, .1]) {
+        for (const [offsetX, offsetY] of offsets) {
+          const square = offsetSquareCanvas(source, inset, offsetX, offsetY);
+          if (!square) continue;
+          found = tryDecodeSourceVariants(square, false);
+          if (found) return found;
+        }
       }
       return null;
     }
@@ -8485,10 +8637,38 @@ self.onmessage = async event => {
       canvas.width = size;
       canvas.height = size;
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, size, size);
       return canvas;
+    }
+
+    function centeredCameraRegion(frame, fraction = .78) {
+      const side = Math.min(frame.width, frame.height) * fraction;
+      return {
+        sx: (frame.width - side) / 2,
+        sy: (frame.height - side) / 2,
+        side
+      };
+    }
+
+    function expandedCameraRegion(region, frame, factor = 1.08) {
+      const centerX = region.sx + region.side / 2;
+      const centerY = region.sy + region.side / 2;
+      const side = Math.min(region.side * factor, frame.width, frame.height);
+      return {
+        sx: Math.max(0, Math.min(frame.width - side, centerX - side / 2)),
+        sy: Math.max(0, Math.min(frame.height - side, centerY - side / 2)),
+        side
+      };
+    }
+
+    function decodeCameraRegion(frame, region) {
+      const crop = cropCanvas(frame, region.sx, region.sy, region.side, region.side);
+      let decoded = scanner2TryCandidate(crop);
+      if (decoded) return { decoded, candidate: crop };
+      const candidate = normalizeCameraCandidate(crop);
+      decoded = scanner2TryCandidate(candidate);
+      return { decoded, candidate };
     }
 
     function cameraFrameSample(canvas) {
@@ -8631,28 +8811,37 @@ self.onmessage = async event => {
       }
       state.cameraBusy = true;
       try {
+        const guideFractions = force ? [.7, .78, .86] : [.78];
+        for (const fraction of guideFractions) {
+          const direct = decodeCameraRegion(frame, centeredCameraRegion(frame, fraction));
+          if (direct.decoded) {
+            await acceptCameraCandidate(direct.candidate, direct.decoded);
+            return;
+          }
+        }
+
         const located = await scanner2LocateRegions(frame);
-        let regions = located.regions.slice(0, 2);
+        let regions = located.regions.slice(0, 3).flatMap(region => [
+          expandedCameraRegion(region, frame),
+          region
+        ]);
         if (!regions.length && force) {
-          const side = Math.min(frame.width, frame.height) * .78;
-          regions = [{ sx: (frame.width - side) / 2, sy: (frame.height - side) / 2, side }];
+          regions = guideFractions.map(fraction => centeredCameraRegion(frame, fraction));
         }
         if (!regions.length) {
-          setCameraStatus("Наведите рамку на контейнер");
+          setCameraStatus("Поместите контейнер целиком внутрь рамки");
           return;
         }
         let bestCandidate = null;
         let bestQuality = -Infinity;
         for (const region of regions) {
-          const crop = cropCanvas(frame, region.sx, region.sy, region.side, region.side);
-          const candidate = normalizeCameraCandidate(crop);
-          const decoded = scanner2TryCandidate(candidate);
-          if (decoded) {
-            await acceptCameraCandidate(candidate, decoded);
+          const result = decodeCameraRegion(frame, region);
+          if (result.decoded) {
+            await acceptCameraCandidate(result.candidate, result.decoded);
             return;
           }
-          const quality = cameraFrameSample(candidate).score;
-          if (quality > bestQuality) { bestQuality = quality; bestCandidate = candidate; }
+          const quality = cameraFrameSample(result.candidate).score;
+          if (quality > bestQuality) { bestQuality = quality; bestCandidate = result.candidate; }
         }
         if (bestCandidate) rememberCameraFrame(bestCandidate);
         if (state.cameraFrames.length >= 3) {
@@ -8664,8 +8853,12 @@ self.onmessage = async event => {
             await acceptCameraCandidate(fused, decoded);
             return;
           }
+          state.cameraFrames = state.cameraFrames.slice(0, 1);
+          updateCameraMeter();
         }
-        setCameraStatus(`Стабилизирую изображение · ${Math.min(3, state.cameraFrames.length)}/3`);
+        setCameraStatus(state.cameraFrames.length
+          ? "Ищу границы контейнера · держите камеру ровно"
+          : "Поместите контейнер целиком внутрь рамки");
       } finally {
         state.cameraBusy = false;
         if (token === state.cameraLoopToken && !state.cameraAccepted) scheduleCameraScan(token);
@@ -9048,6 +9241,8 @@ self.onmessage = async event => {
     }
     function switchInfoPage(name) {
       const make = name === "make";
+      $("infoModal").classList.toggle("info-make-mode", make);
+      $("infoModal").classList.toggle("info-read-mode", !make);
       $("infoMakeTab").classList.toggle("active", make);
       $("infoReadTab").classList.toggle("active", !make);
       $("infoMakePage").classList.toggle("active", make);
@@ -9272,7 +9467,7 @@ self.onmessage = async event => {
       const menu = document.createElement("div");
       menu.className = "field-select-menu";
       menu.setAttribute("role", "listbox");
-      wrap.appendChild(menu);
+      document.body.appendChild(menu);
 
       function buildMenu() {
         menu.innerHTML = "";
@@ -9302,12 +9497,15 @@ self.onmessage = async event => {
       function positionMenu() {
         const r = trigger.getBoundingClientRect();
         const vh = window.innerHeight;
+        const vw = window.innerWidth;
+        const viewportInset = 10;
         const menuMax = 260;
         const spaceBelow = vh - r.bottom;
         const spaceAbove = r.top;
         menu.style.position = "fixed";
-        menu.style.left = r.left + "px";
-        menu.style.width = r.width + "px";
+        const width = Math.min(r.width, vw - viewportInset * 2);
+        menu.style.left = Math.max(viewportInset, Math.min(r.left, vw - width - viewportInset)) + "px";
+        menu.style.width = width + "px";
         if (spaceBelow < 180 && spaceAbove > spaceBelow) {
           menu.style.top = "auto";
           menu.style.bottom = (vh - r.top + 6) + "px";
@@ -9319,14 +9517,18 @@ self.onmessage = async event => {
         }
       }
       function open() {
-        document.querySelectorAll(".field-select.open").forEach(w => w !== wrap && w.classList.remove("open"));
+        document.querySelectorAll(".field-select.open").forEach(w => {
+          if (w !== wrap) w.dispatchEvent(new Event("fieldselectclose"));
+        });
         wrap.classList.add("open");
+        menu.classList.add("open");
         positionMenu();
         window.addEventListener("scroll", onScrollClose, true);
         window.addEventListener("resize", onScrollClose);
       }
       function close() {
         wrap.classList.remove("open");
+        menu.classList.remove("open");
         window.removeEventListener("scroll", onScrollClose, true);
         window.removeEventListener("resize", onScrollClose);
       }
@@ -9339,6 +9541,7 @@ self.onmessage = async event => {
         ev.stopPropagation();
         wrap.classList.contains("open") ? close() : open();
       });
+      wrap.addEventListener("fieldselectclose", close);
       sel.addEventListener("change", syncTrigger);
       buildMenu();
       syncTrigger();
@@ -9348,11 +9551,11 @@ self.onmessage = async event => {
     }
     document.querySelectorAll("select").forEach(enhanceSelect);
     document.addEventListener("click", () => {
-      document.querySelectorAll(".field-select.open").forEach(w => w.classList.remove("open"));
+      document.querySelectorAll(".field-select.open").forEach(w => w.dispatchEvent(new Event("fieldselectclose")));
     });
     document.addEventListener("keydown", ev => {
       if (ev.key === "Escape") {
-        document.querySelectorAll(".field-select.open").forEach(w => w.classList.remove("open"));
+        document.querySelectorAll(".field-select.open").forEach(w => w.dispatchEvent(new Event("fieldselectclose")));
       }
     });
 
