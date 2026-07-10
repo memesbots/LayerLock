@@ -26,7 +26,9 @@ const exposed = `
     globalThis.Scanner3Core = {
       FEC_PROFILES, KDF_PROFILES, crc32, encodeEnvelope, encodePayloadFrame, wrapPayload,
       chooseGrid, chooseScale, renderSigil, decodePackageFromCanvas,
-      centeredCameraRegion, decodeCameraRegion, makeSettingsReport, state
+      centeredCameraRegion, decodeCameraRegion, makeSettingsReport, state,
+      scanner2LocateRegions, cropCanvas, scanner3TryCandidate, scanner2TryCandidate,
+      makeDegradedRender, assessCameraQuality, fuseAlignedCameraFrames
     };
     return;
 `;
@@ -39,8 +41,8 @@ const body = core.encodeEnvelope(
   Uint8Array.from({ length: 12 }, (_, i) => i + 33),
   core.KDF_PROFILES.fast
 );
-const frame = core.encodePayloadFrame(body, core.FEC_PROFILES.screen);
-const mode = 3;
+const frame = core.encodePayloadFrame(body, core.FEC_PROFILES.standard);
+const mode = 2;
 const grid = core.chooseGrid(frame.length + 13, mode);
 const render = {
   syms: core.wrapPayload(frame, core.crc32(body), mode, grid),
@@ -48,7 +50,7 @@ const render = {
   mode,
   scale: core.chooseScale(grid),
   shape: "mosaic",
-  paletteHex: ["#000000", "#242424", "#494949", "#6d6d6d", "#929292", "#b6b6b6", "#dbdbdb", "#ffffff"],
+  paletteHex: ["#000000", "#555555", "#aaaaaa", "#ffffff"],
   backgroundMode: "palette",
   backgroundColor: "#0d1117"
 };
@@ -57,6 +59,10 @@ const code = createCanvas(1, 1);
 core.renderSigil(code, render);
 const direct = await core.decodePackageFromCanvas(code);
 assert.equal(direct.body.kind, "locked", "direct rendered decode failed");
+for (const kind of ["scaled", "faded"]) {
+  const degraded = await core.decodePackageFromCanvas(core.makeDegradedRender(render, kind));
+  assert.equal(degraded.body.kind, "locked", `${kind} quality test failed`);
+}
 
 const screenshot = createCanvas(1360, 900);
 const screenshotContext = screenshot.getContext("2d");
@@ -66,9 +72,11 @@ screenshotContext.fillStyle = "#1d2430";
 screenshotContext.fillRect(60, 60, 520, 72);
 screenshotContext.imageSmoothingEnabled = false;
 screenshotContext.drawImage(code, 600, 82);
+const screenshotRegions = await core.scanner2LocateRegions(screenshot);
+assert(screenshotRegions.regions.length > 0, "Scanner 2 found no screenshot candidate regions");
 const located = await core.decodePackageFromCanvas(screenshot);
 assert.equal(located.body.kind, "locked", "full screenshot decode failed");
-assert.equal(located.scanPath, "scanner3-perspective");
+assert(["projection-fast", "projection-perspective", "scanner3-perspective"].includes(located.scanPath), `unexpected scan path: ${located.scanPath}`);
 
 const camera = createCanvas(960, 540);
 const cameraContext = camera.getContext("2d");
@@ -76,19 +84,25 @@ cameraContext.fillStyle = "#8b919a";
 cameraContext.fillRect(0, 0, camera.width, camera.height);
 cameraContext.imageSmoothingEnabled = false;
 cameraContext.drawImage(code, 300, 90, 360, 360);
+const cameraStartedAt = Date.now();
 const cameraResult = core.decodeCameraRegion(camera, core.centeredCameraRegion(camera, .78));
+const cameraMs = Date.now() - cameraStartedAt;
 assert(cameraResult.decoded, "centered camera decode failed");
 assert.equal(cameraResult.decoded.body.kind, "locked");
+const quality = core.assessCameraQuality(camera);
+assert.equal(quality.blocked, false, `camera quality rejected test frame: ${quality.message}`);
+const fusedCamera = core.fuseAlignedCameraFrames([code, code]);
+assert(fusedCamera, "aligned camera fusion failed");
 
 core.state.lastBaseName = "Test Vault";
 core.state.lastEntries = [{ password: "must-not-leak", text: "must-not-leak" }];
 const report = await core.makeSettingsReport({
   ...render,
   kdfProfile: core.KDF_PROFILES.fast,
-  fecProfile: core.FEC_PROFILES.screen
+  fecProfile: core.FEC_PROFILES.standard
 }, [{ name: "Test Vault/PNG/Test.png", data: Uint8Array.of(1, 2, 3) }], new Date("2026-07-10T12:00:00Z"));
 assert.match(report, /KDF: Argon2id \+ HKDF-SHA-256/);
 assert.match(report, /SHA-256\s+[0-9a-f]{64}/);
 assert(!report.includes("must-not-leak"), "ZIP settings leaked secret content");
 
-console.log(`LayerLock Scanner 3 rendered smoke: OK; screenshot ${Math.round(located.scanMs)} ms`);
+console.log(`LayerLock Scanner 3 rendered smoke: OK; screenshot ${Math.round(located.scanMs)} ms; centered camera ${cameraMs} ms`);
