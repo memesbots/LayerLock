@@ -29,7 +29,7 @@ Passwords, master keys and plaintext are never written into PNG, SVG, ZIP settin
 
 ## Visual Frame
 
-The current private-development profile emits one visual form: a four-class monochrome mosaic. Grid size and pixels per cell are selected automatically. The visual grid has a three-cell synchronization margin with four high-contrast corner brackets and timing tracks. Payload cells begin after this margin. The top-left bracket is asymmetric and establishes orientation.
+The current private-development profile emits one visual form: a monochrome mosaic with either two or four luminance classes; four classes are used by default. Grid size and pixels per cell are selected automatically. The visual grid has a three-cell synchronization margin with four high-contrast corner brackets and timing tracks. Payload cells begin after this margin. The top-left bracket is asymmetric and establishes orientation.
 
 Scanner 3 first detects a dense candidate region, estimates its quadrilateral, applies projective rectification, calibrates color centroids from the embedded calibration symbols and then validates the binary header before FEC or decryption.
 
