@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build:optical": "node tools/embed-optical-codecs.mjs",
-    "test": "node tests/v6-core-smoke.mjs && node tests/optical-codecs-smoke.mjs"
+    "test": "node tests/v6-core-smoke.mjs && node tests/optical-codecs-smoke.mjs && node tests/i18n-security-smoke.mjs"
   },
   "devDependencies": {
     "@napi-rs/canvas": "^0.1.100"
