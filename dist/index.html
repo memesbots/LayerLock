@@ -917,6 +917,9 @@
       --primary-bottom: #dc2626;
       box-shadow: 0 10px 28px -14px rgba(220, 38, 38, .65), inset 0 1px 0 rgba(255, 255, 255, .2);
     }
+    button.primary.invalid:hover {
+      box-shadow: 0 13px 30px -14px rgba(220, 38, 38, .72), inset 0 1px 0 rgba(255, 255, 255, .24);
+    }
 
     /* Icon-only buttons (copy, expand, etc.) */
     button.icon {
@@ -1769,6 +1772,13 @@
         0 1px 0 rgba(255, 255, 255, 0.18) inset,
         0 10px 28px -14px color-mix(in oklab, var(--accent) 70%, transparent),
         0 2px 6px -2px rgba(0, 0, 0, 0.35);
+    }
+    .mobile-action-bar button.primary.invalid,
+    .mobile-action-bar button.primary.invalid:hover {
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, .16) inset,
+        0 12px 28px -14px rgba(220, 38, 38, .78),
+        0 2px 6px -2px rgba(0, 0, 0, .35);
     }
     @media (max-width: 720px) {
       .mobile-action-bar { display: block; }
@@ -6266,9 +6276,27 @@
       return (c ^ 0xffffffff) >>> 0;
     }
 
-    function haptic(type = "success") {
-      if (!window.matchMedia("(pointer: coarse)").matches || typeof navigator.vibrate !== "function") return;
-      navigator.vibrate(type === "error" ? [18, 38, 18] : 12);
+    const HAPTIC_PATTERNS = Object.freeze({
+      tap: 7,
+      selection: 5,
+      warning: [14, 34, 8],
+      success: [9, 42, 16],
+      error: [22, 42, 22]
+    });
+    let lastHapticAt = 0;
+    let lastHapticType = "";
+
+    function haptic(type = "tap") {
+      if (document.visibilityState !== "visible") return false;
+      if (!window.matchMedia("(pointer: coarse)").matches || typeof navigator.vibrate !== "function") return false;
+      const pattern = HAPTIC_PATTERNS[type] || HAPTIC_PATTERNS.tap;
+      const now = performance.now();
+      const cooldown = type === "tap" ? 45 : (type === "selection" ? 70 : 650);
+      if (lastHapticType === type && now - lastHapticAt < cooldown) return false;
+      lastHapticAt = now;
+      lastHapticType = type;
+      try { return navigator.vibrate(pattern); }
+      catch (_) { return false; }
     }
 
     function showToast(message, type = "bad") {
@@ -6285,7 +6313,6 @@
       el.textContent = message;
       el.className = `status ${type}`.trim();
       if (type === "bad") showToast(message, "bad");
-      else if (type === "ok") haptic("success");
     }
 
     function setStatusHtml(id, html, type = "") {
@@ -6293,7 +6320,6 @@
       el.innerHTML = html;
       el.className = `status ${type}`.trim();
       if (type === "bad") showToast(el.textContent, "bad");
-      else if (type === "ok") haptic("success");
     }
 
     function handleError(id, error) {
@@ -6378,10 +6404,12 @@
         btn.disabled = false;
         btn.classList.add("ok");
         btn.textContent = detail ? `Проверено · ${detail}` : "Проверено";
+        haptic("success");
       } else if (mode === "bad") {
         btn.disabled = false;
         btn.classList.add("bad");
         btn.textContent = detail ? `Не прошло · ${detail}` : "Ошибка проверки";
+        haptic("error");
       } else {
         btn.disabled = !state.lastRender;
         btn.textContent = "Проверить";
@@ -7855,6 +7883,7 @@ self.onmessage = async event => {
         }
         state.readPack = pack;
         setReadLayerStage(meta);
+        haptic("selection");
         $("readout").textContent = "";
         $("readWorkPane").classList.remove("has-result");
         setStatus("readStatusWork", "Контейнер открыт. Введите пароль слоя.", "ok");
@@ -7872,6 +7901,7 @@ self.onmessage = async event => {
           $("readWorkPane").classList.add("has-result");
           $("readLayerField").classList.add("is-ok");
           setStatus("readStatusWork", "Слой открыт.", "ok");
+          haptic("success");
           return;
         } catch (_) {}
       }
@@ -8269,6 +8299,7 @@ self.onmessage = async event => {
     $("readLayerPassword").addEventListener("input", () => $("readLayerField").classList.remove("is-ok"));
     $("clearAll").addEventListener("click", () => {
       if (!confirm("Очистить все слои, название и сгенерированное изображение?")) return;
+      haptic("warning");
       $("entries").textContent = "";
       makeEntry(true);
       $("vaultName").value = "";
@@ -8295,6 +8326,12 @@ self.onmessage = async event => {
       applyTheme(light);
       try { localStorage.setItem("layerlock-theme", light ? "light" : "dark"); } catch (_) {}
     });
+    document.addEventListener("pointerup", ev => {
+      const button = ev.target.closest("button");
+      if (!button || button.disabled || button.id === "clearAll") return;
+      const selection = button.matches(".tab, .info-tabs button, .read-source-switch button, .theme-toggle");
+      haptic(selection ? "selection" : "tap");
+    }, { passive: true });
     document.addEventListener("input", ev => {
       if (ev.target.closest("#makeView")) markDirty();
     });
@@ -8681,7 +8718,10 @@ self.onmessage = async event => {
       syncSettingsSummary();
     }
 
-    $("fecLevel").addEventListener("input", syncFecLevel);
+    $("fecLevel").addEventListener("input", () => {
+      syncFecLevel();
+      haptic("selection");
+    });
     $("kdfProfile").addEventListener("change", () => {
       syncKdfNote();
       syncSettingsSummary();
