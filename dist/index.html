@@ -1466,18 +1466,44 @@
     .file-input { display: none; }
 
     .read-source-switch {
-      display: inline-flex;
+      --source-progress: 0;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       align-self: center;
+      width: 210px;
+      max-width: 100%;
       padding: 4px;
       background: color-mix(in oklab, var(--field) 80%, transparent);
       border: 1px solid var(--line);
       border-radius: 11px;
       gap: 2px;
+      isolation: isolate;
+      overflow: hidden;
+    }
+    .read-source-switch::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 4px;
+      bottom: 4px;
+      left: 4px;
+      width: calc((100% - 10px) / 2);
+      border-radius: 8px;
+      background: var(--accent);
+      box-shadow: 0 4px 12px -6px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, .18);
+      transform: translateX(calc(var(--source-progress) * (100% + 2px)));
+      transition: transform .38s cubic-bezier(.22, .8, .2, 1), background-color .3s ease, box-shadow .3s ease;
     }
     .read-source-switch button {
+      position: relative;
+      z-index: 1;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
+      width: 100%;
+      min-width: 0;
       padding: 7px 14px;
       background: transparent;
       border: 0;
@@ -1487,14 +1513,14 @@
       font: inherit;
       font-size: 13px;
       font-weight: 500;
-      transition: color .2s, background .2s;
+      transition: color .28s ease, transform .18s ease;
     }
     .read-source-switch button svg { width: 15px; height: 15px; stroke: currentColor; }
     .read-source-switch button:hover { color: var(--text); }
     .read-source-switch button.active {
       color: #fff;
-      background: var(--grad-accent);
-      box-shadow: 0 4px 12px -6px var(--accent-glow);
+      background: transparent;
+      box-shadow: none;
     }
     .drop-zone {
       position: relative;
@@ -2779,6 +2805,11 @@
       src: local("JetBrains Mono"); }
 
     /* ---------- Motion and compact mobile header ---------- */
+    @property --fec-progress {
+      syntax: "<percentage>";
+      inherits: true;
+      initial-value: 33.333%;
+    }
     header {
       top: max(8px, env(safe-area-inset-top));
     }
@@ -2807,7 +2838,12 @@
       transform: translateX(calc(var(--tab-progress) * (100% + 2px)));
       transition: transform .38s cubic-bezier(.22, .8, .2, 1), background-color .3s ease, box-shadow .3s ease;
     }
-    .info-tabs { --tab-progress: var(--info-progress, 0); }
+    .info-tabs {
+      --tab-progress: var(--info-progress, 0);
+      width: 250px;
+      max-width: 100%;
+      flex: 0 0 auto;
+    }
     .tab,
     .info-tabs button {
       z-index: 1;
@@ -2834,14 +2870,53 @@
       from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .recovery-control input[type="range"] {
-      transition: --fec-progress .32s cubic-bezier(.22, .8, .2, 1);
+    .recovery-slider-shell {
+      --fec-progress: 33.333%;
+      position: relative;
+      height: 30px;
+      margin: 0 26px;
+      transition: --fec-progress .34s cubic-bezier(.22, .8, .2, 1);
     }
-    .recovery-control input[type="range"]::-webkit-slider-thumb {
-      transition: transform .18s ease, box-shadow .22s ease;
+    .recovery-slider-visual {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(
+        to right,
+        color-mix(in oklab, var(--accent) 92%, white 8%) 0 var(--fec-progress),
+        color-mix(in oklab, var(--line-strong) 68%, var(--field)) var(--fec-progress) 100%
+      );
+      transform: translateY(-50%);
+      pointer-events: none;
     }
-    .recovery-control input[type="range"]:active::-webkit-slider-thumb {
-      transform: scale(.94);
+    .recovery-slider-visual span {
+      position: absolute;
+      left: var(--fec-progress);
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      border: 3px solid var(--panel);
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 52%, transparent);
+      transform: translate(-50%, -50%);
+      transition: left .34s cubic-bezier(.22, .8, .2, 1), transform .18s ease, box-shadow .22s ease;
+    }
+    .recovery-slider-shell:active .recovery-slider-visual span {
+      transform: translate(-50%, -50%) scale(.94);
+    }
+    .recovery-slider-shell input[type="range"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+      touch-action: pan-x;
     }
 
     @media (max-width: 720px) {
@@ -2867,6 +2942,8 @@
         pointer-events: none;
       }
       .brand-tools > * { pointer-events: auto; }
+      #themeToggle { order: -1; }
+      #openInfoBtn { order: 1; }
       .header-actions { width: min(100%, 430px); justify-self: center; }
       .tabs { width: min(100%, 430px); }
       .view-page.active { animation: viewIn .34s cubic-bezier(.22, .8, .2, 1) both; }
@@ -3038,7 +3115,10 @@
               <strong>Восстановление повреждений</strong>
               <output id="fecLevelValue" for="fecLevel">Стандартное</output>
             </div>
-            <input id="fecLevel" type="range" min="0" max="3" step="1" value="1" aria-label="Запас восстановления">
+            <div class="recovery-slider-shell">
+              <div class="recovery-slider-visual" aria-hidden="true"><span></span></div>
+              <input id="fecLevel" type="range" min="0" max="3" step="1" value="1" aria-label="Запас восстановления">
+            </div>
             <div class="recovery-scale" aria-hidden="true">
               <span>Минимум</span><span>Стандарт</span><span>Повышенный</span><span>Максимум</span>
             </div>
@@ -3093,7 +3173,7 @@
             </div>
             <div class="info-card">
               <h3>Скачивание</h3>
-              <p>PNG и SVG скачивают выбранный оптический формат. ZIP повторно проверяет контейнер, сохраняет один PNG, один SVG и добавляет “Настройки.txt” с параметрами и SHA-256 файлов. Ключи и пароли туда не записываются.</p>
+              <p>PNG и SVG скачивают Aztec-контейнер. ZIP повторно проверяет его, сохраняет один PNG, один SVG и добавляет “settings.txt” с параметрами и SHA-256 файлов. Ключи и пароли туда не записываются.</p>
               <div class="info-example">Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip</div>
             </div>
           </div>
@@ -8137,6 +8217,7 @@ self.onmessage = async event => {
 
     function setReadSource(source) {
       const camera = source === "camera";
+      document.querySelector(".read-source-switch").style.setProperty("--source-progress", camera ? 1 : 0);
       $("cameraSourceBtn").classList.toggle("active", camera);
       $("uploadSourceBtn").classList.toggle("active", !camera);
       $("dropZone").classList.toggle("camera-mode", camera);
@@ -8591,7 +8672,7 @@ self.onmessage = async event => {
         "Максимальный запас восстановления; изображение будет крупнее."
       ];
       const index = Math.max(0, Math.min(3, Number($("fecLevel").value) || 0));
-      $("fecLevel").style.setProperty("--fec-progress", `${(index / 3) * 100}%`);
+      $("fecLevel").closest(".recovery-slider-shell").style.setProperty("--fec-progress", `${(index / 3) * 100}%`);
       $("fecLevel").setAttribute("aria-valuetext", FEC_PROFILES[keys[index]].label);
       $("fecProfile").value = keys[index];
       $("fecLevelValue").textContent = FEC_PROFILES[keys[index]].label;
