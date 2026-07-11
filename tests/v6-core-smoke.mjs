@@ -10,6 +10,10 @@ globalThis.__LayerLockArgon2VendorSource = vendorMatch[1];
 const vendorModule = { exports: {} };
 new Function("module", "exports", vendorMatch[1])(vendorModule, vendorModule.exports);
 globalThis.hashwasm = vendorModule.exports;
+globalThis.MutationObserver = class MutationObserver {
+  constructor() {}
+  observe() {}
+};
 const scriptMatch = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
   .find(match => match[1].includes('const SLOT_VERSION = 6'));
 assert(scriptMatch, "inline application script not found");
