@@ -294,9 +294,12 @@
     }
     .header-icon-btn:hover { color: var(--text); background: var(--button-hover); border-color: var(--line-strong); }
     .header-icon-btn svg { width: 14px; height: 14px; stroke: currentColor; }
-    .language-toggle {
-      font: 700 8.5px/1 var(--font-ui);
-      letter-spacing: .02em;
+    button#languageToggle.header-icon-btn {
+      font-family: var(--font-ui);
+      font-size: 7px;
+      font-weight: 750;
+      line-height: 1;
+      letter-spacing: 0;
     }
 
     @media (max-width: 720px) {
@@ -1897,22 +1900,28 @@
     .image-modal.active { display: flex; }
     .image-modal-card {
       position: relative;
-      width: min(90vw, 90vh, 760px);
-      height: min(90vw, 90vh, 760px);
-      padding: 20px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: min(90vw, calc(90dvh - 48px), 760px);
+      height: auto;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
     }
     .image-modal-close {
-      position: absolute;
-      top: 12px; right: 12px;
+      position: static;
+      align-self: flex-end;
+      margin-bottom: 10px;
       z-index: 2;
+      background: color-mix(in oklab, var(--surface) 90%, transparent);
+      border-color: var(--line-strong);
+      box-shadow: 0 10px 28px -16px rgba(0, 0, 0, .7);
     }
     .image-modal-box {
       width: 100%;
-      height: 100%;
+      height: auto;
       max-width: none;
       margin: 0;
       aspect-ratio: 1;
@@ -9109,7 +9118,7 @@ self.onmessage = async event => {
       attributes: true,
       attributeFilter: LOCALIZED_ATTRIBUTES
     });
-    let savedLanguage = navigator.language?.toLowerCase().startsWith("ru") ? "ru" : "en";
+    let savedLanguage = "en";
     try { savedLanguage = localStorage.getItem("layerlock-language") || savedLanguage; } catch (_) {}
     applyLanguage(savedLanguage, false);
     try { applyTheme(localStorage.getItem("layerlock-theme") === "light"); }
