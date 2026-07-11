@@ -2913,7 +2913,7 @@
       background: var(--accent);
       box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 52%, transparent);
       transform: translate(-50%, -50%);
-      transition: left .34s cubic-bezier(.22, .8, .2, 1), transform .18s ease, box-shadow .22s ease;
+      transition: transform .18s ease, box-shadow .22s ease;
     }
     .recovery-slider-shell:active .recovery-slider-visual span {
       transform: translate(-50%, -50%) scale(.94);
@@ -2948,13 +2948,22 @@
         top: 15px;
         left: 12px;
         right: 12px;
+        height: 32px;
         width: auto;
-        justify-content: space-between;
+        display: block;
         pointer-events: none;
       }
       .brand-tools > * { pointer-events: auto; }
-      #themeToggle { order: -1; }
-      #openInfoBtn { order: 1; }
+      #themeToggle {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      #openInfoBtn {
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
       .header-actions { width: min(100%, 430px); justify-self: center; }
       .tabs { width: min(100%, 430px); }
       .view-page.active { animation: viewIn .34s cubic-bezier(.22, .8, .2, 1) both; }
