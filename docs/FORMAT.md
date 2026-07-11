@@ -33,15 +33,15 @@ Passwords, master keys and plaintext are never written into PNG, SVG, ZIP settin
 The encrypted and error-corrected payload is independent of its optical transport. LayerLock can emit:
 
 - Aztec, the default two-color transport for fast camera detection, rotation and perspective handling.
-- JABCode, an optional four-color transport for higher optical density under controlled capture conditions.
+- JABCode, a reserved four-color transport. Its bundled prototype remains disabled for new output until a decoder passes full-size optical round-trip and camera tests.
 
 Both transports carry the same `LLO1` binary wrapper: magic, wrapper version, FEC-frame length, CRC32 of the encrypted container and the FEC frame itself. JABCode represents this wrapper as a Base64 message prefixed with `LLJ1:` because the bundled JavaScript port accepts text input. Base64 is confined to the JAB optical adapter; the encrypted container and Aztec transport remain binary.
 
-The previous LayerLock mosaic decoder remains as a private-development fallback. New output is generated as Aztec or JABCode.
+The previous LayerLock mosaic decoder remains as a private-development fallback. New output is currently generated as Aztec. The JABCode adapter remains in the private build for replacement with a production C-to-WASM implementation; the current unofficial JavaScript decoder is not accepted as a release transport.
 
 The bundled implementations are pinned locally: `zxing-wasm 3.1.0` for Aztec and `TMSSassen/JABCodeJS` for JABCode. Their JavaScript and WebAssembly assets are embedded into the release HTML; generation and reading do not request a network resource.
 
-The scanner dispatches to Aztec first, then JABCode, and finally the legacy mosaic detector. A candidate is accepted only after the optical wrapper, FEC and encrypted-envelope structure validate; an unrelated Aztec or JAB symbol is not treated as a LayerLock container.
+The scanner dispatches to Aztec first and then to the legacy mosaic detector. The experimental JABCode path remains isolated until its decoder is replaced. A candidate is accepted only after the optical wrapper, FEC and encrypted-envelope structure validate; an unrelated optical symbol is not treated as a LayerLock container.
 
 ## Error Correction
 
