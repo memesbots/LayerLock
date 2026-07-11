@@ -477,7 +477,7 @@
       border: 1px solid var(--line);
       border-radius: var(--radius);
       position: relative;
-      transition: border-color .2s, transform .1s;
+      transition: border-color .2s, transform .1s, gap .26s ease;
     }
     .entry:hover { border-color: var(--line-strong); }
     .entry-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -505,8 +505,28 @@
       transition: transform .2s ease, color .2s ease;
     }
     .entry-title-toggle:hover .entry-chevron { color: var(--text-dim); }
+    .entry-body-shell {
+      display: grid;
+      grid-template-rows: 1fr;
+      min-height: 0;
+      opacity: 1;
+      transform: translateY(0);
+      transition: grid-template-rows .26s ease, opacity .18s ease, transform .26s ease;
+    }
+    .entry-body {
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
     .entry.is-collapsed { gap: 0; }
-    .entry.is-collapsed > :not(.entry-head) { display: none; }
+    .entry.is-collapsed .entry-body-shell {
+      grid-template-rows: 0fr;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+    }
     .entry.is-collapsed .entry-chevron { transform: rotate(-90deg); }
     .entry-title,
     .entry-text-label {
@@ -1194,9 +1214,9 @@
     }
     /* Settings launcher (gear chip in header) */
     .panel-action.settings-launcher {
-      width: 38px;
-      min-width: 38px;
-      height: 38px;
+      width: 32px;
+      min-width: 32px;
+      height: 32px;
       max-width: none;
       padding: 0;
       justify-content: center;
@@ -6845,6 +6865,8 @@ self.onmessage = async event => {
           </button>
           <button class="icon entry-remove" type="button" title="Удалить">×</button>
         </div>
+        <div class="entry-body-shell">
+          <div class="entry-body">
         <div class="field-fieldset pass-fieldset">
           <span class="field-legend">Пароль</span>
           <span class="password-field">
@@ -6909,6 +6931,8 @@ self.onmessage = async event => {
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
               </svg>
             </button>
+          </div>
+        </div>
           </div>
         </div>
       `;
