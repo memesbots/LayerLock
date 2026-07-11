@@ -10,7 +10,7 @@ LayerLock is an offline visual encrypted-container prototype. It has automated t
 - The encrypted manifest hides layer contents and exact layer count until the master key is accepted.
 - FEC and CRC detect or repair visual corruption; they do not add secrecy.
 - The Content Security Policy blocks network connections in the shipped HTML.
-- Argon2id and density location run in local Blob Workers created from the same offline HTML; no code is fetched from a server.
+- Argon2id runs in a local Blob Worker created from the same offline HTML; no code is fetched from a server.
 - Generated output can be stress-checked after scaling and contrast loss before it is downloaded.
 
 ## Limitations
@@ -28,7 +28,7 @@ LayerLock is an offline visual encrypted-container prototype. It has automated t
 3. Publish `RELEASE.sha256` with the release.
 4. Verify the GitHub Actions deployment commit.
 5. Keep a separately downloaded offline HTML and compare its SHA-256 before critical use.
-6. Verify that the ZIP contains only one mosaic PNG, one mosaic SVG and a settings report without secrets.
+6. Verify that the ZIP contains one Aztec PNG, one Aztec SVG and `settings.txt` without secrets.
 
 ## Recommended Review Before Public Release
 
