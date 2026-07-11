@@ -1583,6 +1583,19 @@
       color: var(--text);
       letter-spacing: 0;
     }
+
+    @media (hover: none) and (pointer: coarse) {
+      button:not(:disabled) {
+        transition-property: color, background-color, border-color, box-shadow, opacity, scale;
+        transition-duration: .18s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button:not(:disabled):active {
+        scale: .97;
+        opacity: .88;
+        transition-duration: .06s;
+      }
+    }
     #dropHint {
       font-size: 13px;
       color: var(--muted);
@@ -2154,7 +2167,11 @@
     .panel-header-icon svg { width: 15px; height: 15px; stroke: currentColor; }
 
     /* ---------- Entry text field (paste button outside label) ---------- */
-    .entry-text-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .entry-text-field { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    .entry-text-field .label-row,
+    .master-entry .entry-head {
+      min-height: 26px;
+    }
     /* .entry-text-label shares the base text styling with .entry-title (see above) */
 
     /* ---------- Custom select (in-theme dropdown) ---------- */
@@ -2405,7 +2422,7 @@
     textarea,
     select,
     .field-select-trigger { line-height: 1.4; }
-    .entry-text-field,
+    .entry-text-field { gap: 10px; }
     label,
     .field-group { gap: 6px; }
 
@@ -2702,7 +2719,7 @@
       }
       .master-entry {
         grid-template-columns: minmax(0, 1fr);
-        gap: 9px;
+        gap: 10px;
       }
       .entry {
         padding: 12px;
@@ -2933,36 +2950,24 @@
       .shell { padding-top: max(10px, env(safe-area-inset-top)); }
       header {
         position: sticky;
-        grid-template-columns: 1fr;
-        grid-template-areas: "brand" "tabs";
+        grid-template-columns: 40px minmax(0, 1fr) 40px;
+        grid-template-areas: "theme brand info" "tabs tabs tabs";
         padding: 12px 12px 10px;
         min-height: 100px;
       }
-      .brand { justify-self: center; }
+      .brand { grid-area: brand; justify-self: center; }
       .brand-main { gap: 9px; }
       .logo { width: 38px; height: 38px; border-radius: 11px; }
       .logo svg { width: 25px; height: 25px; }
       .brand h1 { font-size: 18px; }
-      .brand-tools {
-        position: absolute;
-        top: 15px;
-        left: 12px;
-        right: 12px;
-        height: 32px;
-        width: auto;
-        display: block;
-        pointer-events: none;
-      }
-      .brand-tools > * { pointer-events: auto; }
+      .brand-tools { display: contents; }
       #themeToggle {
-        position: absolute;
-        top: 0;
-        left: 0;
+        grid-area: theme;
+        justify-self: start;
       }
       #openInfoBtn {
-        position: absolute;
-        top: 0;
-        right: 0;
+        grid-area: info;
+        justify-self: end;
       }
       .header-actions { width: min(100%, 430px); justify-self: center; }
       .tabs { width: min(100%, 430px); }
@@ -6297,7 +6302,7 @@
 
     function haptic(type = "tap") {
       if (document.visibilityState !== "visible") return false;
-      if (!window.matchMedia("(pointer: coarse)").matches || typeof navigator.vibrate !== "function") return false;
+      if (typeof navigator.vibrate !== "function") return false;
       const pattern = HAPTIC_PATTERNS[type] || HAPTIC_PATTERNS.tap;
       const now = performance.now();
       const cooldown = type === "tap" ? 45 : (type === "selection" ? 70 : 650);
