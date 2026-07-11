@@ -2786,9 +2786,12 @@
     .info-tabs {
       --tab-progress: 0;
       position: relative;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       isolation: isolate;
       overflow: hidden;
     }
+    .tabs { width: 250px; }
     .tabs::before,
     .info-tabs::before {
       content: "";
@@ -2808,6 +2811,12 @@
     .tab,
     .info-tabs button {
       z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-width: 0;
+      text-align: center;
       transition: color .28s ease, transform .18s ease;
     }
     .tab.active,
