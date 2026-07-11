@@ -6,6 +6,7 @@ const vendor = await readFile(new URL("../vendor/zxing-wasm-full.iife.js", impor
 
 if (!html.includes('connect-src \'none\'')) throw new Error("CSP connect-src 'none' is missing");
 if (!html.includes('id="languageToggle"')) throw new Error("Language switch is missing");
+if (!html.includes('let savedLanguage = "en";')) throw new Error("English is not the default language");
 if (/https?:\/\/(?:fastly\.)?jsdelivr\.net/i.test(html + vendor)) {
   throw new Error("ZXing network fallback is present");
 }
