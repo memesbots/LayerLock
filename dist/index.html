@@ -348,7 +348,7 @@
 
     @media (max-width: 720px) {
       .shell {
-        overflow-x: hidden;
+        overflow-x: clip;
       }
       .views {
         display: block;
@@ -2922,6 +2922,7 @@
     @media (max-width: 720px) {
       .shell { padding-top: max(10px, env(safe-area-inset-top)); }
       header {
+        position: sticky;
         grid-template-columns: 1fr;
         grid-template-areas: "brand" "tabs";
         padding: 12px 12px 10px;
