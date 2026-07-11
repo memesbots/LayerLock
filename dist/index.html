@@ -1562,6 +1562,15 @@
     .verify-actions button:disabled { opacity: .5; cursor: not-allowed; }
     .verify-actions button.icon { display: inline-flex; align-items: center; gap: 6px; width: auto; padding: 6px 12px; }
     .verify-actions button.icon span { font-size: 12.5px; font-weight: 500; }
+    .verify-actions button.preview-expand-btn {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      flex: 0 0 34px;
+    }
+    .verify-actions button.preview-expand-btn svg { width: 16px; height: 16px; }
 
     /* ---------- Read view ---------- */
     .read-panel { padding: 0; }
@@ -3076,7 +3085,7 @@
           <label>Оптический формат
             <select id="opticalFormat">
               <option value="aztec" selected>Aztec · надежный</option>
-              <option value="jab">JABCode · цветной</option>
+              <option value="jab" disabled>JABCode · ожидает надежный декодер</option>
             </select>
             <span id="opticalFormatNote" class="setting-note">Быстро находится камерой, устойчив к повороту и перспективе.</span>
           </label>
@@ -3203,7 +3212,7 @@
             </div>
             <div class="info-card">
               <h3>Как создается изображение</h3>
-              <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” добавляет запас Reed-Solomon. Затем Aztec формирует надежную двухцветную матрицу, а JABCode — более емкую цветную.</p>
+              <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” добавляет запас Reed-Solomon. Aztec формирует надежную двухцветную матрицу. Цветной JABCode появится после подключения декодера, проходящего полный оптический self-test.</p>
             </div>
             <div class="info-card">
               <h3>Скачивание</h3>
@@ -3214,7 +3223,7 @@
           <div id="infoReadPage" class="info-page">
             <div class="info-card">
               <h3>Как загрузить</h3>
-              <p>Выберите “Файл”, “Камера”, перетащите картинку в зону загрузки или вставьте ее через Ctrl+V. Сканер сначала ищет Aztec по центральной мишени, затем пробует цветные ориентиры JABCode; старый мозаичный детектор остается резервным. Камера подсказывает проблемы со светом и резкостью. Видео остается только в памяти устройства.</p>
+              <p>Выберите “Файл”, “Камера”, перетащите картинку в зону загрузки или вставьте ее через Ctrl+V. Сканер сначала ищет Aztec; старый мозаичный детектор остается резервным. Экспериментальный JABCode-декодер сохранен, но не участвует в выпуске новых контейнеров. Камера подсказывает проблемы со светом и резкостью. Видео остается только в памяти устройства.</p>
             </div>
             <div class="info-card">
               <h3>Два этапа доступа</h3>
@@ -3247,6 +3256,14 @@
               <h2>Изображение</h2>
             </div>
             <div class="verify-actions">
+              <button id="expandMakeImageBtn" class="icon preview-expand-btn" type="button" disabled aria-label="Открыть на весь экран" title="Открыть на весь экран">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M15 3h6v6"/>
+                  <path d="M21 3l-7 7"/>
+                  <path d="M9 21H3v-6"/>
+                  <path d="M3 21l7-7"/>
+                </svg>
+              </button>
               <button id="verifyBtn" type="button" disabled>Проверить</button>
             </div>
           </div>
@@ -6312,6 +6329,7 @@
     const FEC_MAGIC = [0x4c, 0x4c, 0x46, 0x32]; // LLF2
     const OPTICAL_MAGIC = [0x4c, 0x4c, 0x4f, 0x31]; // LLO1
     const OPTICAL_VERSION = 1;
+    const JABCODE_ENABLED = false;
     const candidates = [24, 32, 40, 48, 64, 80, 96, 128, 160, 192, 224, 256];
     const SHAPES = [["mosaic", "Мозаика"]];
     const enc = new TextEncoder();
@@ -9284,6 +9302,9 @@ self.onmessage = async event => {
       onProgress(`Добавляю коррекцию ошибок · ${fecProfile.label.toLowerCase()}`, 80);
       const payloadFrame = encodePayloadFrame(containerBytes, fecProfile);
       const opticalFormat = $("opticalFormat").value;
+      if (opticalFormat === "jab" && !JABCODE_ENABLED) {
+        throw new Error("JABCode временно отключен: текущий автономный декодер не проходит проверку контейнера реального размера.");
+      }
       const opticalBytes = encodeOpticalPayload(payloadFrame, crc32(containerBytes));
       const id = randomHex(6);
       const baseName = safeName($("vaultName").value);
@@ -9322,6 +9343,7 @@ self.onmessage = async event => {
       $("downloadZipBtn").disabled = false;
       $("printBtn").disabled = false;
       $("verifyBtn").disabled = false;
+      $("expandMakeImageBtn").disabled = false;
       setVerifyButton("idle");
       onProgress(`${state.lastRender.formatLabel} создан`, 92);
       const px = renderPixelSize(state.lastRender);
@@ -9555,7 +9577,7 @@ self.onmessage = async event => {
     async function tryDecodeOptical(source, options = {}) {
       const aztec = await tryDecodeAztec(source, Boolean(options.fast));
       if (aztec) return aztec;
-      if (options.skipJab) return null;
+      if (!JABCODE_ENABLED || options.skipJab) return null;
       return tryDecodeJab(source);
     }
 
@@ -10184,6 +10206,17 @@ self.onmessage = async event => {
       $("imageModal").setAttribute("aria-hidden", "false");
     }
 
+    function openGeneratedImageModal() {
+      const render = selectedRender();
+      if (!render) return;
+      const canvas = $("modalCanvas");
+      renderSigil(canvas, render);
+      canvas.style.imageRendering = "pixelated";
+      canvas.closest(".canvas-box").classList.add("has-image");
+      $("imageModal").classList.add("active");
+      $("imageModal").setAttribute("aria-hidden", "false");
+    }
+
     function closeReadImageModal() {
       $("imageModal").classList.remove("active");
       $("imageModal").setAttribute("aria-hidden", "true");
@@ -10261,6 +10294,7 @@ self.onmessage = async event => {
       $("downloadZipBtn").disabled = true;
       $("printBtn").disabled = true;
       $("verifyBtn").disabled = true;
+      $("expandMakeImageBtn").disabled = true;
       setStatus("makeStatus", "Изображение еще не создано.");
       markSaved();
     });
@@ -10311,6 +10345,7 @@ self.onmessage = async event => {
         $("downloadZipBtn").disabled = true;
         $("printBtn").disabled = true;
         $("verifyBtn").disabled = true;
+        $("expandMakeImageBtn").disabled = true;
         state.lastRender = null;
         state.lastVariants = [];
         state.verifyCache.clear();
@@ -10454,6 +10489,7 @@ self.onmessage = async event => {
       resetReadImageFlow();
     });
     $("expandReadImageBtn").addEventListener("click", openReadImageModal);
+    $("expandMakeImageBtn").addEventListener("click", openGeneratedImageModal);
     $("closeImageModal").addEventListener("click", closeReadImageModal);
     $("imageModal").addEventListener("click", ev => {
       if (ev.target === $("imageModal")) closeReadImageModal();
