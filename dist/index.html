@@ -954,6 +954,11 @@
       opacity: 1;
       animation: viewIn .22s cubic-bezier(.2,.7,.2,1);
     }
+    .settings-modal.closing {
+      display: flex;
+      opacity: 0;
+      pointer-events: none;
+    }
     .settings-modal-card {
       width: min(560px, 100%);
       max-height: calc(100dvh - 40px);
@@ -965,6 +970,14 @@
       box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
       overflow: hidden;
       min-height: 0;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .2s ease, transform .22s cubic-bezier(.4,0,.2,1);
+    }
+    .settings-modal.closing .settings-modal-card {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: none !important;
     }
     .settings-modal-head { flex-shrink: 0; position: sticky; top: 0; background: color-mix(in oklab, var(--bg-1) 96%, transparent); backdrop-filter: blur(6px); z-index: 1; }
     @media (max-width: 720px) {
@@ -1221,7 +1234,7 @@
       padding: 0;
       justify-content: center;
     }
-    .panel-action.settings-launcher svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .panel-action.settings-launcher svg { width: 14px; height: 14px; flex-shrink: 0; }
     .panel-action.settings-launcher span { display: none; }
     .setting-note {
       font-family: var(--font-mono);
@@ -2666,6 +2679,7 @@
       border-radius: 18px;
       animation: settingsIn .24s cubic-bezier(.2,.75,.2,1) both;
     }
+    #settingsModal.closing .settings-modal-card { transform: translateX(18px); }
     @keyframes settingsIn {
       from { opacity: 0; transform: translateX(18px); }
       to { opacity: 1; transform: translateX(0); }
@@ -2833,6 +2847,7 @@
         border-bottom: 0;
         animation-name: settingsUp;
       }
+      #settingsModal.closing .settings-modal-card { transform: translateY(24px); }
       @keyframes settingsUp {
         from { opacity: 0; transform: translateY(24px); }
         to { opacity: 1; transform: translateY(0); }
@@ -10047,24 +10062,36 @@ self.onmessage = async event => {
     $("imageModal").addEventListener("click", ev => {
       if (ev.target === $("imageModal")) closeReadImageModal();
     });
+    function openModal(modal) {
+      clearTimeout(modal._closeTimer);
+      modal.classList.remove("closing");
+      modal.classList.add("active");
+      modal.setAttribute("aria-hidden", "false");
+    }
+    function closeModal(modal, onClosed) {
+      if (!modal.classList.contains("active")) return;
+      clearTimeout(modal._closeTimer);
+      modal.classList.remove("active");
+      modal.classList.add("closing");
+      modal.setAttribute("aria-hidden", "true");
+      modal._closeTimer = setTimeout(() => {
+        modal.classList.remove("closing");
+        onClosed?.();
+      }, 230);
+    }
     function openSettings() {
-      $("settingsModal").classList.add("active");
-      $("settingsModal").setAttribute("aria-hidden", "false");
+      openModal($("settingsModal"));
       document.body.classList.add("settings-open");
     }
     function closeSettings() {
-      $("settingsModal").classList.remove("active");
-      $("settingsModal").setAttribute("aria-hidden", "true");
-      document.body.classList.remove("settings-open");
+      closeModal($("settingsModal"), () => document.body.classList.remove("settings-open"));
     }
     function openInfo() {
       switchInfoPage(document.body.classList.contains("read-mode") ? "read" : "make");
-      $("infoModal").classList.add("active");
-      $("infoModal").setAttribute("aria-hidden", "false");
+      openModal($("infoModal"));
     }
     function closeInfo() {
-      $("infoModal").classList.remove("active");
-      $("infoModal").setAttribute("aria-hidden", "true");
+      closeModal($("infoModal"));
     }
     function switchInfoPage(name) {
       const make = name === "make";
