@@ -7,6 +7,7 @@ const vendor = await readFile(new URL("../vendor/zxing-wasm-full.iife.js", impor
 if (!html.includes('connect-src \'none\'')) throw new Error("CSP connect-src 'none' is missing");
 if (!html.includes('id="languageToggle"')) throw new Error("Language switch is missing");
 if (!html.includes('let savedLanguage = "en";')) throw new Error("English is not the default language");
+if (!html.includes("async function rasterizeSvgFile(file)")) throw new Error("SVG rasterization fallback is missing");
 if (/https?:\/\/(?:fastly\.)?jsdelivr\.net/i.test(html + vendor)) {
   throw new Error("ZXing network fallback is present");
 }
@@ -35,7 +36,8 @@ const cases = new Map([
   ["Надежный · ~96 бит", "Strong · ~96 bits"],
   ["Контейнер найден за 302 мс. Введите мастер-ключ.", "Container found in 302 ms. Enter the master key."],
   ["Усиленная защита · стандартное восстановление · Aztec", "Hardened protection · standard recovery · Aztec"],
-  ["Настройки: усиленная защита паролей, повышенное восстановление, Aztec", "Settings: hardened password protection, enhanced recovery, Aztec"]
+  ["Настройки: усиленная защита паролей, повышенное восстановление, Aztec", "Settings: hardened password protection, enhanced recovery, Aztec"],
+  ["Не удалось открыть SVG.", "Could not open the SVG file."]
 ]);
 
 for (const [source, expected] of cases) {
