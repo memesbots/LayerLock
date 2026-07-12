@@ -3301,7 +3301,7 @@
     <main id="readView" class="view-page">
       <section class="panel read-panel empty">
         <div id="readDropPane" class="form-body read-drop-pane">
-          <input id="fileIn" class="file-input" type="file" accept="image/*">
+          <input id="fileIn" class="file-input" type="file" accept="image/*,.svg">
           <input id="cameraIn" class="file-input" type="file" accept="image/*" capture="environment">
           <div class="read-source-switch" role="group" aria-label="Источник изображения">
             <button id="uploadSourceBtn" class="active" type="button">
@@ -6369,6 +6369,11 @@
       "Слой открыт.": "Layer unlocked.",
       "Контейнер найден, но этот пароль не открыл ни один слой.": "The container was found, but this password did not unlock any layer.",
       "Нужен файл изображения.": "An image file is required.",
+      "Файл SVG не распознан.": "The SVG file could not be recognized.",
+      "SVG содержит неподдерживаемое активное содержимое.": "The SVG contains unsupported active content.",
+      "SVG не содержит корректного размера.": "The SVG does not contain valid dimensions.",
+      "SVG слишком большой для безопасной обработки.": "The SVG is too large to process safely.",
+      "Не удалось открыть SVG.": "Could not open the SVG file.",
       "Изображение загружено. Ищу контейнер...": "Image loaded. Locating container...",
       "Слишком темно · добавьте света": "Too dark · add more light",
       "Слишком ярко · уберите блик": "Too bright · reduce glare",
@@ -8308,12 +8313,68 @@ self.onmessage = async event => {
       setStatus("readStatusWork", `Контейнер найден за ${time}. Введите мастер-ключ.`, "ok");
     }
 
+    function isSvgFile(file) {
+      const name = String(file?.name || "").toLowerCase();
+      return file?.type === "image/svg+xml" || name.endsWith(".svg");
+    }
+
+    async function rasterizeSvgFile(file) {
+      const source = await file.text();
+      if (!/^\s*(?:<\?xml[\s\S]*?\?>\s*)?<svg[\s>]/i.test(source)) {
+        throw new Error("Файл SVG не распознан.");
+      }
+      if (/<(?:script|foreignObject)\b/i.test(source)) {
+        throw new Error("SVG содержит неподдерживаемое активное содержимое.");
+      }
+
+      const url = URL.createObjectURL(new Blob([source], { type: "image/svg+xml" }));
+      try {
+        const image = new Image();
+        image.decoding = "async";
+        await new Promise((resolve, reject) => {
+          image.onload = resolve;
+          image.onerror = () => reject(new Error("Не удалось открыть SVG."));
+          image.src = url;
+        });
+
+        const width = image.naturalWidth || image.width;
+        const height = image.naturalHeight || image.height;
+        if (!width || !height) throw new Error("SVG не содержит корректного размера.");
+        if (width > 8192 || height > 8192 || width * height > 32000000) {
+          throw new Error("SVG слишком большой для безопасной обработки.");
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(image, 0, 0, width, height);
+        return canvas;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    async function decodeImageFile(file) {
+      try {
+        return await createImageBitmap(file);
+      } catch (error) {
+        if (!isSvgFile(file)) throw error;
+        return rasterizeSvgFile(file);
+      }
+    }
+
     async function loadImageFile(file, decodedHint = null) {
-      if (!file || !file.type.startsWith("image/")) throw new Error("Нужен файл изображения.");
+      if (!file || (!file.type.startsWith("image/") && !isSvgFile(file))) {
+        throw new Error("Нужен файл изображения.");
+      }
       state.readDecoded = decodedHint;
       state.readDecodePromise = null;
       setReadMasterStage();
-      state.imageBitmap = await createImageBitmap(file);
+      state.imageBitmap = await decodeImageFile(file);
       const canvas = $("readCanvas");
       canvas.width = state.imageBitmap.width;
       canvas.height = state.imageBitmap.height;
