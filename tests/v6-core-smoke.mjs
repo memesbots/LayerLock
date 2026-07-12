@@ -27,7 +27,7 @@ const exposed = `
       KEY_CONTEXT, KDF_PROFILES, FEC_PROFILES, randomBytes, bytesToHex, crc32,
       deriveKey, argon2idRaw, argon2WorkerSource, validateKdfParams, encryptSlot, decryptSlot, encodePack, decodePack, encodeEnvelope,
       decodeEnvelope, decodeBody, encryptContainer, decryptContainer,
-      encodePayloadFrame, decodePayloadFrame, selectFecProfile
+      encodePayloadFrame, decodePayloadFrame, selectFecProfile, makeSvg
     };
     return;
 `;
@@ -41,6 +41,15 @@ assert.equal(core.SLOT_VERSION, 6);
 assert.equal(core.PACK_VERSION, 6);
 assert.equal(core.ENVELOPE_VERSION, 3);
 assert.equal(core.KDF_ID, 3);
+
+const compactSvg = core.makeSvg({
+  moduleWidth: 3,
+  moduleHeight: 2,
+  moduleData: new Uint8Array([0, 0, 255, 255, 0, 255]),
+  scale: 4
+});
+assert.match(compactSvg, /<path fill="#000000" d="M0 0h2v1H0zM1 1h1v1H1z"\/>/);
+assert.doesNotMatch(compactSvg, /<rect x=/);
 
 const kdf = core.KDF_PROFILES.fast;
 const vaultId = core.randomBytes(16);
