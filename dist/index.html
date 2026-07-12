@@ -8315,7 +8315,7 @@ self.onmessage = async event => {
 
     async function verifyGeneratedVault() {
       if (!state.lastRender) throw new Error("Сначала создайте изображение.");
-      if (!state.lastEntries.length) throw new Error("Нет заполненн��х слоев для проверки.");
+      if (!state.lastEntries.length) throw new Error("Нет заполненных слоев для проверки.");
       await verifyRender(state.lastRender, state.lastEntries);
     }
 
