@@ -3337,7 +3337,7 @@
             </div>
             <div class="info-card">
               <h3>Скачивание</h3>
-              <p>PNG и SVG скачивают Aztec-контейнер. TXT сохраняет ту же матрицу как нули и единицы с геометрией и контрольной суммой. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, битовый TXT и “settings.txt”. Ключи и пароли туда не записываются.</p>
+              <p>PNG и SVG скачивают Aztec-контейнер. Компактные TXT и RAW сохраняют зашифрованное ядро до оптической коррекции и позволяют заново построить Aztec и SVG. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, TXT, RAW и “settings.txt”. Ключи и пароли туда не записываются.</p>
               <div class="info-example">Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip</div>
             </div>
           </div>
@@ -3396,7 +3396,8 @@
             <div class="download-actions">
               <button id="downloadPngBtn" type="button" disabled title="Скачать PNG" aria-label="Скачать PNG">PNG</button>
               <button id="downloadSvgBtn" type="button" disabled title="Скачать SVG" aria-label="Скачать SVG">SVG</button>
-              <button id="downloadBitsBtn" type="button" disabled title="Скачать битовый TXT" aria-label="Скачать битовый TXT">TXT</button>
+              <button id="downloadBitsBtn" type="button" disabled title="Скачать компактный TXT" aria-label="Скачать компактный TXT">TXT</button>
+              <button id="downloadRawBtn" type="button" disabled title="Скачать компактный RAW" aria-label="Скачать компактный RAW">RAW</button>
               <button id="downloadZipBtn" type="button" disabled title="Скачать ZIP" aria-label="Скачать ZIP">ZIP</button>
               <button id="printBtn" type="button" disabled title="Печать" aria-label="Печать">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -3414,7 +3415,7 @@
     <main id="readView" class="view-page">
       <section class="panel read-panel empty">
         <div id="readDropPane" class="form-body read-drop-pane">
-          <input id="fileIn" class="file-input" type="file" accept="image/*,.svg">
+          <input id="fileIn" class="file-input" type="file" accept="image/*,.svg,.llc,.txt">
           <input id="cameraIn" class="file-input" type="file" accept="image/*" capture="environment">
           <div class="read-source-switch" role="group" aria-label="Источник изображения">
             <button id="uploadSourceBtn" class="active" type="button">
@@ -3433,7 +3434,7 @@
               <span>Камера</span>
             </button>
             <button id="bitsSourceBtn" type="button">
-              <span class="source-bits-icon" aria-hidden="true">01</span>
+              <span class="source-bits-icon" aria-hidden="true">&lt;&gt;</span>
               <span>Код</span>
             </button>
           </div>
@@ -3462,13 +3463,13 @@
           </div>
           <div id="bitImportPane" class="bit-import-pane hidden">
             <div class="bit-import-heading">
-              <span class="bit-import-icon" aria-hidden="true">01</span>
+              <span class="bit-import-icon" aria-hidden="true">&lt;&gt;</span>
               <div>
-                <strong>Битовый контейнер</strong>
-                <span>Вставьте содержимое TXT, чтобы восстановить матрицу и SVG.</span>
+                <strong>Компактный контейнер</strong>
+                <span>Вставьте содержимое TXT, чтобы восстановить Aztec и SVG.</span>
               </div>
             </div>
-            <textarea id="bitCodeInput" spellcheck="false" autocomplete="off" placeholder="LAYERLOCK-BITS/1&#10;..."></textarea>
+            <textarea id="bitCodeInput" spellcheck="false" autocomplete="off" placeholder="LAYERLOCK-COMPACT/1&#10;..."></textarea>
             <button id="restoreBitsBtn" class="primary" type="button">Восстановить контейнер</button>
           </div>
           <div id="readStatus" class="status hidden"></div>
@@ -6416,7 +6417,7 @@
       "Как создается изображение": "How the image is created",
       "Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” добавляет запас Reed-Solomon, а Aztec формирует двухцветную матрицу для камеры и печати.": "Each layer's text is normalized, compressed, and encrypted with AES-GCM using an isolated key. Passwords are hardened with Argon2id; “Password protection” controls memory usage and the number of passes. The container is separately locked with the master key. “Damage recovery” adds Reed-Solomon redundancy, and Aztec produces a two-color matrix for cameras and printing.",
       "Скачивание": "Downloads",
-      "PNG и SVG скачивают Aztec-контейнер. TXT сохраняет ту же матрицу как нули и единицы с геометрией и контрольной суммой. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, битовый TXT и “settings.txt”. Ключи и пароли туда не записываются.": "PNG and SVG download the Aztec container. TXT stores the same matrix as zeros and ones together with its geometry and checksum. ZIP verifies the container and saves PNG, SVG, the bit TXT, and settings.txt. Keys and passwords are never written to it.",
+      "PNG и SVG скачивают Aztec-контейнер. Компактные TXT и RAW сохраняют зашифрованное ядро до оптической коррекции и позволяют заново построить Aztec и SVG. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, TXT, RAW и “settings.txt”. Ключи и пароли туда не записываются.": "PNG and SVG download the Aztec container. Compact TXT and RAW store the encrypted core before optical error correction and can rebuild Aztec and SVG. ZIP verifies the container and saves PNG, SVG, TXT, RAW, and settings.txt. Keys and passwords are never written to it.",
       "Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip": "Example: name “Documents” -> Documents-xxxxxx.png / Documents-xxxxxx.zip",
       "Документы-xxxxxx.png / Документы-xxxxxx.zip": "Documents-xxxxxx.png / Documents-xxxxxx.zip",
       "Как загрузить": "How to load an image",
@@ -6432,15 +6433,16 @@
       "Изображение еще не создано.": "No image has been created yet.",
       "Скачать PNG": "Download PNG",
       "Скачать SVG": "Download SVG",
-      "Скачать битовый TXT": "Download bit TXT",
+      "Скачать компактный TXT": "Download compact TXT",
+      "Скачать компактный RAW": "Download compact RAW",
       "Скачать ZIP": "Download ZIP",
       "Печать": "Print",
       "Источник изображения": "Image source",
       "Файл": "File",
       "Камера": "Camera",
       "Код": "Code",
-      "Битовый контейнер": "Bit container",
-      "Вставьте содержимое TXT, чтобы восстановить матрицу и SVG.": "Paste the TXT contents to restore the matrix and SVG.",
+      "Компактный контейнер": "Compact container",
+      "Вставьте содержимое TXT, чтобы восстановить Aztec и SVG.": "Paste the TXT contents to restore Aztec and SVG.",
       "Восстановить контейнер": "Restore container",
       "Скачать восстановленный SVG": "Download restored SVG",
       "Загрузить PNG": "Upload PNG",
@@ -6506,16 +6508,15 @@
       "Слой открыт.": "Layer unlocked.",
       "Контейнер найден, но этот пароль не открыл ни один слой.": "The container was found, but this password did not unlock any layer.",
       "Нужен файл изображения.": "An image file is required.",
-      "Вставьте битовый код.": "Paste a bit code.",
-      "Формат битового кода не распознан.": "The bit code format was not recognized.",
-      "Версия битового кода не поддерживается.": "This bit code version is not supported.",
-      "Геометрия битового кода некорректна.": "The bit code geometry is invalid.",
-      "Битовая матрица слишком большая.": "The bit matrix is too large.",
-      "Битовый код содержит недопустимые символы.": "The bit code contains invalid characters.",
-      "Размер битовой матрицы не совпадает с заголовком.": "The bit matrix size does not match its header.",
-      "Контрольная сумма битового кода не совпала.": "The bit code checksum did not match.",
-      "Битовый контейнер восстановлен.": "Bit container restored.",
-      "Восстанавливаю битовый контейнер...": "Restoring bit container...",
+      "Вставьте компактный код.": "Paste a compact code.",
+      "Формат компактного кода не распознан.": "The compact code format was not recognized.",
+      "Версия компактного кода не поддерживается.": "This compact code version is not supported.",
+      "Компактный код содержит недопустимые символы.": "The compact code contains invalid characters.",
+      "Компактный контейнер не готов.": "The compact container is not ready.",
+      "Структура компактного кода повреждена.": "The compact code structure is damaged.",
+      "Контрольная сумма компактного кода не совпала.": "The compact code checksum did not match.",
+      "Компактный контейнер восстановлен.": "Compact container restored.",
+      "Восстанавливаю компактный контейнер...": "Restoring compact container...",
       "Файл SVG не распознан.": "The SVG file could not be recognized.",
       "SVG содержит неподдерживаемое активное содержимое.": "The SVG contains unsupported active content.",
       "SVG не содержит корректного размера.": "The SVG does not contain valid dimensions.",
@@ -6586,7 +6587,7 @@
       [/^Проверяю (.+)$/, (_, format) => `Verifying ${format}`],
       [/^(.+) создан$/, (_, format) => `${format} created`],
       [/^Детали:$/, () => "Details:"],
-      [/^(\d+) байт, (\d+) слой\(я\), (.+), матрица (\d+) x (\d+), изображение (\d+) x (\d+)\.$/, (_, bytes, layers, format, mw, mh, iw, ih) => `${bytes} bytes, ${layers} layer(s), ${format}, ${mw} x ${mh} matrix, ${iw} x ${ih} image.`],
+      [/^(\d+) байт, RAW (\d+) байт, (\d+) слой\(я\), (.+), матрица (\d+) x (\d+), изображение (\d+) x (\d+)\.$/, (_, bytes, raw, layers, format, mw, mh, iw, ih) => `${bytes} bytes, ${raw}-byte RAW, ${layers} layer(s), ${format}, ${mw} x ${mh} matrix, ${iw} x ${ih} image.`],
       [/^(.+) прошел (\d+) из (\d+) сценариев качества\.$/, (_, format, passed, total) => `${format} passed ${passed} of ${total} quality scenarios.`],
       [/^(\d+) мс$/, (_, ms) => `${ms} ms`],
       [/^(\d+\.\d) с$/, (_, seconds) => `${seconds} s`],
@@ -6728,7 +6729,8 @@
     const FEC_MAGIC = [0x4c, 0x4c, 0x46, 0x32]; // LLF2
     const OPTICAL_MAGIC = [0x4c, 0x4c, 0x4f, 0x31]; // LLO1
     const OPTICAL_VERSION = 1;
-    const BIT_TEXT_MAGIC = "LAYERLOCK-BITS/1";
+    const COMPACT_TEXT_MAGIC = "LAYERLOCK-COMPACT/1";
+    const FEC_PROFILE_KEYS = ["minimal", "standard", "enhanced", "maximum"];
     const enc = new TextEncoder();
     const dec = new TextDecoder();
     const $ = id => document.getElementById(id);
@@ -6742,10 +6744,13 @@
       readRender: null,
       lastName: "image.png",
       lastSvgName: "image.svg",
-      lastBitsName: "image.bits.txt",
+      lastBitsName: "image.layerlock.txt",
+      lastRawName: "image.llc",
       lastZipName: "layerlock.zip",
       lastUrl: null,
       lastRender: null,
+      lastContainerBytes: null,
+      lastFecKey: "standard",
       lastEntries: [],
       lastMasterKey: "",
       lastBaseName: "LayerLock",
@@ -7978,82 +7983,67 @@ self.onmessage = async event => {
       return parts.join("");
     }
 
-    function bitTextChecksum(width, height, scale, bits) {
-      return crc32(enc.encode(`${BIT_TEXT_MAGIC}|${width}|${height}|${scale}|${bits}`))
-        .toString(16)
-        .padStart(8, "0")
-        .toUpperCase();
+    function bytesToBase64Url(bytes) {
+      let binary = "";
+      for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+      }
+      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
     }
 
-    function makeBitText(render) {
-      const width = render.moduleWidth;
-      const height = render.moduleHeight;
-      const scale = render.scale;
-      if (!width || !height || !render.moduleData || render.moduleData.length !== width * height) {
-        throw new Error("Геометрия битового кода некорректна.");
-      }
-      let bits = "";
-      const rows = [];
-      for (let y = 0; y < height; y++) {
-        let row = "";
-        for (let x = 0; x < width; x++) row += render.moduleData[y * width + x] < 128 ? "0" : "1";
-        rows.push(row);
-        bits += row;
-      }
-      return [
-        BIT_TEXT_MAGIC,
-        "FORMAT=AZTEC",
-        `WIDTH=${width}`,
-        `HEIGHT=${height}`,
-        `SCALE=${scale}`,
-        "BLACK=0",
-        "WHITE=1",
-        `CRC32=${bitTextChecksum(width, height, scale, bits)}`,
-        "BITS",
-        ...rows,
-        ""
-      ].join("\n");
+    function base64UrlToBytes(value) {
+      const clean = String(value || "").replace(/\s/g, "").replace(/-/g, "+").replace(/_/g, "/");
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(clean)) throw new Error("Компактный код содержит недопустимые символы.");
+      const padded = clean + "=".repeat((4 - clean.length % 4) % 4);
+      let binary;
+      try { binary = atob(padded); }
+      catch (_) { throw new Error("Формат компактного кода не распознан."); }
+      return Uint8Array.from(binary, char => char.charCodeAt(0));
     }
 
-    function parseBitText(source) {
-      const normalized = String(source || "").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").trim();
-      if (!normalized) throw new Error("Вставьте битовый код.");
-      const lines = normalized.split("\n");
-      if (lines[0].trim() !== BIT_TEXT_MAGIC) {
-        if (/^LAYERLOCK-BITS\//i.test(lines[0].trim())) throw new Error("Версия битового кода не поддерживается.");
-        throw new Error("Формат битового кода не распознан.");
+    function makeCompactBytes(containerBytes, fecKey = "standard") {
+      const profileIndex = FEC_PROFILE_KEYS.indexOf(fecKey);
+      if (!(containerBytes instanceof Uint8Array) || !containerBytes.length || profileIndex < 0) {
+        throw new Error("Компактный контейнер не готов.");
       }
-      const marker = lines.findIndex(line => line.trim() === "BITS");
-      if (marker < 1) throw new Error("Формат битового кода не распознан.");
-      const header = new Map();
-      for (const line of lines.slice(1, marker)) {
-        const separator = line.indexOf("=");
-        if (separator < 1) throw new Error("Формат битового кода не распознан.");
-        header.set(line.slice(0, separator).trim().toUpperCase(), line.slice(separator + 1).trim());
+      const out = new Uint8Array(9 + containerBytes.length + 4);
+      out.set([0x4c, 0x4c, 0x43, 0x31], 0);
+      out[4] = profileIndex;
+      new DataView(out.buffer).setUint32(5, containerBytes.length, false);
+      out.set(containerBytes, 9);
+      new DataView(out.buffer).setUint32(9 + containerBytes.length, crc32(out.subarray(0, 9 + containerBytes.length)), false);
+      return out;
+    }
+
+    function parseCompactBytes(bytes) {
+      if (!(bytes instanceof Uint8Array)) bytes = new Uint8Array(bytes || 0);
+      if (bytes.length < 13 || bytes[0] !== 0x4c || bytes[1] !== 0x4c || bytes[2] !== 0x43 || bytes[3] !== 0x31) {
+        throw new Error("Формат компактного кода не распознан.");
       }
-      if (header.get("FORMAT") !== "AZTEC" || header.get("BLACK") !== "0" || header.get("WHITE") !== "1") {
-        throw new Error("Формат битового кода не распознан.");
+      const fecKey = FEC_PROFILE_KEYS[bytes[4]];
+      const length = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(5, false);
+      if (!fecKey || !length || length > 16777216 || bytes.length !== 9 + length + 4) {
+        throw new Error("Структура компактного кода повреждена.");
       }
-      const width = Number(header.get("WIDTH"));
-      const height = Number(header.get("HEIGHT"));
-      const scale = Number(header.get("SCALE"));
-      if (!Number.isInteger(width) || !Number.isInteger(height) || !Number.isInteger(scale) || width < 1 || height < 1 || scale < 1 || scale > 64) {
-        throw new Error("Геометрия битового кода некорректна.");
+      const expected = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(9 + length, false);
+      if (crc32(bytes.subarray(0, 9 + length)) !== expected) throw new Error("Контрольная сумма компактного кода не совпала.");
+      return { containerBytes: bytes.slice(9, 9 + length), fecKey, fecProfile: FEC_PROFILES[fecKey] };
+    }
+
+    function makeCompactText(containerBytes, fecKey = "standard") {
+      return `${COMPACT_TEXT_MAGIC}\n${bytesToBase64Url(makeCompactBytes(containerBytes, fecKey))}\n`;
+    }
+
+    function parseCompactText(source) {
+      const normalized = String(source || "").replace(/^\uFEFF/, "").trim();
+      if (!normalized) throw new Error("Вставьте компактный код.");
+      const firstBreak = normalized.indexOf("\n");
+      const header = (firstBreak < 0 ? normalized : normalized.slice(0, firstBreak)).trim();
+      if (header !== COMPACT_TEXT_MAGIC) {
+        if (/^LAYERLOCK-COMPACT\//i.test(header)) throw new Error("Версия компактного кода не поддерживается.");
+        throw new Error("Формат компактного кода не распознан.");
       }
-      if (width > 1024 || height > 1024 || width * height > 1048576) {
-        throw new Error("Битовая матрица слишком большая.");
-      }
-      const rawBits = lines.slice(marker + 1).join("");
-      if (/[^01\s]/.test(rawBits)) throw new Error("Битовый код содержит недопустимые символы.");
-      const bits = rawBits.replace(/\s/g, "");
-      if (bits.length !== width * height) throw new Error("Размер битовой матрицы не совпадает с заголовком.");
-      const checksum = String(header.get("CRC32") || "").toUpperCase();
-      if (!/^[0-9A-F]{8}$/.test(checksum) || checksum !== bitTextChecksum(width, height, scale, bits)) {
-        throw new Error("Контрольная сумма битового кода не совпала.");
-      }
-      const moduleData = new Uint8Array(bits.length);
-      for (let i = 0; i < bits.length; i++) moduleData[i] = bits.charCodeAt(i) === 48 ? 0 : 255;
-      return { moduleWidth: width, moduleHeight: height, moduleData, scale, formatLabel: "Aztec" };
+      return parseCompactBytes(base64UrlToBytes(firstBreak < 0 ? "" : normalized.slice(firstBreak + 1)));
     }
 
     function downloadBlob(bytesOrText, type, name) {
@@ -8183,6 +8173,8 @@ self.onmessage = async event => {
         `Matrix: ${render.moduleWidth || render.grid} x ${render.moduleHeight || render.grid}`,
         `Pixels per module: ${render.scale}`,
         `Image size: ${renderPixelSize(render)} x ${renderPixelSize(render)} px`,
+        `Compact RAW size: ${makeCompactBytes(state.lastContainerBytes, state.lastFecKey).length} bytes`,
+        `Compact text encoding: Base64URL`,
         "Color classes: 2",
         "Palette: black / white",
         `Layers: ${state.lastEntries.length}`,
@@ -8214,6 +8206,8 @@ self.onmessage = async event => {
         `Матрица: ${render.moduleWidth || render.grid} x ${render.moduleHeight || render.grid}`,
         `Пикселей на ячейку: ${render.scale}`,
         `Размер изображения: ${renderPixelSize(render)} x ${renderPixelSize(render)} px`,
+        `Размер компактного RAW: ${makeCompactBytes(state.lastContainerBytes, state.lastFecKey).length} байт`,
+        `Кодирование компактного TXT: Base64URL`,
         "Цветовых классов: 2",
         "Палитра: черный / белый",
         `Слоев: ${state.lastEntries.length}`,
@@ -8240,7 +8234,8 @@ self.onmessage = async event => {
       const files = [
         { name: `${root}/PNG (${stamp})/${root}.png`, data: await pngBytesFromRender(render) },
         { name: `${root}/SVG (${stamp})/${root}.svg`, data: makeSvg(render) },
-        { name: `${root}/${root}.bits.txt`, data: makeBitText(render) }
+        { name: `${root}/${root}.layerlock.txt`, data: makeCompactText(state.lastContainerBytes, state.lastFecKey) },
+        { name: `${root}/${root}.llc`, data: makeCompactBytes(state.lastContainerBytes, state.lastFecKey) }
       ];
       files.push({ name: `${root}/settings.txt`, data: await makeSettingsReport(render, files, generatedAt) });
       return files;
@@ -8275,6 +8270,7 @@ self.onmessage = async event => {
       onProgress("Укрепляю мастер-ключ и закрываю контейнер", 76);
       const containerBytes = await encryptContainer(masterKey, packageBytes, kdfProfile);
       const fecProfile = selectedFecProfile();
+      const fecKey = $("fecProfile").value in FEC_PROFILES ? $("fecProfile").value : "standard";
       onProgress(`Добавляю коррекцию ошибок · ${fecProfile.label.toLowerCase()}`, 80);
       const payloadFrame = encodePayloadFrame(containerBytes, fecProfile);
       const opticalBytes = encodeOpticalPayload(payloadFrame, crc32(containerBytes));
@@ -8286,12 +8282,15 @@ self.onmessage = async event => {
       };
       onProgress("Строю Aztec", 82);
       state.lastRender = await createAztecRender(opticalBytes, baseRender);
+      state.lastContainerBytes = containerBytes.slice();
+      state.lastFecKey = fecKey;
       state.lastEntries = entries.map(e => ({ ...e }));
       state.lastMasterKey = masterKey;
       state.lastBaseName = baseName;
       state.lastName = `${baseName}-${id}.png`;
       state.lastSvgName = `${baseName}-${id}.svg`;
-      state.lastBitsName = `${baseName}-${id}.bits.txt`;
+      state.lastBitsName = `${baseName}-${id}.layerlock.txt`;
+      state.lastRawName = `${baseName}-${id}.llc`;
       state.lastZipName = `${baseName}-${id}.zip`;
       state.verifyCache.clear();
       onProgress("Рисую изображение", 86);
@@ -8303,6 +8302,7 @@ self.onmessage = async event => {
       $("downloadPngBtn").disabled = false;
       $("downloadSvgBtn").disabled = false;
       $("downloadBitsBtn").disabled = false;
+      $("downloadRawBtn").disabled = false;
       $("downloadZipBtn").disabled = false;
       $("printBtn").disabled = false;
       $("verifyBtn").disabled = false;
@@ -8310,7 +8310,8 @@ self.onmessage = async event => {
       setVerifyButton("idle");
       onProgress(`${state.lastRender.formatLabel} создан`, 92);
       const px = renderPixelSize(state.lastRender);
-      setStatusHtml("makeStatus", `<strong>Детали:</strong> ${payloadFrame.length} байт, ${entries.length} слой(я), ${state.lastRender.formatLabel}, матрица ${state.lastRender.moduleWidth} x ${state.lastRender.moduleHeight}, изображение ${px} x ${px}.`, "ok");
+      const compactSize = makeCompactBytes(state.lastContainerBytes, state.lastFecKey).length;
+      setStatusHtml("makeStatus", `<strong>Детали:</strong> ${payloadFrame.length} байт, RAW ${compactSize} байт, ${entries.length} слой(я), ${state.lastRender.formatLabel}, матрица ${state.lastRender.moduleWidth} x ${state.lastRender.moduleHeight}, изображение ${px} x ${px}.`, "ok");
     }
 
     async function verifyGeneratedVault() {
@@ -8549,6 +8550,11 @@ self.onmessage = async event => {
       return file?.type === "image/svg+xml" || name.endsWith(".svg");
     }
 
+    function isCompactFile(file) {
+      const name = String(file?.name || "").toLowerCase();
+      return name.endsWith(".llc") || name.endsWith(".txt");
+    }
+
     async function rasterizeSvgFile(file) {
       const source = await file.text();
       if (!/^\s*(?:<\?xml[\s\S]*?\?>\s*)?<svg[\s>]/i.test(source)) {
@@ -8644,13 +8650,35 @@ self.onmessage = async event => {
       await activateReadImageSource(await decodeImageFile(file), decodedHint, null);
     }
 
-    async function loadBitContainerText(source) {
-      const render = parseBitText(source);
+    async function loadCompactContainer(compact) {
+      const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+      const payloadFrame = encodePayloadFrame(compact.containerBytes, compact.fecProfile);
+      const opticalBytes = encodeOpticalPayload(payloadFrame, crc32(compact.containerBytes));
+      const render = await createAztecRender(opticalBytes, { fecProfile: { ...compact.fecProfile } });
       const canvas = document.createElement("canvas");
       renderSigil(canvas, render);
-      const decoded = await decodePackageFromCanvas(canvas);
+      const decoded = {
+        body: decodeBody(compact.containerBytes),
+        transport: "compact",
+        formatLabel: "Aztec",
+        orientation: 0,
+        position: null,
+        scanPath: "compact-v1",
+        scanCandidates: 1,
+        scanMs: (typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt
+      };
       await activateReadImageSource(canvas, decoded, render);
-      showToast("Битовый контейнер восстановлен.", "ok");
+      showToast("Компактный контейнер восстановлен.", "ok");
+    }
+
+    async function loadCompactContainerText(source) {
+      return loadCompactContainer(parseCompactText(source));
+    }
+
+    async function loadCompactContainerFile(file) {
+      const name = String(file?.name || "").toLowerCase();
+      if (name.endsWith(".llc")) return loadCompactContainer(parseCompactBytes(new Uint8Array(await file.arrayBuffer())));
+      return loadCompactContainerText(await file.text());
     }
 
     function updateCameraMeter(count = 0) {
@@ -9008,6 +9036,7 @@ self.onmessage = async event => {
       updateMatch(document.querySelector(".master-entry"));
       syncFieldsetValid($("masterKey"));
       state.lastRender = null;
+      state.lastContainerBytes = null;
       state.lastEntries = [];
       state.lastMasterKey = "";
       $("canvas").closest(".canvas-box").classList.remove("has-image");
@@ -9016,6 +9045,7 @@ self.onmessage = async event => {
       $("downloadPngBtn").disabled = true;
       $("downloadSvgBtn").disabled = true;
       $("downloadBitsBtn").disabled = true;
+      $("downloadRawBtn").disabled = true;
       $("downloadZipBtn").disabled = true;
       $("printBtn").disabled = true;
       $("verifyBtn").disabled = true;
@@ -9081,11 +9111,13 @@ self.onmessage = async event => {
         $("downloadPngBtn").disabled = true;
         $("downloadSvgBtn").disabled = true;
         $("downloadBitsBtn").disabled = true;
+        $("downloadRawBtn").disabled = true;
         $("downloadZipBtn").disabled = true;
         $("printBtn").disabled = true;
         $("verifyBtn").disabled = true;
         $("expandMakeImageBtn").disabled = true;
         state.lastRender = null;
+        state.lastContainerBytes = null;
         state.verifyCache.clear();
         $("canvas").closest(".canvas-box").classList.remove("has-image");
         $("makeView").classList.remove("has-output");
@@ -9183,7 +9215,17 @@ self.onmessage = async event => {
       try {
         if (!state.lastRender) throw new Error("Сначала создайте изображение.");
         await verifyRenderCached(selectedRender());
-        downloadBlob(makeBitText(selectedRender()), "text/plain;charset=utf-8", state.lastBitsName);
+        downloadBlob(makeCompactText(state.lastContainerBytes, state.lastFecKey), "text/plain;charset=utf-8", state.lastBitsName);
+        markSaved();
+      } catch (e) {
+        handleError("makeStatus", e);
+      }
+    });
+    $("downloadRawBtn").addEventListener("click", async () => {
+      try {
+        if (!state.lastRender) throw new Error("Сначала создайте изображение.");
+        await verifyRenderCached(selectedRender());
+        downloadBlob(makeCompactBytes(state.lastContainerBytes, state.lastFecKey), "application/octet-stream", state.lastRawName);
         markSaved();
       } catch (e) {
         handleError("makeStatus", e);
@@ -9219,8 +9261,11 @@ self.onmessage = async event => {
     $("fileIn").addEventListener("change", async ev => {
       const file = ev.target.files[0];
       if (!file) return;
-      setReadSource("file");
-      try { await loadImageFile(file); }
+      setReadSource(isCompactFile(file) ? "bits" : "file");
+      try {
+        if (isCompactFile(file)) await loadCompactContainerFile(file);
+        else await loadImageFile(file);
+      }
       catch (e) { handleError(readStatusTarget(), e); }
     });
     $("cameraIn").addEventListener("change", async ev => {
@@ -9322,9 +9367,9 @@ self.onmessage = async event => {
     });
     $("restoreBitsBtn").addEventListener("click", async () => {
       $("restoreBitsBtn").disabled = true;
-      setStatus("readStatus", "Восстанавливаю битовый контейнер...");
+      setStatus("readStatus", "Восстанавливаю компактный контейнер...");
       try {
-        await loadBitContainerText($("bitCodeInput").value);
+        await loadCompactContainerText($("bitCodeInput").value);
       } catch (e) {
         handleError("readStatus", e);
       } finally {
@@ -9381,9 +9426,12 @@ self.onmessage = async event => {
       });
     }
     $("dropZone").addEventListener("drop", async ev => {
-      const file = [...ev.dataTransfer.files].find(f => f.type.startsWith("image/"));
-      setReadSource("file");
-      try { await loadImageFile(file); }
+      const file = [...ev.dataTransfer.files].find(f => f.type.startsWith("image/") || isCompactFile(f));
+      setReadSource(isCompactFile(file) ? "bits" : "file");
+      try {
+        if (isCompactFile(file)) await loadCompactContainerFile(file);
+        else await loadImageFile(file);
+      }
       catch (e) { handleError(readStatusTarget(), e); }
     });
     document.addEventListener("paste", async ev => {
