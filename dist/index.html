@@ -1480,9 +1480,9 @@
       --source-progress: 0;
       position: relative;
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       align-self: center;
-      width: 210px;
+      width: 315px;
       max-width: 100%;
       padding: 4px;
       background: color-mix(in oklab, var(--field) 80%, transparent);
@@ -1499,7 +1499,7 @@
       top: 4px;
       bottom: 4px;
       left: 4px;
-      width: calc((100% - 10px) / 2);
+      width: calc((100% - 12px) / 3);
       border-radius: 8px;
       background: var(--accent);
       box-shadow: 0 4px 12px -6px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, .18);
@@ -1527,6 +1527,10 @@
       transition: color .28s ease, transform .18s ease;
     }
     .read-source-switch button svg { width: 15px; height: 15px; stroke: currentColor; }
+    .source-bits-icon {
+      font: 700 11px/1 var(--font-mono);
+      letter-spacing: 0;
+    }
     .read-source-switch button:hover { color: var(--text); }
     .read-source-switch button.active {
       color: #fff;
@@ -1608,6 +1612,64 @@
       font-size: 13px;
       color: var(--muted);
       max-width: 340px;
+    }
+    .bit-import-pane {
+      min-height: 270px;
+      padding: 24px;
+      border: 1px solid color-mix(in oklab, var(--accent) 26%, var(--line));
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklab, var(--accent) 3%, var(--panel));
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto minmax(150px, 1fr) auto;
+      gap: 16px;
+    }
+    .bit-import-pane.hidden { display: none; }
+    .bit-import-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .bit-import-heading > div {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .bit-import-heading strong { color: var(--text); font-size: 15px; }
+    .bit-import-heading span:not(.bit-import-icon) { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .bit-import-icon {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: var(--accent);
+      border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--line));
+      background: color-mix(in oklab, var(--accent) 9%, var(--field));
+      font: 700 14px/1 var(--font-mono);
+    }
+    #bitCodeInput {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--field);
+      color: var(--text);
+      font: 12px/1.55 var(--font-mono);
+      letter-spacing: 0;
+      outline: none;
+    }
+    #bitCodeInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 12%, transparent);
+    }
+    #restoreBitsBtn {
+      justify-self: center;
+      min-width: 210px;
     }
 
     /* Read grid — single column; image now lives inside the result card */
@@ -1770,6 +1832,13 @@
     }
     .icon-chip:active { transform: scale(.94); }
     .icon-chip svg { width: 15px; height: 15px; stroke: currentColor; }
+    .icon-chip.read-svg-btn {
+      width: auto;
+      min-width: 40px;
+      padding-inline: 7px;
+      font: 700 10px/1 var(--font-mono);
+      letter-spacing: 0;
+    }
     .icon-chip.hidden { display: none; }
 
     /* ---------- Mobile bottom action bar ---------- */
@@ -2988,6 +3057,49 @@
       .tabs { width: min(100%, 430px); }
       .view-page.active { animation: viewIn .34s cubic-bezier(.22, .8, .2, 1) both; }
     }
+
+    @media (min-width: 721px) {
+      #readWorkPane .read-result-card { width: min(100%, 900px); }
+      #readWorkPane .read-result-body {
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 270px);
+        align-items: start;
+      }
+      #readWorkPane .read-result-main { display: contents; }
+      #readWorkPane .read-action-panel {
+        grid-column: 1;
+        grid-row: 1;
+        min-width: 0;
+        align-self: stretch;
+      }
+      #readWorkPane .read-image-wrap {
+        grid-column: 2;
+        grid-row: 1;
+      }
+      #readWorkPane .readout-wrap {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      #readWorkPane,
+      #readWorkPane .read-result-card,
+      #readWorkPane .read-result-body,
+      #readWorkPane .read-result-main,
+      #readWorkPane .read-action-panel,
+      #readWorkPane .readout-wrap {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+      }
+      #readWorkPane .read-action-panel input { font-size: 16px; }
+      #readStatusWork { min-height: 42px; }
+      .read-source-switch { width: min(100%, 330px); }
+      .bit-import-pane { padding: 18px; }
+      #bitCodeInput { font-size: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -3225,7 +3337,7 @@
             </div>
             <div class="info-card">
               <h3>Скачивание</h3>
-              <p>PNG и SVG скачивают Aztec-контейнер. ZIP повторно проверяет его, сохраняет один PNG, один SVG и добавляет “settings.txt” с параметрами и SHA-256 файлов. Ключи и пароли туда не записываются.</p>
+              <p>PNG и SVG скачивают Aztec-контейнер. TXT сохраняет ту же матрицу как нули и единицы с геометрией и контрольной суммой. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, битовый TXT и “settings.txt”. Ключи и пароли туда не записываются.</p>
               <div class="info-example">Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip</div>
             </div>
           </div>
@@ -3284,6 +3396,7 @@
             <div class="download-actions">
               <button id="downloadPngBtn" type="button" disabled title="Скачать PNG" aria-label="Скачать PNG">PNG</button>
               <button id="downloadSvgBtn" type="button" disabled title="Скачать SVG" aria-label="Скачать SVG">SVG</button>
+              <button id="downloadBitsBtn" type="button" disabled title="Скачать битовый TXT" aria-label="Скачать битовый TXT">TXT</button>
               <button id="downloadZipBtn" type="button" disabled title="Скачать ZIP" aria-label="Скачать ZIP">ZIP</button>
               <button id="printBtn" type="button" disabled title="Печать" aria-label="Печать">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -3319,6 +3432,10 @@
               </svg>
               <span>Камера</span>
             </button>
+            <button id="bitsSourceBtn" type="button">
+              <span class="source-bits-icon" aria-hidden="true">01</span>
+              <span>Код</span>
+            </button>
           </div>
           <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Загрузить PNG">
             <div>
@@ -3343,6 +3460,17 @@
               <span id="dropHint">Или нажмите, выберите файл, либо вставьте через Ctrl+V.</span>
             </div>
           </div>
+          <div id="bitImportPane" class="bit-import-pane hidden">
+            <div class="bit-import-heading">
+              <span class="bit-import-icon" aria-hidden="true">01</span>
+              <div>
+                <strong>Битовый контейнер</strong>
+                <span>Вставьте содержимое TXT, чтобы восстановить матрицу и SVG.</span>
+              </div>
+            </div>
+            <textarea id="bitCodeInput" spellcheck="false" autocomplete="off" placeholder="LAYERLOCK-BITS/1&#10;..."></textarea>
+            <button id="restoreBitsBtn" class="primary" type="button">Восстановить контейнер</button>
+          </div>
           <div id="readStatus" class="status hidden"></div>
         </div>
       </section>
@@ -3363,6 +3491,7 @@
                 </div>
               </div>
               <div class="read-action-panel">
+                <div class="read-section-label read-password-label">Ввод пароля</div>
                 <div id="readMasterField" class="field-fieldset">
                   <span class="field-legend">Мастер-ключ</span>
                   <span class="password-field">
@@ -3414,6 +3543,7 @@
                     <path d="M3 21l7-7"/>
                   </svg>
                 </button>
+                <button id="downloadReadSvgBtn" class="icon-chip read-svg-btn hidden" type="button" aria-label="Скачать восстановленный SVG" title="Скачать восстановленный SVG">SVG</button>
                 <button id="replaceImageBtn" class="icon-chip hidden" type="button" aria-label="Заменить" title="Заменить">
                   <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M21 12a9 9 0 0 1-15.3 6.4"/>
@@ -6286,7 +6416,7 @@
       "Как создается изображение": "How the image is created",
       "Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” добавляет запас Reed-Solomon, а Aztec формирует двухцветную матрицу для камеры и печати.": "Each layer's text is normalized, compressed, and encrypted with AES-GCM using an isolated key. Passwords are hardened with Argon2id; “Password protection” controls memory usage and the number of passes. The container is separately locked with the master key. “Damage recovery” adds Reed-Solomon redundancy, and Aztec produces a two-color matrix for cameras and printing.",
       "Скачивание": "Downloads",
-      "PNG и SVG скачивают Aztec-контейнер. ZIP повторно проверяет его, сохраняет один PNG, один SVG и добавляет “settings.txt” с параметрами и SHA-256 файлов. Ключи и пароли туда не записываются.": "PNG and SVG download the Aztec container. ZIP verifies it again, saves one PNG and one SVG, and adds a settings.txt file containing parameters and file SHA-256 hashes. Keys and passwords are never written to it.",
+      "PNG и SVG скачивают Aztec-контейнер. TXT сохраняет ту же матрицу как нули и единицы с геометрией и контрольной суммой. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, битовый TXT и “settings.txt”. Ключи и пароли туда не записываются.": "PNG and SVG download the Aztec container. TXT stores the same matrix as zeros and ones together with its geometry and checksum. ZIP verifies the container and saves PNG, SVG, the bit TXT, and settings.txt. Keys and passwords are never written to it.",
       "Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip": "Example: name “Documents” -> Documents-xxxxxx.png / Documents-xxxxxx.zip",
       "Документы-xxxxxx.png / Документы-xxxxxx.zip": "Documents-xxxxxx.png / Documents-xxxxxx.zip",
       "Как загрузить": "How to load an image",
@@ -6302,15 +6432,22 @@
       "Изображение еще не создано.": "No image has been created yet.",
       "Скачать PNG": "Download PNG",
       "Скачать SVG": "Download SVG",
+      "Скачать битовый TXT": "Download bit TXT",
       "Скачать ZIP": "Download ZIP",
       "Печать": "Print",
       "Источник изображения": "Image source",
       "Файл": "File",
       "Камера": "Camera",
+      "Код": "Code",
+      "Битовый контейнер": "Bit container",
+      "Вставьте содержимое TXT, чтобы восстановить матрицу и SVG.": "Paste the TXT contents to restore the matrix and SVG.",
+      "Восстановить контейнер": "Restore container",
+      "Скачать восстановленный SVG": "Download restored SVG",
       "Загрузить PNG": "Upload PNG",
       "Отправьте изображение": "Upload an image",
       "Или нажмите, выберите файл, либо вставьте через Ctrl+V.": "Click to choose a file, drag it here, or paste with Ctrl+V.",
       "Результат": "Result",
+      "Ввод пароля": "Password entry",
       "Скопировать": "Copy",
       "Показать мастер-ключ": "Show master key",
       "Пароль слоя": "Layer password",
@@ -6369,6 +6506,16 @@
       "Слой открыт.": "Layer unlocked.",
       "Контейнер найден, но этот пароль не открыл ни один слой.": "The container was found, but this password did not unlock any layer.",
       "Нужен файл изображения.": "An image file is required.",
+      "Вставьте битовый код.": "Paste a bit code.",
+      "Формат битового кода не распознан.": "The bit code format was not recognized.",
+      "Версия битового кода не поддерживается.": "This bit code version is not supported.",
+      "Геометрия битового кода некорректна.": "The bit code geometry is invalid.",
+      "Битовая матрица слишком большая.": "The bit matrix is too large.",
+      "Битовый код содержит недопустимые символы.": "The bit code contains invalid characters.",
+      "Размер битовой матрицы не совпадает с заголовком.": "The bit matrix size does not match its header.",
+      "Контрольная сумма битового кода не совпала.": "The bit code checksum did not match.",
+      "Битовый контейнер восстановлен.": "Bit container restored.",
+      "Восстанавливаю битовый контейнер...": "Restoring bit container...",
       "Файл SVG не распознан.": "The SVG file could not be recognized.",
       "SVG содержит неподдерживаемое активное содержимое.": "The SVG contains unsupported active content.",
       "SVG не содержит корректного размера.": "The SVG does not contain valid dimensions.",
@@ -6581,6 +6728,7 @@
     const FEC_MAGIC = [0x4c, 0x4c, 0x46, 0x32]; // LLF2
     const OPTICAL_MAGIC = [0x4c, 0x4c, 0x4f, 0x31]; // LLO1
     const OPTICAL_VERSION = 1;
+    const BIT_TEXT_MAGIC = "LAYERLOCK-BITS/1";
     const enc = new TextEncoder();
     const dec = new TextDecoder();
     const $ = id => document.getElementById(id);
@@ -6591,8 +6739,10 @@
       readDecodePromise: null,
       readPack: null,
       readMeta: null,
+      readRender: null,
       lastName: "image.png",
       lastSvgName: "image.svg",
+      lastBitsName: "image.bits.txt",
       lastZipName: "layerlock.zip",
       lastUrl: null,
       lastRender: null,
@@ -7828,6 +7978,84 @@ self.onmessage = async event => {
       return parts.join("");
     }
 
+    function bitTextChecksum(width, height, scale, bits) {
+      return crc32(enc.encode(`${BIT_TEXT_MAGIC}|${width}|${height}|${scale}|${bits}`))
+        .toString(16)
+        .padStart(8, "0")
+        .toUpperCase();
+    }
+
+    function makeBitText(render) {
+      const width = render.moduleWidth;
+      const height = render.moduleHeight;
+      const scale = render.scale;
+      if (!width || !height || !render.moduleData || render.moduleData.length !== width * height) {
+        throw new Error("Геометрия битового кода некорректна.");
+      }
+      let bits = "";
+      const rows = [];
+      for (let y = 0; y < height; y++) {
+        let row = "";
+        for (let x = 0; x < width; x++) row += render.moduleData[y * width + x] < 128 ? "0" : "1";
+        rows.push(row);
+        bits += row;
+      }
+      return [
+        BIT_TEXT_MAGIC,
+        "FORMAT=AZTEC",
+        `WIDTH=${width}`,
+        `HEIGHT=${height}`,
+        `SCALE=${scale}`,
+        "BLACK=0",
+        "WHITE=1",
+        `CRC32=${bitTextChecksum(width, height, scale, bits)}`,
+        "BITS",
+        ...rows,
+        ""
+      ].join("\n");
+    }
+
+    function parseBitText(source) {
+      const normalized = String(source || "").replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").trim();
+      if (!normalized) throw new Error("Вставьте битовый код.");
+      const lines = normalized.split("\n");
+      if (lines[0].trim() !== BIT_TEXT_MAGIC) {
+        if (/^LAYERLOCK-BITS\//i.test(lines[0].trim())) throw new Error("Версия битового кода не поддерживается.");
+        throw new Error("Формат битового кода не распознан.");
+      }
+      const marker = lines.findIndex(line => line.trim() === "BITS");
+      if (marker < 1) throw new Error("Формат битового кода не распознан.");
+      const header = new Map();
+      for (const line of lines.slice(1, marker)) {
+        const separator = line.indexOf("=");
+        if (separator < 1) throw new Error("Формат битового кода не распознан.");
+        header.set(line.slice(0, separator).trim().toUpperCase(), line.slice(separator + 1).trim());
+      }
+      if (header.get("FORMAT") !== "AZTEC" || header.get("BLACK") !== "0" || header.get("WHITE") !== "1") {
+        throw new Error("Формат битового кода не распознан.");
+      }
+      const width = Number(header.get("WIDTH"));
+      const height = Number(header.get("HEIGHT"));
+      const scale = Number(header.get("SCALE"));
+      if (!Number.isInteger(width) || !Number.isInteger(height) || !Number.isInteger(scale) || width < 1 || height < 1 || scale < 1 || scale > 64) {
+        throw new Error("Геометрия битового кода некорректна.");
+      }
+      if (width > 1024 || height > 1024 || width * height > 1048576) {
+        throw new Error("Битовая матрица слишком большая.");
+      }
+      const rawBits = lines.slice(marker + 1).join("");
+      if (/[^01\s]/.test(rawBits)) throw new Error("Битовый код содержит недопустимые символы.");
+      const bits = rawBits.replace(/\s/g, "");
+      if (bits.length !== width * height) throw new Error("Размер битовой матрицы не совпадает с заголовком.");
+      const checksum = String(header.get("CRC32") || "").toUpperCase();
+      if (!/^[0-9A-F]{8}$/.test(checksum) || checksum !== bitTextChecksum(width, height, scale, bits)) {
+        throw new Error("Контрольная сумма битового кода не совпала.");
+      }
+      const moduleData = new Uint8Array(bits.length);
+      for (let i = 0; i < bits.length; i++) moduleData[i] = bits.charCodeAt(i) === 48 ? 0 : 255;
+      return { moduleWidth: width, moduleHeight: height, moduleData, scale, formatLabel: "Aztec" };
+    }
+
     function downloadBlob(bytesOrText, type, name) {
       if (state.lastUrl) URL.revokeObjectURL(state.lastUrl);
       state.lastUrl = URL.createObjectURL(new Blob([bytesOrText], { type }));
@@ -8011,7 +8239,8 @@ self.onmessage = async event => {
     async function buildZipFiles(render, root, stamp, generatedAt = new Date()) {
       const files = [
         { name: `${root}/PNG (${stamp})/${root}.png`, data: await pngBytesFromRender(render) },
-        { name: `${root}/SVG (${stamp})/${root}.svg`, data: makeSvg(render) }
+        { name: `${root}/SVG (${stamp})/${root}.svg`, data: makeSvg(render) },
+        { name: `${root}/${root}.bits.txt`, data: makeBitText(render) }
       ];
       files.push({ name: `${root}/settings.txt`, data: await makeSettingsReport(render, files, generatedAt) });
       return files;
@@ -8062,6 +8291,7 @@ self.onmessage = async event => {
       state.lastBaseName = baseName;
       state.lastName = `${baseName}-${id}.png`;
       state.lastSvgName = `${baseName}-${id}.svg`;
+      state.lastBitsName = `${baseName}-${id}.bits.txt`;
       state.lastZipName = `${baseName}-${id}.zip`;
       state.verifyCache.clear();
       onProgress("Рисую изображение", 86);
@@ -8072,6 +8302,7 @@ self.onmessage = async event => {
       onProgress(`Проверяю ${state.lastRender.formatLabel}`, 90);
       $("downloadPngBtn").disabled = false;
       $("downloadSvgBtn").disabled = false;
+      $("downloadBitsBtn").disabled = false;
       $("downloadZipBtn").disabled = false;
       $("printBtn").disabled = false;
       $("verifyBtn").disabled = false;
@@ -8084,7 +8315,7 @@ self.onmessage = async event => {
 
     async function verifyGeneratedVault() {
       if (!state.lastRender) throw new Error("Сначала создайте изображение.");
-      if (!state.lastEntries.length) throw new Error("Нет заполненных слоев для проверки.");
+      if (!state.lastEntries.length) throw new Error("Нет заполненн��х слоев для проверки.");
       await verifyRender(state.lastRender, state.lastEntries);
     }
 
@@ -8367,14 +8598,12 @@ self.onmessage = async event => {
       }
     }
 
-    async function loadImageFile(file, decodedHint = null) {
-      if (!file || (!file.type.startsWith("image/") && !isSvgFile(file))) {
-        throw new Error("Нужен файл изображения.");
-      }
+    async function activateReadImageSource(imageSource, decodedHint = null, restoredRender = null) {
       state.readDecoded = decodedHint;
       state.readDecodePromise = null;
+      state.readRender = restoredRender;
       setReadMasterStage();
-      state.imageBitmap = await decodeImageFile(file);
+      state.imageBitmap = imageSource;
       const canvas = $("readCanvas");
       canvas.width = state.imageBitmap.width;
       canvas.height = state.imageBitmap.height;
@@ -8386,6 +8615,7 @@ self.onmessage = async event => {
       $("readWorkPane").classList.add("active");
       $("replaceImageBtn").classList.remove("hidden");
       $("expandReadImageBtn").classList.remove("hidden");
+      $("downloadReadSvgBtn").classList.toggle("hidden", !restoredRender);
       $("readWorkPane").classList.remove("has-result");
       $("readout").textContent = "";
       setStatus("readStatusWork", "Изображение загружено. Ищу контейнер...");
@@ -8405,6 +8635,22 @@ self.onmessage = async event => {
           .catch(e => handleError("readStatusWork", e))
           .finally(() => setReadScanning(false));
       }, 30);
+    }
+
+    async function loadImageFile(file, decodedHint = null) {
+      if (!file || (!file.type.startsWith("image/") && !isSvgFile(file))) {
+        throw new Error("Нужен файл изображения.");
+      }
+      await activateReadImageSource(await decodeImageFile(file), decodedHint, null);
+    }
+
+    async function loadBitContainerText(source) {
+      const render = parseBitText(source);
+      const canvas = document.createElement("canvas");
+      renderSigil(canvas, render);
+      const decoded = await decodePackageFromCanvas(canvas);
+      await activateReadImageSource(canvas, decoded, render);
+      showToast("Битовый контейнер восстановлен.", "ok");
     }
 
     function updateCameraMeter(count = 0) {
@@ -8637,6 +8883,7 @@ self.onmessage = async event => {
       state.imageBitmap = null;
       state.readDecoded = null;
       state.readDecodePromise = null;
+      state.readRender = null;
       setReadMasterStage();
       const canvas = $("readCanvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -8649,6 +8896,7 @@ self.onmessage = async event => {
       $("readDropPane").classList.remove("hidden");
       $("replaceImageBtn").classList.add("hidden");
       $("expandReadImageBtn").classList.add("hidden");
+      $("downloadReadSvgBtn").classList.add("hidden");
       $("readStatus").classList.add("hidden");
       $("readStatus").textContent = "";
       $("readStatusWork").textContent = "Введите мастер-ключ.";
@@ -8656,6 +8904,7 @@ self.onmessage = async event => {
       setReadScanning(false);
       $("fileIn").value = "";
       $("cameraIn").value = "";
+      $("bitCodeInput").value = "";
       setReadSource("file");
       requestAnimationFrame(() => $("dropZone").focus());
     }
@@ -8696,9 +8945,13 @@ self.onmessage = async event => {
 
     function setReadSource(source) {
       const camera = source === "camera";
-      document.querySelector(".read-source-switch").style.setProperty("--source-progress", camera ? 1 : 0);
+      const bits = source === "bits";
+      document.querySelector(".read-source-switch").style.setProperty("--source-progress", bits ? 2 : (camera ? 1 : 0));
       $("cameraSourceBtn").classList.toggle("active", camera);
-      $("uploadSourceBtn").classList.toggle("active", !camera);
+      $("bitsSourceBtn").classList.toggle("active", bits);
+      $("uploadSourceBtn").classList.toggle("active", !camera && !bits);
+      $("dropZone").classList.toggle("hidden", bits);
+      $("bitImportPane").classList.toggle("hidden", !bits);
       $("dropZone").classList.toggle("camera-mode", camera);
       $("dropZone").setAttribute("aria-label", camera ? "Сканировать камерой" : "Загрузить PNG");
       $("dropTitle").textContent = camera ? "Сканируйте камерой" : "Отправьте изображение";
@@ -8762,6 +9015,7 @@ self.onmessage = async event => {
       $("makePreviewPane").classList.add("hidden");
       $("downloadPngBtn").disabled = true;
       $("downloadSvgBtn").disabled = true;
+      $("downloadBitsBtn").disabled = true;
       $("downloadZipBtn").disabled = true;
       $("printBtn").disabled = true;
       $("verifyBtn").disabled = true;
@@ -8826,6 +9080,7 @@ self.onmessage = async event => {
       try {
         $("downloadPngBtn").disabled = true;
         $("downloadSvgBtn").disabled = true;
+        $("downloadBitsBtn").disabled = true;
         $("downloadZipBtn").disabled = true;
         $("printBtn").disabled = true;
         $("verifyBtn").disabled = true;
@@ -8924,6 +9179,16 @@ self.onmessage = async event => {
         handleError("makeStatus", e);
       }
     });
+    $("downloadBitsBtn").addEventListener("click", async () => {
+      try {
+        if (!state.lastRender) throw new Error("Сначала создайте изображение.");
+        await verifyRenderCached(selectedRender());
+        downloadBlob(makeBitText(selectedRender()), "text/plain;charset=utf-8", state.lastBitsName);
+        markSaved();
+      } catch (e) {
+        handleError("makeStatus", e);
+      }
+    });
     $("downloadZipBtn").addEventListener("click", async () => {
       try {
         setStatus("makeStatus", "Проверяю контейнер перед ZIP...");
@@ -8971,6 +9236,10 @@ self.onmessage = async event => {
       resetReadImageFlow();
     });
     $("expandReadImageBtn").addEventListener("click", openReadImageModal);
+    $("downloadReadSvgBtn").addEventListener("click", () => {
+      if (!state.readRender) return;
+      downloadBlob(makeSvg(state.readRender), "image/svg+xml", "LayerLock-restored.svg");
+    });
     $("expandMakeImageBtn").addEventListener("click", openGeneratedImageModal);
     $("closeImageModal").addEventListener("click", closeReadImageModal);
     $("imageModal").addEventListener("click", ev => {
@@ -9045,6 +9314,28 @@ self.onmessage = async event => {
     });
     $("cameraSourceBtn").addEventListener("click", () => {
       setReadSource("camera");
+    });
+    $("bitsSourceBtn").addEventListener("click", () => {
+      stopLiveCamera(true);
+      setReadSource("bits");
+      requestAnimationFrame(() => $("bitCodeInput").focus());
+    });
+    $("restoreBitsBtn").addEventListener("click", async () => {
+      $("restoreBitsBtn").disabled = true;
+      setStatus("readStatus", "Восстанавливаю битовый контейнер...");
+      try {
+        await loadBitContainerText($("bitCodeInput").value);
+      } catch (e) {
+        handleError("readStatus", e);
+      } finally {
+        $("restoreBitsBtn").disabled = false;
+      }
+    });
+    $("bitCodeInput").addEventListener("keydown", ev => {
+      if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") {
+        ev.preventDefault();
+        $("restoreBitsBtn").click();
+      }
     });
     $("closeCameraBtn").addEventListener("click", () => stopLiveCamera(true));
     $("cameraFallbackBtn").addEventListener("click", openSystemCamera);
