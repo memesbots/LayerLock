@@ -27,7 +27,8 @@ const exposed = `
       KEY_CONTEXT, KDF_PROFILES, FEC_PROFILES, randomBytes, bytesToHex, crc32,
       deriveKey, argon2idRaw, argon2WorkerSource, validateKdfParams, encryptSlot, decryptSlot, encodePack, decodePack, encodeEnvelope,
       decodeEnvelope, decodeBody, encryptContainer, decryptContainer,
-      encodePayloadFrame, decodePayloadFrame, selectFecProfile, makeSvg, makeBitText, parseBitText
+      encodePayloadFrame, decodePayloadFrame, selectFecProfile, makeSvg,
+      makeCompactBytes, parseCompactBytes, makeCompactText, parseCompactText
     };
     return;
 `;
@@ -51,23 +52,20 @@ const compactSvg = core.makeSvg({
 assert.match(compactSvg, /<path fill="#000000" d="M0 0h2v1H0zM1 1h1v1H1z"\/>/);
 assert.doesNotMatch(compactSvg, /<rect x=/);
 
-const bitRender = {
-  moduleWidth: 3,
-  moduleHeight: 2,
-  moduleData: new Uint8Array([0, 0, 255, 255, 0, 255]),
-  scale: 4,
-  formatLabel: "Aztec"
-};
-const bitText = core.makeBitText(bitRender);
-assert.match(bitText, /^LAYERLOCK-BITS\/1\nFORMAT=AZTEC\n/);
-assert.match(bitText, /\nBITS\n001\n101\n$/);
-const restoredBits = core.parseBitText(bitText);
-assert.equal(restoredBits.moduleWidth, bitRender.moduleWidth);
-assert.equal(restoredBits.moduleHeight, bitRender.moduleHeight);
-assert.equal(restoredBits.scale, bitRender.scale);
-assert.deepEqual(restoredBits.moduleData, bitRender.moduleData);
-const damagedBitText = bitText.replace("001\n101", "101\n101");
-assert.throws(() => core.parseBitText(damagedBitText), /Контрольная сумма/);
+const compactSource = new Uint8Array([0, 1, 2, 3, 127, 128, 254, 255]);
+const compactText = core.makeCompactText(compactSource, "enhanced");
+assert.match(compactText, /^LAYERLOCK-COMPACT\/1\n[A-Za-z0-9_-]+\n$/);
+const restoredCompact = core.parseCompactText(compactText);
+assert.equal(restoredCompact.fecKey, "enhanced");
+assert.deepEqual(restoredCompact.containerBytes, compactSource);
+const compactBytes = core.makeCompactBytes(compactSource, "maximum");
+const restoredRaw = core.parseCompactBytes(compactBytes);
+assert.equal(restoredRaw.fecKey, "maximum");
+assert.deepEqual(restoredRaw.containerBytes, compactSource);
+const compactLines = compactText.trim().split("\n");
+const damageIndex = Math.floor(compactLines[1].length / 2);
+compactLines[1] = `${compactLines[1].slice(0, damageIndex)}${compactLines[1][damageIndex] === "A" ? "B" : "A"}${compactLines[1].slice(damageIndex + 1)}`;
+assert.throws(() => core.parseCompactText(compactLines.join("\n")), /Контрольная сумма|Структура/);
 
 const kdf = core.KDF_PROFILES.fast;
 const vaultId = core.randomBytes(16);
@@ -93,6 +91,12 @@ assert.throws(() => core.decodePack(tamperedPack), /unsupported KDF profile/);
 const envelopeBytes = await core.encryptContainer("master-pass", packBytes, kdf);
 const body = core.decodeBody(envelopeBytes);
 assert.equal(body.kind, "locked");
+const compactEnvelope = core.parseCompactBytes(core.makeCompactBytes(envelopeBytes, "standard"));
+assert.deepEqual(compactEnvelope.containerBytes, envelopeBytes);
+assert.deepEqual(
+  core.decodePayloadFrame(core.encodePayloadFrame(compactEnvelope.containerBytes, compactEnvelope.fecProfile), core.crc32(envelopeBytes)),
+  envelopeBytes
+);
 const tamperedEnvelope = envelopeBytes.slice();
 tamperedEnvelope[9] ^= 1;
 assert.throws(() => core.decodeEnvelope(tamperedEnvelope), /unsupported KDF profile/);
