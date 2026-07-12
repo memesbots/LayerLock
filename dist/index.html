@@ -7805,17 +7805,20 @@ self.onmessage = async event => {
         `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${modules} ${modules}" shape-rendering="crispEdges">`,
         `<rect width="${modules}" height="${modules}" fill="#ffffff"/>`
       ];
+      const path = [];
       for (let y = 0; y < render.moduleHeight; y++) {
         let start = -1;
         for (let x = 0; x <= render.moduleWidth; x++) {
           const dark = x < render.moduleWidth && render.moduleData[y * render.moduleWidth + x] < 128;
           if (dark && start < 0) start = x;
           if (!dark && start >= 0) {
-            parts.push(`<rect x="${offsetX + start}" y="${offsetY + y}" width="${x - start}" height="1" fill="#000000"/>`);
+            const left = offsetX + start;
+            path.push(`M${left} ${offsetY + y}h${x - start}v1H${left}z`);
             start = -1;
           }
         }
       }
+      if (path.length) parts.push(`<path fill="#000000" d="${path.join("")}"/>`);
       parts.push("</svg>");
       return parts.join("");
     }
