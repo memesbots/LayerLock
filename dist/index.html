@@ -295,12 +295,9 @@
     .header-icon-btn:hover { color: var(--text); background: var(--button-hover); border-color: var(--line-strong); }
     .header-icon-btn svg { width: 14px; height: 14px; stroke: currentColor; }
     button#languageToggle.header-icon-btn {
-      font-family: var(--font-ui);
-      font-size: 7px;
-      font-weight: 750;
-      line-height: 1;
-      letter-spacing: 0;
+      color: var(--text-dim);
     }
+    button#languageToggle.header-icon-btn svg { width: 16px; height: 16px; }
 
     @media (max-width: 720px) {
       header { grid-template-columns: auto auto; grid-template-areas: "brand tools" "tabs tabs"; padding: 10px 12px; gap: 10px; }
@@ -3047,7 +3044,16 @@
               <path d="M12 8h.01"/>
             </svg>
           </button>
-          <button id="languageToggle" class="header-icon-btn language-toggle" type="button" aria-label="Switch to English" title="Switch to English">EN</button>
+          <button id="languageToggle" class="header-icon-btn language-toggle" type="button" aria-label="Switch language" title="Switch language">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m5 8 6 6"/>
+              <path d="m4 14 6-6 2-3"/>
+              <path d="M2 5h12"/>
+              <path d="M7 2h1"/>
+              <path d="m22 22-5-10-5 10"/>
+              <path d="M14 18h6"/>
+            </svg>
+          </button>
         </div>
       </div>
     </header>
@@ -6531,7 +6537,7 @@
       localizeTree(document);
       const toggle = document.getElementById("languageToggle");
       if (toggle) {
-        toggle.textContent = currentLanguage === "en" ? "RU" : "EN";
+        toggle.dataset.language = currentLanguage;
         toggle.title = currentLanguage === "en" ? "Переключить на русский" : "Switch to English";
         toggle.setAttribute("aria-label", toggle.title);
       }
