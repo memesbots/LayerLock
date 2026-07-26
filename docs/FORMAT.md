@@ -20,6 +20,10 @@ layer ciphertext lengths and KDF-authenticated pack data are unavailable until t
 master key succeeds. Layer records use variable lengths and no artificial random
 padding, reducing the optical payload substantially.
 
+The container KDF may optionally mix in the SHA-256 digest of an external key file.
+No key-file flag or digest is stored in the encrypted envelope, so this mode adds zero
+bytes to the optical payload and requires the same external file for recovery.
+
 ## Optical Transport
 
 LayerLock emits a two-color Aztec symbol. Encrypted `LLE4` bytes are passed directly to

@@ -27,9 +27,23 @@ v1.3 and then HKDF-SHA-256. The envelope stores one KDF profile index:
 | 0 | 32 MiB | 2 | 1 |
 | 1 | 64 MiB | 3 | 1 |
 | 2 | 128 MiB | 4 | 1 |
+| 3 | 128 MiB | 6 | 1 |
 
 HKDF salt is the UTF-8 string `LayerLock:v7:HKDF-SHA-256`. HKDF `info` is either
 `LayerLock:v7:key:slot` or `LayerLock:v7:key:container`. The output is an AES-256 key.
+
+An optional external key file may be used only for the container key. LayerLock hashes
+the selected file with SHA-256 and supplies the following byte string to Argon2id in
+place of the password bytes:
+
+```text
+"LayerLock:v7:keyfile" || 00 || NFKC(masterKey) || 00 || SHA-256(keyFile)
+```
+
+Without a key file, Argon2id receives the normalized password exactly as in the base v7
+format. No key-file flag, file name, digest, or other marker is stored in `LLE4`; using
+the feature therefore adds zero bytes to the Aztec payload. A reader cannot distinguish
+a missing key file from an incorrect master key. Losing either factor is irreversible.
 
 ## Derived Parameters
 
@@ -131,4 +145,8 @@ the container and provides no secrecy; AES-GCM performs cryptographic authentica
 - The master key hides the exact layer count and all inner metadata.
 - Image dimensions and total payload length still reveal an approximate size bound.
 - Weak passwords remain vulnerable to offline guessing after the image is obtained.
+- The interface rejects short, common, predictable, duplicate layer passwords and a
+  master key equal to a layer password; this policy does not replace a strong random key.
+- Secret form values, decrypted output, and cached key material are cleared after 15
+  minutes of inactivity. JavaScript runtimes cannot guarantee complete memory erasure.
 - The implementation has automated tests but has not received an independent audit.

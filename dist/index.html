@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -781,6 +781,54 @@
     .pass-match[data-state="duplicate"] .pass-match-dot {
       background: var(--danger, #ef4444);
       box-shadow: 0 0 0 3px color-mix(in oklab, var(--danger, #ef4444) 22%, transparent);
+    }
+
+    .security-tools {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      min-width: 0;
+    }
+    .master-entry .security-tools { grid-column: 2; }
+    .master-policy { grid-column: 2; }
+    .security-tool {
+      min-height: 30px;
+      padding: 6px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--soft-line);
+      border-radius: 8px;
+      background: color-mix(in oklab, var(--field) 72%, transparent);
+      color: var(--text-dim);
+      font: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+    .security-tool:hover {
+      color: var(--ok);
+      border-color: color-mix(in oklab, var(--ok) 40%, var(--line));
+      background: color-mix(in oklab, var(--ok) 9%, var(--field));
+    }
+    .security-tool:active { transform: scale(.97); }
+    .security-tool svg { width: 14px; height: 14px; stroke: currentColor; flex: 0 0 auto; }
+    .security-tool.remove:hover { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 42%, var(--line)); }
+    .keyfile-status {
+      flex: 1 1 180px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+    .keyfile-status.active { color: var(--ok); }
+    .read-keyfile-tools { margin-top: -2px; }
+    .read-keyfile-tools .security-tool:hover {
+      color: var(--read-accent, var(--ok));
+      border-color: color-mix(in oklab, var(--read-accent, var(--ok)) 42%, var(--line));
     }
 
     /* Paste icon inside labels */
@@ -2805,6 +2853,10 @@
         grid-template-columns: minmax(0, 1fr);
         gap: 10px;
       }
+      .master-entry .security-tools { grid-column: 1; }
+      .master-policy { grid-column: 1; }
+      .security-tool { flex: 1 1 auto; }
+      .keyfile-status { flex-basis: 100%; }
       .entry {
         padding: 12px;
       }
@@ -3213,7 +3265,7 @@
               <div class="field-fieldset pass-fieldset">
                 <span class="field-legend">Мастер-ключ</span>
                 <span class="password-field">
-                  <input id="masterKey" class="entry-pass" type="password" autocomplete="off" placeholder=" ">
+                  <input id="masterKey" class="entry-pass" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
                   <button class="password-toggle" type="button" data-target="masterKey" aria-label="Показать ключ" title="Показать ключ">
                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
@@ -3224,6 +3276,30 @@
                 <span class="field-check" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>
                 </span>
+                <span class="field-danger" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 17h.01"/></svg>
+                </span>
+              </div>
+              <div id="masterPolicy" class="pass-match master-policy" data-state="empty" aria-live="polite">
+                <span class="pass-match-dot" aria-hidden="true"></span>
+                <span class="pass-match-text"></span>
+              </div>
+              <div class="security-tools">
+                <input id="masterKeyFileInput" type="file" hidden>
+                <button id="generateMasterKeyBtn" class="security-tool" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14Z"/><path d="M5 14v7"/><path d="M2 17.5h6"/></svg>
+                  <span>Создать ключ</span>
+                </button>
+                <button id="selectMasterKeyFileBtn" class="security-tool" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M12 12v6"/></svg>
+                  <span>Ключ-файл</span>
+                </button>
+                <button id="generateKeyFileBtn" class="security-tool" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                  <span>Создать файл</span>
+                </button>
+                <button id="removeMasterKeyFileBtn" class="security-tool remove hidden" type="button">Убрать файл</button>
+                <span id="masterKeyFileStatus" class="keyfile-status">Опционально: файл становится вторым фактором и не сохраняется в контейнере.</span>
               </div>
             </div>
             <div class="layers-toolbar">
@@ -3271,6 +3347,7 @@
               <option value="fast">Обычная</option>
               <option value="normal" selected>Усиленная</option>
               <option value="max">Максимальная</option>
+              <option value="ultra">Экстремальная</option>
             </select>
             <span id="kdfNote" class="setting-note">Argon2id + HKDF-SHA-256 · 64 MiB · 3 прохода</span>
           </label>
@@ -3328,12 +3405,14 @@
               <ol>
                 <li>Введите название. Оно используется для имен файлов и ZIP-папки.</li>
                 <li>В блоке “Контейнер” задайте мастер-ключ. Он открывает контейнер и скрывает структуру слоев.</li>
+                <li>При необходимости подключите ключ-файл. Он не попадает в контейнер: для чтения понадобится этот же файл, а его потеря необратима.</li>
                 <li>Добавьте слой: пароль слоя и текст, который нужно получить при этом пароле.</li>
               </ol>
             </div>
             <div class="info-card">
               <h3>Как создается изображение</h3>
               <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” управляет встроенной коррекцией Aztec для камеры и печати.</p>
+              <p>Мастер-ключ должен содержать не менее 16 символов, пароль слоя — не менее 12. Одинаковые, распространенные и предсказуемые пароли отклоняются. Секретные поля и открытый результат очищаются после 15 минут бездействия.</p>
             </div>
             <div class="info-card">
               <h3>Скачивание</h3>
@@ -3350,6 +3429,7 @@
               <h3>Два этапа доступа</h3>
               <ol>
                 <li>Введите мастер-ключ, чтобы открыть контейнер. До этого слои и их количество не раскрываются.</li>
+                <li>Если контейнер создавался с ключ-файлом, выберите тот же файл до открытия. Сам контейнер не сообщает, использовался ли второй фактор.</li>
                 <li>После успешного открытия появится поле “Пароль слоя”. Введите пароль нужного слоя, и текст появится в результате.</li>
               </ol>
             </div>
@@ -3496,7 +3576,7 @@
                 <div id="readMasterField" class="field-fieldset">
                   <span class="field-legend">Мастер-ключ</span>
                   <span class="password-field">
-                    <input id="readPassword" type="password" autocomplete="off" placeholder=" ">
+                    <input id="readPassword" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
                     <button class="password-toggle" type="button" data-target="readPassword" aria-label="Показать мастер-ключ" title="Показать мастер-ключ">
                       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
@@ -3508,10 +3588,19 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>
                   </span>
                 </div>
+                <div class="security-tools read-keyfile-tools">
+                  <input id="readKeyFileInput" type="file" hidden>
+                  <button id="selectReadKeyFileBtn" class="security-tool" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M12 12v6"/></svg>
+                    <span>Ключ-файл</span>
+                  </button>
+                  <button id="removeReadKeyFileBtn" class="security-tool remove hidden" type="button">Убрать файл</button>
+                  <span id="readKeyFileStatus" class="keyfile-status">Выберите тот же файл, если он использовался при создании.</span>
+                </div>
                 <div id="readLayerField" class="field-fieldset hidden">
                   <span class="field-legend">Пароль слоя</span>
                   <span class="password-field">
-                    <input id="readLayerPassword" type="password" autocomplete="off" placeholder=" ">
+                    <input id="readLayerPassword" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
                     <button class="password-toggle" type="button" data-target="readLayerPassword" aria-label="Показать пароль слоя" title="Показать пароль слоя">
                       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
@@ -6396,6 +6485,25 @@
       "Усиленная": "Hardened",
       "Максимальная": "Maximum",
       "Максимальное": "Maximum",
+      "Экстремальная": "Extreme",
+      "Создать ключ": "Generate key",
+      "Создать файл": "Generate file",
+      "Ключ-файл": "Key file",
+      "Убрать файл": "Remove file",
+      "Опционально: файл становится вторым фактором и не сохраняется в контейнере.": "Optional: the file becomes a second factor and is not stored in the container.",
+      "Выберите тот же файл, если он использовался при создании.": "Select the same file if one was used when creating the container.",
+      "Ключ-файл подключен. Без него мастер-ключ не сработает.": "Key file attached. The master key will not work without it.",
+      "Ключ-файл не используется.": "No key file is in use.",
+      "Сгенерирован стойкий мастер-ключ. Сохраните его отдельно.": "A strong master key was generated. Store it separately.",
+      "Ключ-файл должен содержать не менее 16 байт.": "The key file must contain at least 16 bytes.",
+      "Ключ-файл слишком большой. Максимум — 16 MiB.": "The key file is too large. The maximum is 16 MiB.",
+      "Ключ-файл не выбран.": "No key file was selected.",
+      "Мастер-ключ слишком короткий: используйте не менее 16 символов.": "The master key is too short: use at least 16 characters.",
+      "Пароль слоя слишком короткий: используйте не менее 12 символов.": "The layer password is too short: use at least 12 characters.",
+      "Этот пароль слишком распространен или легко угадывается.": "This password is too common or easy to guess.",
+      "Мастер-ключ не должен совпадать с паролем слоя.": "The master key must not match a layer password.",
+      "Секретные поля и расшифрованный результат очищены после 15 минут бездействия.": "Secret fields and the decrypted result were cleared after 15 minutes of inactivity.",
+      "Скопировано. Помните: системный буфер обмена находится вне контроля LayerLock.": "Copied. Remember: the system clipboard is outside LayerLock's control.",
       "Восстановление повреждений": "Damage recovery",
       "Стандартное": "Standard",
       "Запас восстановления": "Recovery level",
@@ -6413,9 +6521,11 @@
       "Что заполнять": "What to enter",
       "Введите название. Оно используется для имен файлов и ZIP-папки.": "Enter a name. It is used for file names and the ZIP folder.",
       "В блоке “Контейнер” задайте мастер-ключ. Он открывает контейнер и скрывает структуру слоев.": "Set a master key in the “Container” section. It unlocks the container and conceals the layer structure.",
+      "При необходимости подключите ключ-файл. Он не попадает в контейнер: для чтения понадобится этот же файл, а его потеря необратима.": "Optionally attach a key file. It is not stored in the container: the same file is required for reading, and losing it is irreversible.",
       "Добавьте слой: пароль слоя и текст, который нужно получить при этом пароле.": "Add a layer with its password and the text that should be revealed by that password.",
       "Как создается изображение": "How the image is created",
       "Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” управляет встроенной коррекцией Aztec для камеры и печати.": "Each layer's text is normalized, compressed, and encrypted with AES-GCM using an isolated key. Passwords are hardened with Argon2id; “Password protection” controls memory usage and the number of passes. The container is separately locked with the master key. “Damage recovery” controls Aztec's built-in error correction for cameras and printing.",
+      "Мастер-ключ должен содержать не менее 16 символов, пароль слоя — не менее 12. Одинаковые, распространенные и предсказуемые пароли отклоняются. Секретные поля и открытый результат очищаются после 15 минут бездействия.": "The master key must contain at least 16 characters and each layer password at least 12. Duplicate, common, and predictable passwords are rejected. Secret fields and decrypted results are cleared after 15 minutes of inactivity.",
       "Скачивание": "Downloads",
       "PNG и SVG скачивают Aztec-контейнер. Компактные TXT и RAW сохраняют зашифрованное ядро до оптической коррекции и позволяют заново построить Aztec и SVG. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, TXT, RAW и “settings.txt”. Ключи и пароли туда не записываются.": "PNG and SVG download the Aztec container. Compact TXT and RAW store the encrypted core before optical error correction and can rebuild Aztec and SVG. ZIP verifies the container and saves PNG, SVG, TXT, RAW, and settings.txt. Keys and passwords are never written to it.",
       "Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip": "Example: name “Documents” -> Documents-xxxxxx.png / Documents-xxxxxx.zip",
@@ -6424,6 +6534,7 @@
       "Выберите “Файл”, “Камера”, перетащите картинку в зону загрузки или вставьте ее через Ctrl+V. Сканер ищет Aztec, проверяет оптическую оболочку и коррекцию ошибок, после чего предлагает мастер-ключ. Камера подсказывает проблемы со светом и резкостью. Видео остается только в памяти устройства.": "Choose “File” or “Camera”, drag an image into the upload area, or paste it with Ctrl+V. The scanner locates the Aztec symbol, validates the optical envelope and error correction, then asks for the master key. The camera provides lighting and sharpness guidance. Video remains only in device memory.",
       "Два этапа доступа": "Two-stage access",
       "Введите мастер-ключ, чтобы открыть контейнер. До этого слои и их количество не раскрываются.": "Enter the master key to unlock the container. Until then, the layers and their count remain concealed.",
+      "Если контейнер создавался с ключ-файлом, выберите тот же файл до открытия. Сам контейнер не сообщает, использовался ли второй фактор.": "If the container was created with a key file, select the same file before unlocking it. The container itself does not reveal whether a second factor was used.",
       "После успешного открытия появится поле “Пароль слоя”. Введите пароль нужного слоя, и текст появится в результате.": "After the container is unlocked, the “Layer password” field appears. Enter the password for the required layer to reveal its text.",
       "Если не открывается": "If it does not open",
       "Проверьте мастер-ключ, пароль слоя, обрезку изображения и сжатие с потерями. Для бумажной копии лучше сохранить четкий контраст и не закрывать углы изображения.": "Check the master key, layer password, image cropping, and lossy compression. For printed copies, preserve strong contrast and keep the image corners unobstructed.",
@@ -6571,6 +6682,8 @@
       [/^Слой (\d+): введите пароль\.$/, (_, n) => `Layer ${n}: enter a password.`],
       [/^Слой (\d+): пароли не совпадают\.$/, (_, n) => `Layer ${n}: passwords do not match.`],
       [/^Слой (\d+): введите текст\.$/, (_, n) => `Layer ${n}: enter text.`],
+      [/^Слой (\d+): Пароль слоя слишком короткий: используйте не менее 12 символов\.$/, (_, n) => `Layer ${n}: the layer password is too short; use at least 12 characters.`],
+      [/^Слой (\d+): Этот пароль слишком распространен или легко угадывается\.$/, (_, n) => `Layer ${n}: this password is too common or easy to guess.`],
       [/^Слои (.+): одинаковые пароли запрещены\.$/, (_, list) => `Layers ${list.replace(/ и /g, " and ")}: duplicate passwords are not allowed.`],
       [/^Легкий · ~(\d+) бит$/, (_, bits) => `Weak · ~${bits} bits`],
       [/^Средний · ~(\d+) бит$/, (_, bits) => `Moderate · ~${bits} bits`],
@@ -6706,7 +6819,8 @@
     const KDF_PROFILES = {
       fast: { label: "Обычная", memory: 32768, iterations: 2, parallelism: 1 },
       normal: { label: "Усиленная", memory: 65536, iterations: 3, parallelism: 1 },
-      max: { label: "Максимальная", memory: 131072, iterations: 4, parallelism: 1 }
+      max: { label: "Максимальная", memory: 131072, iterations: 4, parallelism: 1 },
+      ultra: { label: "Экстремальная", memory: 131072, iterations: 6, parallelism: 1 }
     };
     const KDF_ID = 4;
     const KDF_NAME = "Argon2id-v1.3";
@@ -6727,7 +6841,10 @@
     const NOTE_DEFLATE = 2;
     const COMPACT_TEXT_MAGIC = "LAYERLOCK-COMPACT/2";
     const FEC_PROFILE_KEYS = ["minimal", "standard", "enhanced", "maximum"];
-    const KDF_PROFILE_KEYS = ["fast", "normal", "max"];
+    const KDF_PROFILE_KEYS = ["fast", "normal", "max", "ultra"];
+    const KEY_FILE_MAX_BYTES = 16 * 1024 * 1024;
+    const KEY_FILE_MIN_BYTES = 16;
+    const SENSITIVE_IDLE_MS = 15 * 60 * 1000;
     const enc = new TextEncoder();
     const dec = new TextDecoder();
     const $ = id => document.getElementById(id);
@@ -6748,7 +6865,13 @@
       lastContainerBytes: null,
       lastFecKey: "standard",
       lastEntries: [],
+      lastLayerCount: 0,
       lastMasterKey: "",
+      createKeyFileDigest: null,
+      readKeyFileDigest: null,
+      lastMasterKeyFileDigest: null,
+      lastUsedKeyFile: false,
+      sensitiveTimer: null,
       lastBaseName: "LayerLock",
       dirty: false,
       verifyCache: new Set(),
@@ -6995,6 +7118,162 @@
       return String(password).normalize("NFKC");
     }
 
+    function passwordIdentity(password) {
+      return normalizePassword(password).trim().toLocaleLowerCase("en-US");
+    }
+
+    const COMMON_PASSWORDS = new Set([
+      "password", "password1", "password123", "123456", "12345678", "123456789",
+      "123123", "111111", "000000", "qwerty", "qwerty123", "admin", "letmein",
+      "welcome", "iloveyou", "master", "layerlock", "пароль", "пароль123"
+    ]);
+
+    function passwordPolicyIssue(password, role = "layer") {
+      const normalized = normalizePassword(password);
+      const identity = passwordIdentity(normalized);
+      const minLength = role === "master" ? 16 : 12;
+      if ([...normalized].length < minLength) {
+        return role === "master"
+          ? "Мастер-ключ слишком короткий: используйте не менее 16 символов."
+          : "Пароль слоя слишком короткий: используйте не менее 12 символов.";
+      }
+      const compact = identity.replace(/\s+/g, "");
+      const predictable = COMMON_PASSWORDS.has(identity)
+        || (/^\d+$/.test(compact) && compact.length < 20)
+        || /^(.)\1+$/.test(compact)
+        || /^(.{1,4})\1{2,}$/.test(compact)
+        || ["abcdefghijklmnopqrstuvwxyz", "01234567890123456789", "qwertyuiopasdfghjkl"].some(sequence => sequence.includes(compact));
+      return predictable ? "Этот пароль слишком распространен или легко угадывается." : "";
+    }
+
+    function wipeBytes(bytes) {
+      if (bytes instanceof Uint8Array) bytes.fill(0);
+    }
+
+    async function digestKeyFile(file) {
+      if (!file) throw new Error("Ключ-файл не выбран.");
+      if (file.size < KEY_FILE_MIN_BYTES) throw new Error("Ключ-файл должен содержать не менее 16 байт.");
+      if (file.size > KEY_FILE_MAX_BYTES) throw new Error("Ключ-файл слишком большой. Максимум — 16 MiB.");
+      const source = new Uint8Array(await file.arrayBuffer());
+      try {
+        return new Uint8Array(await crypto.subtle.digest("SHA-256", source));
+      } finally {
+        source.fill(0);
+      }
+    }
+
+    function updateKeyFileUi(kind, active) {
+      const create = kind === "create";
+      const status = $(create ? "masterKeyFileStatus" : "readKeyFileStatus");
+      const remove = $(create ? "removeMasterKeyFileBtn" : "removeReadKeyFileBtn");
+      status.classList.toggle("active", active);
+      status.textContent = active
+        ? "Ключ-файл подключен. Без него мастер-ключ не сработает."
+        : (create
+          ? "Опционально: файл становится вторым фактором и не сохраняется в контейнере."
+          : "Выберите тот же файл, если он использовался при создании.");
+      remove.classList.toggle("hidden", !active);
+    }
+
+    function clearKeyFile(kind) {
+      const create = kind === "create";
+      const stateKey = create ? "createKeyFileDigest" : "readKeyFileDigest";
+      wipeBytes(state[stateKey]);
+      state[stateKey] = null;
+      const input = $(create ? "masterKeyFileInput" : "readKeyFileInput");
+      if (input) input.value = "";
+      updateKeyFileUi(kind, false);
+    }
+
+    async function attachKeyFile(kind, file) {
+      const digest = await digestKeyFile(file);
+      const stateKey = kind === "create" ? "createKeyFileDigest" : "readKeyFileDigest";
+      wipeBytes(state[stateKey]);
+      state[stateKey] = digest;
+      updateKeyFileUi(kind, true);
+      showToast("Ключ-файл подключен. Без него мастер-ключ не сработает.", "ok");
+    }
+
+    function generateMasterKey() {
+      const field = $("masterKey");
+      const raw = randomBytes(18);
+      try {
+        field.value = bytesToBase64Url(raw);
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+        field.focus();
+        showToast("Сгенерирован стойкий мастер-ключ. Сохраните его отдельно.", "ok");
+      } finally {
+        raw.fill(0);
+      }
+    }
+
+    async function generateKeyFile() {
+      const raw = randomBytes(32);
+      try {
+        const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", raw));
+        wipeBytes(state.createKeyFileDigest);
+        state.createKeyFileDigest = digest;
+        updateKeyFileUi("create", true);
+        const name = `${safeName($("vaultName").value || "LayerLock")}.llkey`;
+        downloadBlob(raw.slice(), "application/octet-stream", name);
+        showToast("Ключ-файл подключен. Без него мастер-ключ не сработает.", "ok");
+      } finally {
+        raw.fill(0);
+      }
+    }
+
+    function hasSensitiveValues() {
+      const entryHasValue = [...document.querySelectorAll("#entries .entry-pass, #entries .entry-pass-confirm, #entries .entry-text")]
+        .some(input => Boolean(input.value));
+      return Boolean(
+        $("masterKey")?.value
+        || $("readPassword")?.value
+        || $("readLayerPassword")?.value
+        || $("readout")?.textContent
+        || entryHasValue
+        || state.createKeyFileDigest
+        || state.readKeyFileDigest
+        || state.lastMasterKey
+      );
+    }
+
+    function clearSensitiveData(silent = false) {
+      clearTimeout(state.sensitiveTimer);
+      state.sensitiveTimer = null;
+      for (const input of document.querySelectorAll("#masterKey, #entries .entry-pass, #entries .entry-pass-confirm, #entries .entry-text, #readPassword, #readLayerPassword")) {
+        input.value = "";
+        input.removeAttribute("aria-invalid");
+        if (input.matches(".field-fieldset input")) syncFieldsetValid(input);
+      }
+      for (const entry of document.querySelectorAll("#entries .entry")) {
+        if (entry.classList.contains("master-entry")) updateMatch(entry);
+        else updateStrength(entry);
+      }
+      $("readout").textContent = "";
+      $("readWorkPane").classList.remove("has-result");
+      state.readPack = null;
+      state.readMeta = null;
+      state.lastEntries.forEach(entry => {
+        entry.password = "";
+        entry.text = "";
+      });
+      state.lastEntries = [];
+      state.lastMasterKey = "";
+      wipeBytes(state.lastMasterKeyFileDigest);
+      state.lastMasterKeyFileDigest = null;
+      clearKeyFile("create");
+      clearKeyFile("read");
+      if (state.imageBitmap) setReadMasterStage();
+      if (!silent) showToast("Секретные поля и расшифрованный результат очищены после 15 минут бездействия.", "ok");
+    }
+
+    function touchSensitiveActivity() {
+      clearTimeout(state.sensitiveTimer);
+      state.sensitiveTimer = setTimeout(() => {
+        if (hasSensitiveValues()) clearSensitiveData(false);
+      }, SENSITIVE_IDLE_MS);
+    }
+
     function kdfTag(params) {
       return `${params.memory}:${params.iterations}:${params.parallelism}`;
     }
@@ -7127,9 +7406,22 @@ self.onmessage = async event => {
       });
     }
 
-    async function deriveKey(password, salt, context, params = KDF_PROFILES.normal) {
+    async function deriveKey(password, salt, context, params = KDF_PROFILES.normal, keyFileDigest = null) {
       if (!Object.values(KEY_CONTEXT).includes(context)) throw new Error("invalid key context");
-      const passwordBytes = enc.encode(normalizePassword(password));
+      const plainPasswordBytes = enc.encode(normalizePassword(password));
+      let passwordBytes = plainPasswordBytes;
+      if (keyFileDigest) {
+        if (context !== KEY_CONTEXT.container || !(keyFileDigest instanceof Uint8Array) || keyFileDigest.length !== 32) {
+          plainPasswordBytes.fill(0);
+          throw new Error("invalid key file digest");
+        }
+        passwordBytes = concatBytes([
+          enc.encode("LayerLock:v7:keyfile\0"),
+          plainPasswordBytes,
+          new Uint8Array([0]),
+          keyFileDigest
+        ]);
+      }
       let baseBytes;
       try {
         baseBytes = await argon2idRaw(passwordBytes, salt, params);
@@ -7142,6 +7434,7 @@ self.onmessage = async event => {
           ["encrypt", "decrypt"]
         );
       } finally {
+        plainPasswordBytes.fill(0);
         passwordBytes.fill(0);
         baseBytes?.fill(0);
       }
@@ -7249,11 +7542,19 @@ self.onmessage = async event => {
         entry.classList.toggle("is-active", Boolean(pass));
         return;
       }
-      entry.classList.toggle("is-active", Boolean(pass && confirm && pass === confirm && text && !entry.querySelector(".is-duplicate")));
+      entry.classList.toggle("is-active", Boolean(pass && confirm && normalizePassword(pass) === normalizePassword(confirm) && text && !entry.querySelector(".is-duplicate")));
     }
     function syncDuplicatePasswords() {
       const entries = [...document.querySelectorAll("#entries .entry")];
+      const masterIdentity = passwordIdentity($("masterKey")?.value || "");
+      const masterFieldset = document.querySelector(".master-entry .pass-fieldset");
+      const masterPolicy = $("masterPolicy");
       const groups = new Map();
+      masterFieldset?.classList.remove("is-duplicate");
+      if (masterPolicy?.dataset.state === "duplicate") {
+        masterPolicy.dataset.state = "empty";
+        masterPolicy.querySelector(".pass-match-text").textContent = "";
+      }
       for (const entry of entries) {
         const passFieldset = entry.querySelector(".pass-fieldset");
         const confirmFieldset = entry.querySelector(".confirm-fieldset");
@@ -7263,13 +7564,15 @@ self.onmessage = async event => {
         if (box?.dataset.state === "duplicate") {
           const pass = entry.querySelector(".entry-pass")?.value || "";
           const confirm = entry.querySelector(".entry-pass-confirm")?.value || "";
-          box.dataset.state = !confirm ? "empty" : (pass === confirm ? "ok" : "bad");
-          box.querySelector(".pass-match-text").textContent = pass && confirm && pass !== confirm ? "Пароли не совпадают" : "";
+          const matches = normalizePassword(pass) === normalizePassword(confirm);
+          box.dataset.state = !confirm ? "empty" : (matches ? "ok" : "bad");
+          box.querySelector(".pass-match-text").textContent = pass && confirm && !matches ? "Пароли не совпадают" : "";
         }
         const password = entry.querySelector(".entry-pass")?.value || "";
         if (!password) continue;
-        if (!groups.has(password)) groups.set(password, []);
-        groups.get(password).push(entry);
+        const identity = passwordIdentity(password);
+        if (!groups.has(identity)) groups.set(identity, []);
+        groups.get(identity).push(entry);
       }
       for (const duplicates of groups.values()) {
         if (duplicates.length < 2) continue;
@@ -7277,10 +7580,23 @@ self.onmessage = async event => {
           const pass = entry.querySelector(".entry-pass")?.value || "";
           const confirm = entry.querySelector(".entry-pass-confirm")?.value || "";
           entry.querySelector(".pass-fieldset")?.classList.add("is-duplicate");
-          if (confirm === pass) entry.querySelector(".confirm-fieldset")?.classList.add("is-duplicate");
+          if (normalizePassword(confirm) === normalizePassword(pass)) entry.querySelector(".confirm-fieldset")?.classList.add("is-duplicate");
           const box = entry.querySelector(".pass-match");
           box.dataset.state = "duplicate";
           box.querySelector(".pass-match-text").textContent = "Этот пароль уже используется в другом слое";
+        }
+      }
+      if (masterIdentity && groups.has(masterIdentity)) {
+        masterFieldset?.classList.add("is-duplicate");
+        masterPolicy.dataset.state = "duplicate";
+        masterPolicy.querySelector(".pass-match-text").textContent = "Мастер-ключ не должен совпадать с паролем слоя.";
+        for (const entry of groups.get(masterIdentity)) {
+          entry.querySelector(".pass-fieldset")?.classList.add("is-duplicate");
+          const confirm = entry.querySelector(".entry-pass-confirm")?.value || "";
+          if (passwordIdentity(confirm) === masterIdentity) entry.querySelector(".confirm-fieldset")?.classList.add("is-duplicate");
+          const box = entry.querySelector(".pass-match");
+          box.dataset.state = "duplicate";
+          box.querySelector(".pass-match-text").textContent = "Мастер-ключ не должен совпадать с паролем слоя.";
         }
       }
       entries.forEach(syncEntryState);
@@ -7303,7 +7619,7 @@ self.onmessage = async event => {
       if (!conf) {
         box.dataset.state = "empty";
         txt.textContent = "";
-      } else if (pass === conf) {
+      } else if (normalizePassword(pass) === normalizePassword(conf)) {
         box.dataset.state = "ok";
         confirmFieldset.classList.add("is-ok");
         txt.textContent = "";
@@ -7320,6 +7636,8 @@ self.onmessage = async event => {
     function collectMasterKey() {
       const key = $("masterKey").value;
       if (!key) throw new Error("Введите мастер-ключ.");
+      const issue = passwordPolicyIssue(key, "master");
+      if (issue) throw new Error(issue);
       return key;
     }
 
@@ -7335,16 +7653,21 @@ self.onmessage = async event => {
       if (!entries.length) throw new Error("Добавьте хотя бы один слой с паролем и текстом.");
       for (const entry of entries) {
         if (!entry.password) throw new Error(`Слой ${entry.index}: введите пароль.`);
-        if (entry.password !== entry.confirm) throw new Error(`Слой ${entry.index}: пароли не совпадают.`);
+        if (normalizePassword(entry.password) !== normalizePassword(entry.confirm)) throw new Error(`Слой ${entry.index}: пароли не совпадают.`);
+        const issue = passwordPolicyIssue(entry.password, "layer");
+        if (issue) throw new Error(`Слой ${entry.index}: ${issue}`);
         if (!entry.text) throw new Error(`Слой ${entry.index}: введите текст.`);
       }
       const passwordLayers = new Map();
       for (const entry of entries) {
-        if (!passwordLayers.has(entry.password)) passwordLayers.set(entry.password, []);
-        passwordLayers.get(entry.password).push(entry.index);
+        const identity = passwordIdentity(entry.password);
+        if (!passwordLayers.has(identity)) passwordLayers.set(identity, []);
+        passwordLayers.get(identity).push(entry.index);
       }
       const duplicateLayers = [...passwordLayers.values()].find(indexes => indexes.length > 1);
       if (duplicateLayers) throw new Error(`Слои ${duplicateLayers.join(" и ")}: одинаковые пароли запрещены.`);
+      const masterIdentity = passwordIdentity($("masterKey").value);
+      if (passwordLayers.has(masterIdentity)) throw new Error("Мастер-ключ не должен совпадать с паролем слоя.");
       return entries.map(({ password, text }) => ({ password, text }));
     }
 
@@ -7360,20 +7683,24 @@ self.onmessage = async event => {
       };
       if (!$("vaultName").value.trim()) return focusInvalid($("vaultName"));
       if (!$("masterKey").value) return focusInvalid($("masterKey"));
+      if (passwordPolicyIssue($("masterKey").value, "master")) return focusInvalid($("masterKey"));
       for (const layer of $("entries").children) {
         const pass = layer.querySelector(".entry-pass");
         const confirm = layer.querySelector(".entry-pass-confirm");
         const text = layer.querySelector(".entry-text");
         if (!pass.value) return focusInvalid(pass);
-        if (pass.value !== confirm.value) return focusInvalid(confirm);
+        if (normalizePassword(pass.value) !== normalizePassword(confirm.value)) return focusInvalid(confirm);
+        if (passwordPolicyIssue(pass.value, "layer")) return focusInvalid(pass);
         if (!text.value) return focusInvalid(text);
       }
       const passwordFields = [...document.querySelectorAll("#entries .entry-pass")];
       const seenPasswords = new Map();
       for (const field of passwordFields) {
         if (!field.value) continue;
-        if (seenPasswords.has(field.value)) return focusInvalid(field);
-        seenPasswords.set(field.value, field);
+        const identity = passwordIdentity(field.value);
+        if (identity === passwordIdentity($("masterKey").value)) return focusInvalid(field);
+        if (seenPasswords.has(identity)) return focusInvalid(field);
+        seenPasswords.set(identity, field);
       }
       return false;
     }
@@ -7425,7 +7752,7 @@ self.onmessage = async event => {
         <div class="field-fieldset pass-fieldset">
           <span class="field-legend">Пароль</span>
           <span class="password-field">
-            <input class="entry-pass" type="password" autocomplete="off" placeholder=" ">
+            <input class="entry-pass" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
             <button class="password-toggle" type="button" aria-label="Показать пароль" title="Показать пароль">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
@@ -7447,7 +7774,7 @@ self.onmessage = async event => {
         <div class="field-fieldset confirm-fieldset">
           <span class="field-legend">Повторите пароль</span>
           <span class="password-field">
-            <input class="entry-pass-confirm" type="password" autocomplete="off" placeholder=" ">
+            <input class="entry-pass-confirm" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
             <button class="password-toggle" type="button" aria-label="Показать пароль" title="Показать пароль">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
@@ -7708,11 +8035,11 @@ self.onmessage = async event => {
       throw new Error("unsupported body");
     }
 
-    async function encryptContainer(masterKey, packBytes, vaultId, kdf = KDF_PROFILES.normal) {
+    async function encryptContainer(masterKey, packBytes, vaultId, kdf = KDF_PROFILES.normal, keyFileDigest = null) {
       const safeKdf = validateKdfParams(kdf);
       const salt = await deriveDomainBytes("container-salt", vaultId, new Uint8Array(), 16);
       const iv = await deriveDomainBytes("container-nonce", vaultId, new Uint8Array(), 12);
-      const key = await deriveKey(masterKey, salt, KEY_CONTEXT.container, safeKdf);
+      const key = await deriveKey(masterKey, salt, KEY_CONTEXT.container, safeKdf, keyFileDigest);
       const ciphertext = new Uint8Array(await crypto.subtle.encrypt({
         name: "AES-GCM",
         iv,
@@ -7721,10 +8048,10 @@ self.onmessage = async event => {
       return encodeEnvelope(ciphertext, vaultId, safeKdf);
     }
 
-    async function decryptContainer(masterKey, envelope) {
+    async function decryptContainer(masterKey, envelope, keyFileDigest = null) {
       const salt = await deriveDomainBytes("container-salt", envelope.id, new Uint8Array(), 16);
       const iv = await deriveDomainBytes("container-nonce", envelope.id, new Uint8Array(), 12);
-      const key = await deriveKey(masterKey, salt, KEY_CONTEXT.container, envelope.q);
+      const key = await deriveKey(masterKey, salt, KEY_CONTEXT.container, envelope.q, keyFileDigest);
       const plain = new Uint8Array(await crypto.subtle.decrypt({
         name: "AES-GCM",
         iv,
@@ -7733,9 +8060,9 @@ self.onmessage = async event => {
       return decodePack(plain, envelope.id, envelope.q);
     }
 
-    async function packFromBody(body, masterKey) {
+    async function packFromBody(body, masterKey, keyFileDigest = null) {
       if (!masterKey) throw new Error("Введите мастер-ключ.");
-      return decryptContainer(masterKey, body.envelope);
+      return decryptContainer(masterKey, body.envelope, keyFileDigest);
     }
 
     function renderPixelSize(render) {
@@ -7984,11 +8311,12 @@ self.onmessage = async event => {
         `Compact text encoding: Base64URL`,
         "Color classes: 2",
         "Palette: black / white",
-        `Layers: ${state.lastEntries.length}`,
+        `Layers: ${state.lastLayerCount}`,
         "KDF: Argon2id + HKDF-SHA-256",
         `KDF memory: ${kdf.memory / 1024} MiB`,
         `KDF passes: ${kdf.iterations}`,
         `KDF parallelism: ${kdf.parallelism}`,
+        `External master-key file: ${state.lastUsedKeyFile ? "required" : "not used"}`,
         `Damage recovery: ${translateForLanguage(fec.label || "Custom", "en")}`,
         `Aztec error correction: ${fec.ecLevel || Math.round((fec.ratio || 0) * 100)}%`,
         "Additional outer error correction: none",
@@ -8018,11 +8346,12 @@ self.onmessage = async event => {
         `Кодирование компактного TXT: Base64URL`,
         "Цветовых классов: 2",
         "Палитра: черный / белый",
-        `Слоев: ${state.lastEntries.length}`,
+        `Слоев: ${state.lastLayerCount}`,
         `KDF: Argon2id + HKDF-SHA-256`,
         `KDF-память: ${kdf.memory / 1024} MiB`,
         `KDF-проходы: ${kdf.iterations}`,
         `KDF-параллелизм: ${kdf.parallelism}`,
+        `Внешний ключ-файл мастер-ключа: ${state.lastUsedKeyFile ? "требуется" : "не используется"}`,
         `Восстановление повреждений: ${fec.label || "Пользовательское"}`,
         `Коррекция ошибок Aztec: ${fec.ecLevel || Math.round((fec.ratio || 0) * 100)}%`,
         "Дополнительная внешняя коррекция: отсутствует",
@@ -8072,7 +8401,7 @@ self.onmessage = async event => {
       }
       const packageBytes = encodePack(slots);
       onProgress("Укрепляю мастер-ключ и закрываю контейнер", 76);
-      const containerBytes = await encryptContainer(masterKey, packageBytes, vaultId, kdfProfile);
+      const containerBytes = await encryptContainer(masterKey, packageBytes, vaultId, kdfProfile, state.createKeyFileDigest);
       const fecProfile = selectedFecProfile();
       const fecKey = $("fecProfile").value in FEC_PROFILES ? $("fecProfile").value : "standard";
       onProgress(`Настраиваю коррекцию Aztec · ${fecProfile.label.toLowerCase()}`, 80);
@@ -8088,7 +8417,11 @@ self.onmessage = async event => {
       state.lastContainerBytes = containerBytes.slice();
       state.lastFecKey = fecKey;
       state.lastEntries = entries.map(e => ({ ...e }));
+      state.lastLayerCount = entries.length;
       state.lastMasterKey = masterKey;
+      wipeBytes(state.lastMasterKeyFileDigest);
+      state.lastMasterKeyFileDigest = state.createKeyFileDigest?.slice() || null;
+      state.lastUsedKeyFile = Boolean(state.createKeyFileDigest);
       state.lastBaseName = baseName;
       state.lastName = `${baseName}-${id}.png`;
       state.lastSvgName = `${baseName}-${id}.svg`;
@@ -8122,13 +8455,13 @@ self.onmessage = async event => {
       await verifyRender(state.lastRender, state.lastEntries);
     }
 
-    async function verifyRender(render, entries = state.lastEntries, masterKey = state.lastMasterKey) {
+    async function verifyRender(render, entries = state.lastEntries, masterKey = state.lastMasterKey, keyFileDigest = state.lastMasterKeyFileDigest) {
       if (!render) throw new Error("Сначала создайте изображение.");
       const c = document.createElement("canvas");
       renderSigil(c, render);
       const decoded = await decodePackageFromCanvas(c);
       const { body } = decoded;
-      const pack = await packFromBody(body, masterKey);
+      const pack = await packFromBody(body, masterKey, keyFileDigest);
       const aadContext = { vaultId: pack.u, packVersion: pack.v, kdf: pack.q };
       for (const entry of entries) {
         let ok = false;
@@ -8268,6 +8601,9 @@ self.onmessage = async event => {
     function setReadMasterStage() {
       state.readPack = null;
       state.readMeta = null;
+      clearKeyFile("read");
+      $("selectReadKeyFileBtn").disabled = false;
+      $("removeReadKeyFileBtn").disabled = false;
       $("readMasterField").classList.remove("is-ok");
       $("readLayerField").classList.remove("is-ok");
       $("readLayerField").classList.add("hidden");
@@ -8286,6 +8622,8 @@ self.onmessage = async event => {
       $("readLayerField").classList.remove("hidden");
       $("readBtn").textContent = "Расшифровать";
       $("readPassword").readOnly = true;
+      $("selectReadKeyFileBtn").disabled = true;
+      $("removeReadKeyFileBtn").disabled = true;
       $("readLayerPassword").value = "";
       syncFieldsetValid($("readPassword"));
       syncFieldsetValid($("readLayerPassword"));
@@ -8302,7 +8640,7 @@ self.onmessage = async event => {
       if (!pack) {
         if (!password) throw new Error("Введите мастер-ключ.");
         try {
-          pack = await decryptContainer(password, body.envelope);
+          pack = await decryptContainer(password, body.envelope, state.readKeyFileDigest);
         } catch (_) {
           throw new Error("Мастер-ключ не подошел.");
         }
@@ -8834,7 +9172,12 @@ self.onmessage = async event => {
       state.lastRender = null;
       state.lastContainerBytes = null;
       state.lastEntries = [];
+      state.lastLayerCount = 0;
       state.lastMasterKey = "";
+      state.lastUsedKeyFile = false;
+      wipeBytes(state.lastMasterKeyFileDigest);
+      state.lastMasterKeyFileDigest = null;
+      clearKeyFile("create");
       $("canvas").closest(".canvas-box").classList.remove("has-image");
       $("makeView").classList.remove("has-output");
       $("makePreviewPane").classList.add("hidden");
@@ -8878,6 +9221,14 @@ self.onmessage = async event => {
       ev.preventDefault();
       ev.returnValue = "";
     });
+    for (const eventName of ["pointerdown", "keydown", "input", "change"]) {
+      document.addEventListener(eventName, touchSensitiveActivity, { passive: true });
+    }
+    window.addEventListener("pagehide", () => clearSensitiveData(true));
+    window.addEventListener("pageshow", ev => {
+      if (ev.persisted) clearSensitiveData(true);
+      touchSensitiveActivity();
+    });
     document.addEventListener("click", ev => {
       const btn = ev.target.closest(".password-toggle");
       if (!btn) return;
@@ -8889,7 +9240,24 @@ self.onmessage = async event => {
       btn.setAttribute("aria-label", btn.title);
       btn.classList.toggle("active", hidden);
     });
-    $("masterKey").addEventListener("input", () => updateMatch(document.querySelector(".master-entry")));
+    $("masterKey").addEventListener("input", () => {
+      updateMatch(document.querySelector(".master-entry"));
+      syncDuplicatePasswords();
+    });
+    $("generateMasterKeyBtn").addEventListener("click", generateMasterKey);
+    $("generateKeyFileBtn").addEventListener("click", generateKeyFile);
+    $("selectMasterKeyFileBtn").addEventListener("click", () => $("masterKeyFileInput").click());
+    $("selectReadKeyFileBtn").addEventListener("click", () => $("readKeyFileInput").click());
+    $("removeMasterKeyFileBtn").addEventListener("click", () => clearKeyFile("create"));
+    $("removeReadKeyFileBtn").addEventListener("click", () => clearKeyFile("read"));
+    $("masterKeyFileInput").addEventListener("change", async ev => {
+      try { await attachKeyFile("create", ev.target.files?.[0]); }
+      catch (error) { ev.target.value = ""; showToast(error.message, "bad"); }
+    });
+    $("readKeyFileInput").addEventListener("change", async ev => {
+      try { await attachKeyFile("read", ev.target.files?.[0]); }
+      catch (error) { ev.target.value = ""; showToast(error.message, "bad"); }
+    });
     async function runMake() {
       try {
         collectMasterKey();
@@ -8973,7 +9341,7 @@ self.onmessage = async event => {
       if (!text) return;
       try {
         await navigator.clipboard.writeText(text);
-        showToast("Текст скопирован.", "ok");
+        showToast("Скопировано. Помните: системный буфер обмена находится вне контроля LayerLock.", "ok");
       } catch (_) {
         handleError("makeStatus", new Error("Не удалось скопировать текст."));
       }
@@ -8983,7 +9351,7 @@ self.onmessage = async event => {
       if (!text) return;
       try {
         await navigator.clipboard.writeText(text);
-        setStatus("readStatusWork", "Результат скопирован.", "ok");
+        setStatus("readStatusWork", "Скопировано. Помните: системный буфер обмена находится вне контроля LayerLock.", "ok");
       } catch (_) {
         handleError("readStatusWork", new Error("Не удалось скопировать результат."));
       }

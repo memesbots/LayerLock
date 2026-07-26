@@ -28,6 +28,7 @@ const exposed = `
       KEY_CONTEXT, KDF_PROFILES, FEC_PROFILES, randomBytes, bytesToHex, crc32,
       deriveKey, deriveDomainBytes, argon2idRaw, argon2WorkerSource,
       validateKdfParams, kdfProfileIndex, kdfProfileFromIndex,
+      passwordPolicyIssue, passwordIdentity,
       encryptSlot, decryptSlot, encodePack, decodePack, encodeEnvelope,
       decodeEnvelope, decodeBody, encryptContainer, decryptContainer, makeSvg,
       makeCompactBytes, parseCompactBytes, makeCompactText, parseCompactText
@@ -71,6 +72,8 @@ assert.throws(() => core.parseCompactText(compactLines.join("\n")), /Контр�
 
 const kdf = core.KDF_PROFILES.fast;
 assert.equal(core.kdfProfileIndex(kdf), 0);
+assert.equal(core.kdfProfileIndex(core.KDF_PROFILES.ultra), 3);
+assert.equal(core.kdfProfileFromIndex(3).iterations, 6);
 assert.deepEqual(core.kdfProfileFromIndex(0), {
   memory: kdf.memory,
   iterations: kdf.iterations,
@@ -126,6 +129,20 @@ assert.equal(await core.decryptSlot("layer-pass", openedPack.p[0], {
   kdf: openedPack.q
 }, openedPack.q), note);
 await assert.rejects(core.decryptContainer("wrong-master", body.envelope));
+
+const keyFileDigest = core.randomBytes(32);
+const keyFileEnvelopeBytes = await core.encryptContainer("master-pass", packBytes, vaultId, kdf, keyFileDigest);
+assert.equal(keyFileEnvelopeBytes.length, envelopeBytes.length, "key-file mode must add zero container bytes");
+const keyFileBody = core.decodeBody(keyFileEnvelopeBytes);
+await assert.rejects(core.decryptContainer("master-pass", keyFileBody.envelope));
+await assert.rejects(core.decryptContainer("master-pass", keyFileBody.envelope, core.randomBytes(32)));
+const keyFileOpenedPack = await core.decryptContainer("master-pass", keyFileBody.envelope, keyFileDigest);
+assert.equal(keyFileOpenedPack.p.length, 1);
+
+assert.match(core.passwordPolicyIssue("123123", "master"), /16 символов|распространен/);
+assert.match(core.passwordPolicyIssue("123456789012", "layer"), /распространен|угадывается/);
+assert.equal(core.passwordPolicyIssue("four calm words form a strong layer passphrase", "layer"), "");
+assert.equal(core.passwordIdentity("ＡＢＣ  "), "abc");
 
 const tamperedEnvelope = structuredClone(body.envelope);
 tamperedEnvelope.ct = body.envelope.ct.slice();
