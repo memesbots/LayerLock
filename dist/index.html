@@ -684,6 +684,29 @@
     }
     .password-toggle:hover { color: var(--accent); background: var(--button-hover); }
     .password-toggle svg { width: 16px; height: 16px; stroke: currentColor; }
+    .password-generate {
+      position: absolute;
+      right: 42px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .2s ease, background .2s ease, transform .18s ease;
+    }
+    .password-generate:hover {
+      color: var(--ok);
+      background: color-mix(in oklab, var(--ok) 9%, transparent);
+    }
+    .password-generate:active { transform: translateY(-50%) scale(.92); }
+    .password-generate svg { width: 16px; height: 16px; stroke: currentColor; }
 
     .field-check,
     .field-danger {
@@ -817,6 +840,86 @@
     .security-tool:active { transform: scale(.97); }
     .security-tool svg { width: 14px; height: 14px; stroke: currentColor; flex: 0 0 auto; }
     .security-tool.remove:hover { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 42%, var(--line)); }
+    .keyfile-control {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+    .keyfile-main {
+      min-height: 34px;
+      padding: 7px 11px;
+      border-radius: 9px;
+    }
+    .keyfile-main .keyfile-chevron {
+      width: 13px;
+      height: 13px;
+      margin-left: 1px;
+      transition: transform .2s ease;
+    }
+    .keyfile-main[aria-expanded="true"] .keyfile-chevron { transform: rotate(180deg); }
+    .keyfile-main.active {
+      color: var(--ok);
+      border-color: color-mix(in oklab, var(--ok) 44%, var(--line));
+      background: color-mix(in oklab, var(--ok) 9%, var(--field));
+    }
+    .keyfile-menu {
+      position: absolute;
+      z-index: 40;
+      top: calc(100% + 7px);
+      left: 0;
+      width: max-content;
+      min-width: 210px;
+      padding: 6px;
+      display: grid;
+      gap: 3px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: var(--field-solid);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, .26);
+    }
+    .keyfile-menu-item {
+      min-height: 34px;
+      padding: 8px 9px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-dim);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: color .18s ease, background .18s ease;
+    }
+    .keyfile-menu-item:hover {
+      color: var(--ok);
+      background: color-mix(in oklab, var(--ok) 10%, var(--field));
+    }
+    .keyfile-menu-item svg { width: 15px; height: 15px; stroke: currentColor; }
+    .keyfile-remove {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 1px solid var(--soft-line);
+      border-radius: 8px;
+      background: color-mix(in oklab, var(--field) 72%, transparent);
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .keyfile-remove:hover {
+      color: var(--danger);
+      border-color: color-mix(in oklab, var(--danger) 42%, var(--line));
+      background: color-mix(in oklab, var(--danger) 8%, var(--field));
+    }
+    .keyfile-remove svg { width: 14px; height: 14px; stroke: currentColor; }
     .keyfile-status {
       flex: 1 1 180px;
       min-width: 0;
@@ -2533,6 +2636,9 @@
     }
     .field-fieldset > .password-field > input:read-only { color: var(--text-dim); }
     .field-fieldset > .password-field { display: block; padding-right: 72px; position: static; }
+    .master-entry .field-fieldset > .password-field { padding-right: 104px; }
+    .master-entry .field-check,
+    .master-entry .field-danger { right: 76px; }
     /* Anchor the eye button to the fieldset itself (not the inner input line),
        so it stays vertically centered regardless of floating-label padding shifts. */
     .field-fieldset > .password-field .password-toggle {
@@ -2546,6 +2652,14 @@
       color: var(--muted);
     }
     .field-fieldset > .password-field .password-toggle:hover { color: var(--accent); }
+    .field-fieldset > .password-field .password-generate {
+      right: 42px;
+      top: 0;
+      bottom: 0;
+      margin: auto 0;
+      transform: none;
+    }
+    .field-fieldset > .password-field .password-generate:active { transform: scale(.92); }
 
     /* ---------- Responsive form polish: identical paddings, widths, line-height on mobile ---------- */
     *, *::before, *::after { box-sizing: border-box; }
@@ -2856,6 +2970,9 @@
       .master-entry .security-tools { grid-column: 1; }
       .master-policy { grid-column: 1; }
       .security-tool { flex: 1 1 auto; }
+      .keyfile-control { flex: 0 1 auto; max-width: 100%; }
+      .keyfile-main { max-width: 100%; }
+      .keyfile-menu { min-width: min(230px, calc(100vw - 56px)); }
       .keyfile-status { flex-basis: 100%; }
       .entry {
         padding: 12px;
@@ -3266,6 +3383,9 @@
                 <span class="field-legend">Мастер-ключ</span>
                 <span class="password-field">
                   <input id="masterKey" class="entry-pass" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
+                  <button id="generateMasterKeyBtn" class="password-generate" type="button" aria-label="Сгенерировать мастер-ключ" title="Сгенерировать мастер-ключ">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14Z"/><path d="M5 14v7"/><path d="M2 17.5h6"/></svg>
+                  </button>
                   <button class="password-toggle" type="button" data-target="masterKey" aria-label="Показать ключ" title="Показать ключ">
                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
@@ -3286,19 +3406,26 @@
               </div>
               <div class="security-tools">
                 <input id="masterKeyFileInput" type="file" hidden>
-                <button id="generateMasterKeyBtn" class="security-tool" type="button">
-                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14Z"/><path d="M5 14v7"/><path d="M2 17.5h6"/></svg>
-                  <span>Создать ключ</span>
-                </button>
-                <button id="selectMasterKeyFileBtn" class="security-tool" type="button">
-                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M12 12v6"/></svg>
-                  <span>Ключ-файл</span>
-                </button>
-                <button id="generateKeyFileBtn" class="security-tool" type="button">
-                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-                  <span>Создать файл</span>
-                </button>
-                <button id="removeMasterKeyFileBtn" class="security-tool remove hidden" type="button">Убрать файл</button>
+                <div class="keyfile-control">
+                  <button id="keyFileMenuBtn" class="security-tool keyfile-main" type="button" aria-haspopup="menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><circle cx="11" cy="15" r="2"/><path d="m12.5 13.5 2-2"/></svg>
+                    <span id="keyFileMenuLabel">Добавить ключ-файл</span>
+                    <svg class="keyfile-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+                  </button>
+                  <div id="keyFileMenu" class="keyfile-menu hidden" role="menu">
+                    <button id="generateKeyFileBtn" class="keyfile-menu-item" type="button" role="menuitem">
+                      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                      <span>Создать новый</span>
+                    </button>
+                    <button id="selectMasterKeyFileBtn" class="keyfile-menu-item" type="button" role="menuitem">
+                      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h5l2 2h11v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 10h18"/></svg>
+                      <span>Выбрать существующий</span>
+                    </button>
+                  </div>
+                  <button id="removeMasterKeyFileBtn" class="keyfile-remove hidden" type="button" aria-label="Убрать ключ-файл" title="Убрать ключ-файл">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+                  </button>
+                </div>
                 <span id="masterKeyFileStatus" class="keyfile-status">Опционально: файл становится вторым фактором и не сохраняется в контейнере.</span>
               </div>
             </div>
@@ -3592,9 +3719,9 @@
                   <input id="readKeyFileInput" type="file" hidden>
                   <button id="selectReadKeyFileBtn" class="security-tool" type="button">
                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M12 12v6"/></svg>
-                    <span>Ключ-файл</span>
+                    <span>Подключить ключ-файл</span>
                   </button>
-                  <button id="removeReadKeyFileBtn" class="security-tool remove hidden" type="button">Убрать файл</button>
+                  <button id="removeReadKeyFileBtn" class="security-tool remove hidden" type="button">Убрать ключ-файл</button>
                   <span id="readKeyFileStatus" class="keyfile-status">Выберите тот же файл, если он использовался при создании.</span>
                 </div>
                 <div id="readLayerField" class="field-fieldset hidden">
@@ -6488,6 +6615,13 @@
       "Экстремальная": "Extreme",
       "Создать ключ": "Generate key",
       "Создать файл": "Generate file",
+      "Сгенерировать мастер-ключ": "Generate master key",
+      "Добавить ключ-файл": "Add key file",
+      "Создать новый": "Create new",
+      "Выбрать существующий": "Choose existing",
+      "Подключить ключ-файл": "Attach key file",
+      "Убрать ключ-файл": "Remove key file",
+      "Ключ-файл подключен": "Key file attached",
       "Ключ-файл": "Key file",
       "Убрать файл": "Remove file",
       "Опционально: файл становится вторым фактором и не сохраняется в контейнере.": "Optional: the file becomes a second factor and is not stored in the container.",
@@ -7162,6 +7296,24 @@
       }
     }
 
+    function closeKeyFileMenu() {
+      const menu = $("keyFileMenu");
+      const button = $("keyFileMenuBtn");
+      if (!menu || !button) return;
+      menu.classList.add("hidden");
+      button.setAttribute("aria-expanded", "false");
+    }
+
+    function toggleKeyFileMenu() {
+      const menu = $("keyFileMenu");
+      const button = $("keyFileMenuBtn");
+      if (!menu || !button) return;
+      const opening = menu.classList.contains("hidden");
+      menu.classList.toggle("hidden", !opening);
+      button.setAttribute("aria-expanded", String(opening));
+      if (opening) menu.querySelector("button")?.focus();
+    }
+
     function updateKeyFileUi(kind, active) {
       const create = kind === "create";
       const status = $(create ? "masterKeyFileStatus" : "readKeyFileStatus");
@@ -7173,6 +7325,15 @@
           ? "Опционально: файл становится вторым фактором и не сохраняется в контейнере."
           : "Выберите тот же файл, если он использовался при создании.");
       remove.classList.toggle("hidden", !active);
+      if (create) {
+        const button = $("keyFileMenuBtn");
+        const label = $("keyFileMenuLabel");
+        button?.classList.toggle("active", active);
+        if (label) label.textContent = active ? "Ключ-файл подключен" : "Добавить ключ-файл";
+        closeKeyFileMenu();
+      } else {
+        $("selectReadKeyFileBtn")?.classList.toggle("active", active);
+      }
     }
 
     function clearKeyFile(kind) {
@@ -9245,11 +9406,24 @@ self.onmessage = async event => {
       syncDuplicatePasswords();
     });
     $("generateMasterKeyBtn").addEventListener("click", generateMasterKey);
-    $("generateKeyFileBtn").addEventListener("click", generateKeyFile);
-    $("selectMasterKeyFileBtn").addEventListener("click", () => $("masterKeyFileInput").click());
+    $("keyFileMenuBtn").addEventListener("click", toggleKeyFileMenu);
+    $("generateKeyFileBtn").addEventListener("click", async () => {
+      closeKeyFileMenu();
+      await generateKeyFile();
+    });
+    $("selectMasterKeyFileBtn").addEventListener("click", () => {
+      closeKeyFileMenu();
+      $("masterKeyFileInput").click();
+    });
     $("selectReadKeyFileBtn").addEventListener("click", () => $("readKeyFileInput").click());
     $("removeMasterKeyFileBtn").addEventListener("click", () => clearKeyFile("create"));
     $("removeReadKeyFileBtn").addEventListener("click", () => clearKeyFile("read"));
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".keyfile-control")) closeKeyFileMenu();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeKeyFileMenu();
+    });
     $("masterKeyFileInput").addEventListener("change", async ev => {
       try { await attachKeyFile("create", ev.target.files?.[0]); }
       catch (error) { ev.target.value = ""; showToast(error.message, "bad"); }
