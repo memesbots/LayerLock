@@ -1,44 +1,40 @@
 # LayerLock Format
 
-## Processing Pipeline
+The current format is specified in [LAYERLOCK_FORMAT_V7.md](LAYERLOCK_FORMAT_V7.md).
+The previous private-development format remains documented in
+[LAYERLOCK_FORMAT_V6.md](LAYERLOCK_FORMAT_V6.md) for historical reference only.
 
-`UTF-8 -> NFC -> best(raw, gzip, deflate) -> fixed-size layer -> Argon2id/HKDF -> AES-256-GCM -> encrypted container manifest -> Reed-Solomon -> interleaving -> LLO1 optical wrapper -> Aztec`
+## Current Pipeline
 
-The current binary versions are:
+`UTF-8 -> NFC -> best(raw, gzip, deflate) -> AES-256-GCM per layer -> compact binary pack -> AES-256-GCM container -> Aztec error correction`
 
-- Layer record: `v6`
-- Encrypted pack: `v6`
-- Container envelope: `v3`
-- FEC frame: `LLF2`, version `2`
-- Optical wrapper: `LLO1`, version `1`
+Current binary versions:
 
-All integers use fixed-width binary fields. Layer plaintext is padded with cryptographically random bytes to the common slot size before encryption. The container manifest is encrypted by the master key and does not expose layer metadata before authentication.
+- Layer record: `v7`
+- Encrypted pack: `LLP7`
+- Container envelope: `LLE4`
+- Compact transport: `LLC2` / `LAYERLOCK-COMPACT/2`
 
-## Cryptography
-
-- Password KDF: Argon2id v1.3
-- Key separation: HKDF-SHA-256 with distinct layer and container contexts
-- Encryption: AES-256-GCM
-- Per-layer salt and container salt: 32 random bytes
-- Per-layer nonce and container nonce: 12 random bytes
-- Authenticated metadata: version, KDF parameters, vault identifier and slot size
-
-Passwords, master keys and plaintext are never written into PNG, SVG, ZIP settings, browser storage or filenames.
+The container manifest is encrypted by the master key. Layer count, layer identifiers,
+layer ciphertext lengths and KDF-authenticated pack data are unavailable until the
+master key succeeds. Layer records use variable lengths and no artificial random
+padding, reducing the optical payload substantially.
 
 ## Optical Transport
 
-LayerLock emits a two-color Aztec symbol. The `LLO1` binary wrapper carries its version, FEC-frame length, CRC32 of the encrypted container and the FEC frame. The bundled `zxing-wasm 3.1.0` encoder and decoder are embedded into the release HTML, including WebAssembly; generation and reading do not request network resources.
+LayerLock emits a two-color Aztec symbol. Encrypted `LLE4` bytes are passed directly to
+Aztec; there is no second outer Reed-Solomon layer. `LLC2` is reserved for RAW and text
+exports, where it records the recovery profile and CRC. The recovery setting maps to Aztec error
+correction levels of 25%, 33%, 40% or 50%. The bundled ZXing encoder, decoder and
+WebAssembly module are embedded in the release HTML and do not request network data.
 
-A candidate is accepted only after Aztec decoding, optical-wrapper validation, FEC recovery and encrypted-envelope validation. An unrelated Aztec symbol is not treated as a LayerLock container.
-
-## Error Correction
-
-The payload is split into chunks, protected with parity chunks over GF(256), checksummed per chunk and interleaved byte-wise. Failed chunk CRC values are treated as erasures. The global CRC validates the recovered encrypted container before decryption. Four recovery levels map to 10%, 18%, 28% and 40% parity targets, with automatic minimum parity counts based on payload size.
-
-## Camera Decode
-
-Camera frames are checked for severe exposure, contrast and blur problems, then passed to the embedded Aztec decoder with rotation, inversion, downscaling and denoising enabled as appropriate. Candidate data is accepted only after the complete LayerLock wrapper chain validates.
+A candidate is accepted only after Aztec decoding and `LLE4` structure validation.
+RAW and text imports additionally require `LLC2` CRC validation. Authenticity of
+encrypted data is established by AES-GCM after
+the corresponding password succeeds.
 
 ## Versioning
 
-Decoders reject unknown KDF, envelope, pack, FEC, optical-wrapper or slot versions. The format is still in private development, so pre-release images are not a compatibility target. A public release must freeze the version and publish test vectors before compatibility guarantees begin.
+Decoders reject unknown compact, KDF, envelope, pack and slot versions. Pre-release
+formats are not a compatibility target until a public format is frozen and published
+with independent test vectors.

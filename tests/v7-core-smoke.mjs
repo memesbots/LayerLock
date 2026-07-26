@@ -10,12 +10,13 @@ globalThis.__LayerLockArgon2VendorSource = vendorMatch[1];
 const vendorModule = { exports: {} };
 new Function("module", "exports", vendorMatch[1])(vendorModule, vendorModule.exports);
 globalThis.hashwasm = vendorModule.exports;
+globalThis.window = globalThis;
 globalThis.MutationObserver = class MutationObserver {
-  constructor() {}
   observe() {}
 };
+
 const scriptMatch = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
-  .find(match => match[1].includes('const SLOT_VERSION = 6'));
+  .find(match => match[1].includes("const SLOT_VERSION = 7"));
 assert(scriptMatch, "inline application script not found");
 
 const hook = '    $("tabMake").addEventListener("click", () => switchTab("make"));';
@@ -25,9 +26,10 @@ const exposed = `
     globalThis.LayerLockCore = {
       SLOT_VERSION, PACK_VERSION, ENVELOPE_VERSION, KDF_ID, KDF_NAME, HKDF_HASH,
       KEY_CONTEXT, KDF_PROFILES, FEC_PROFILES, randomBytes, bytesToHex, crc32,
-      deriveKey, argon2idRaw, argon2WorkerSource, validateKdfParams, encryptSlot, decryptSlot, encodePack, decodePack, encodeEnvelope,
-      decodeEnvelope, decodeBody, encryptContainer, decryptContainer,
-      encodePayloadFrame, decodePayloadFrame, selectFecProfile, makeSvg,
+      deriveKey, deriveDomainBytes, argon2idRaw, argon2WorkerSource,
+      validateKdfParams, kdfProfileIndex, kdfProfileFromIndex,
+      encryptSlot, decryptSlot, encodePack, decodePack, encodeEnvelope,
+      decodeEnvelope, decodeBody, encryptContainer, decryptContainer, makeSvg,
       makeCompactBytes, parseCompactBytes, makeCompactText, parseCompactText
     };
     return;
@@ -38,10 +40,10 @@ new Function(instrumented)();
 
 const core = globalThis.LayerLockCore;
 assert(core, "core functions were not exposed");
-assert.equal(core.SLOT_VERSION, 6);
-assert.equal(core.PACK_VERSION, 6);
-assert.equal(core.ENVELOPE_VERSION, 3);
-assert.equal(core.KDF_ID, 3);
+assert.equal(core.SLOT_VERSION, 7);
+assert.equal(core.PACK_VERSION, 7);
+assert.equal(core.ENVELOPE_VERSION, 4);
+assert.equal(core.KDF_ID, 4);
 
 const compactSvg = core.makeSvg({
   moduleWidth: 3,
@@ -54,7 +56,7 @@ assert.doesNotMatch(compactSvg, /<rect x=/);
 
 const compactSource = new Uint8Array([0, 1, 2, 3, 127, 128, 254, 255]);
 const compactText = core.makeCompactText(compactSource, "enhanced");
-assert.match(compactText, /^LAYERLOCK-COMPACT\/1\n[A-Za-z0-9_-]+\n$/);
+assert.match(compactText, /^LAYERLOCK-COMPACT\/2\n[A-Za-z0-9_-]+\n$/);
 const restoredCompact = core.parseCompactText(compactText);
 assert.equal(restoredCompact.fecKey, "enhanced");
 assert.deepEqual(restoredCompact.containerBytes, compactSource);
@@ -68,43 +70,69 @@ compactLines[1] = `${compactLines[1].slice(0, damageIndex)}${compactLines[1][dam
 assert.throws(() => core.parseCompactText(compactLines.join("\n")), /Контрольная сумма|Структура/);
 
 const kdf = core.KDF_PROFILES.fast;
-const vaultId = core.randomBytes(16);
-const aadContext = { vaultId: core.bytesToHex(vaultId), packVersion: core.PACK_VERSION, kdf };
-const slot = await core.encryptSlot("layer-pass", "LayerLock v6: Привет", 128, aadContext, kdf);
-assert.equal(await core.decryptSlot("layer-pass", slot, 128, aadContext, kdf), "LayerLock v6: Привет");
-await assert.rejects(core.decryptSlot("wrong-pass", slot, 128, aadContext, kdf));
+assert.equal(core.kdfProfileIndex(kdf), 0);
+assert.deepEqual(core.kdfProfileFromIndex(0), {
+  memory: kdf.memory,
+  iterations: kdf.iterations,
+  parallelism: kdf.parallelism,
+  label: kdf.label
+});
 
-const packBytes = core.encodePack([slot], vaultId, 128, kdf);
-const decodedPack = core.decodePack(packBytes);
+const vaultId = core.randomBytes(16);
+const slotId = core.randomBytes(8);
+const saltA = await core.deriveDomainBytes("slot-salt", vaultId, slotId, 16);
+const saltB = await core.deriveDomainBytes("slot-salt", vaultId, slotId, 16);
+const nonce = await core.deriveDomainBytes("slot-nonce", vaultId, slotId, 12);
+assert.deepEqual(saltA, saltB, "domain derivation must be deterministic");
+assert.notDeepEqual(saltA.subarray(0, 12), nonce, "salt and nonce domains must be separated");
+
+const aadContext = { vaultId, packVersion: core.PACK_VERSION, kdf };
+const note = "LayerLock v7: Привет";
+const slot = await core.encryptSlot("layer-pass", note, aadContext, kdf);
+assert.equal(slot.id.length, 8);
+assert.equal(await core.decryptSlot("layer-pass", slot, aadContext, kdf), note);
+await assert.rejects(core.decryptSlot("wrong-pass", slot, aadContext, kdf));
+const tamperedSlot = { ...slot, id: slot.id.slice(), ct: slot.ct.slice() };
+tamperedSlot.id[0] ^= 1;
+await assert.rejects(core.decryptSlot("layer-pass", tamperedSlot, aadContext, kdf));
+
+const packBytes = core.encodePack([slot]);
+const decodedPack = core.decodePack(packBytes, vaultId, kdf);
 assert.equal(decodedPack.p.length, 1);
-assert.equal(decodedPack.z, 128);
+assert.equal(decodedPack.u.length, 16);
 assert.deepEqual(decodedPack.q, {
   memory: kdf.memory,
   iterations: kdf.iterations,
   parallelism: kdf.parallelism
 });
+assert.throws(() => core.encodePack([slot, { ...slot }]), /duplicate slot id/);
 
-const tamperedPack = packBytes.slice();
-tamperedPack[9] ^= 1;
-assert.throws(() => core.decodePack(tamperedPack), /unsupported KDF profile/);
-
-const envelopeBytes = await core.encryptContainer("master-pass", packBytes, kdf);
+const envelopeBytes = await core.encryptContainer("master-pass", packBytes, vaultId, kdf);
 const body = core.decodeBody(envelopeBytes);
 assert.equal(body.kind, "locked");
-const compactEnvelope = core.parseCompactBytes(core.makeCompactBytes(envelopeBytes, "standard"));
-assert.deepEqual(compactEnvelope.containerBytes, envelopeBytes);
-assert.deepEqual(
-  core.decodePayloadFrame(core.encodePayloadFrame(compactEnvelope.containerBytes, compactEnvelope.fecProfile), core.crc32(envelopeBytes)),
-  envelopeBytes
-);
-const tamperedEnvelope = envelopeBytes.slice();
-tamperedEnvelope[9] ^= 1;
-assert.throws(() => core.decodeEnvelope(tamperedEnvelope), /unsupported KDF profile/);
+assert.equal(body.envelope.id.length, 16);
+const compactEnvelope = core.makeCompactBytes(envelopeBytes, "standard");
+assert(compactEnvelope.length < 160, `minimal v7 container is unexpectedly large: ${compactEnvelope.length} bytes`);
+assert.deepEqual(core.parseCompactBytes(compactEnvelope).containerBytes, envelopeBytes);
+
+const badProfile = envelopeBytes.slice();
+badProfile[5] = 0xff;
+assert.throws(() => core.decodeEnvelope(badProfile), /unsupported KDF profile/);
 const openedPack = await core.decryptContainer("master-pass", body.envelope);
 assert.equal(openedPack.p.length, 1);
+assert.equal(await core.decryptSlot("layer-pass", openedPack.p[0], {
+  vaultId: openedPack.u,
+  packVersion: core.PACK_VERSION,
+  kdf: openedPack.q
+}, openedPack.q), note);
 await assert.rejects(core.decryptContainer("wrong-master", body.envelope));
 
-const salt = core.randomBytes(32);
+const tamperedEnvelope = structuredClone(body.envelope);
+tamperedEnvelope.ct = body.envelope.ct.slice();
+tamperedEnvelope.ct[tamperedEnvelope.ct.length - 1] ^= 1;
+await assert.rejects(core.decryptContainer("master-pass", tamperedEnvelope));
+
+const salt = core.randomBytes(16);
 const iv = core.randomBytes(12);
 const plain = new TextEncoder().encode("domain separation");
 const slotKey = await core.deriveKey("same-password", salt, core.KEY_CONTEXT.slot, kdf);
@@ -129,33 +157,9 @@ const workerArgon = await new Promise((resolve, reject) => {
     message.ok ? resolve(new Uint8Array(message.buffer)) : reject(new Error(message.error));
   });
   const password = argonPassword.slice();
-  const salt = argonSalt.slice();
-  worker.postMessage({ id: 7, passwordBuffer: password.buffer, saltBuffer: salt.buffer, params: kdf }, [password.buffer, salt.buffer]);
+  const workerSalt = argonSalt.slice();
+  worker.postMessage({ id: 7, passwordBuffer: password.buffer, saltBuffer: workerSalt.buffer, params: kdf }, [password.buffer, workerSalt.buffer]);
 });
 assert.deepEqual(workerArgon, expectedArgon);
 
-function corruptChunks(frame, count) {
-  const damaged = frame.slice();
-  const view = new DataView(damaged.buffer, damaged.byteOffset, damaged.byteLength);
-  const chunkSize = view.getUint16(5, false);
-  const dataChunks = view.getUint16(11, false);
-  const parityChunks = damaged[13];
-  const totalChunks = dataChunks + parityChunks;
-  const interleavedOffset = 18 + totalChunks * 4;
-  for (let chunk = 0; chunk < count; chunk++) {
-    for (let byte = 0; byte < chunkSize; byte++) damaged[interleavedOffset + byte * totalChunks + chunk] ^= 0xff;
-  }
-  return { damaged, dataChunks, parityChunks };
-}
-
-for (const profile of Object.values(core.FEC_PROFILES)) {
-  const fecFrame = core.encodePayloadFrame(envelopeBytes, profile);
-  assert.deepEqual(core.decodePayloadFrame(fecFrame, core.crc32(envelopeBytes)), envelopeBytes);
-  const parsed = corruptChunks(fecFrame, fecFrame[13]);
-  assert(parsed.parityChunks < parsed.dataChunks, "test payload must contain more data than parity chunks");
-  assert.deepEqual(core.decodePayloadFrame(parsed.damaged, core.crc32(envelopeBytes)), envelopeBytes);
-  const beyondCapacity = corruptChunks(fecFrame, parsed.parityChunks + 1);
-  assert.equal(core.decodePayloadFrame(beyondCapacity.damaged, core.crc32(envelopeBytes)), null);
-}
-
-console.log("LayerLock v6 core smoke test: OK");
+console.log(`LayerLock v7 core smoke test: OK (${compactEnvelope.length} compact bytes)`);

@@ -8,7 +8,7 @@ LayerLock is an offline visual encrypted-container prototype. It has automated t
 - Argon2id makes offline password guessing memory-hard.
 - HKDF domain separation prevents reuse of slot and container keys.
 - The encrypted manifest hides layer contents and exact layer count until the master key is accepted.
-- FEC and CRC detect or repair visual corruption; they do not add secrecy.
+- Aztec error correction repairs visual corruption and LLC2 CRC detects transport damage; neither adds secrecy.
 - The Content Security Policy blocks network connections in the shipped HTML.
 - Argon2id runs in a local Blob Worker created from the same offline HTML; no code is fetched from a server.
 - Generated output can be stress-checked after scaling and contrast loss before it is downloaded.
@@ -28,7 +28,7 @@ LayerLock is an offline visual encrypted-container prototype. It has automated t
 3. Publish `RELEASE.sha256` with the release.
 4. Verify the GitHub Actions deployment commit.
 5. Keep a separately downloaded offline HTML and compare its SHA-256 before critical use.
-6. Verify that the ZIP contains one Aztec PNG, one Aztec SVG and `settings.txt` without secrets.
+6. Verify that the ZIP contains one Aztec PNG, one Aztec SVG, one compact text container, one raw `.llc` container and `settings.txt` without secrets.
 
 ## Recommended Review Before Public Release
 
