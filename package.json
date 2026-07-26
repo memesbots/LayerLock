@@ -2,11 +2,14 @@
   "name": "layerlock",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "build:optical": "node tools/embed-optical-codecs.mjs",
-    "test": "node tests/v7-core-smoke.mjs && node tests/optical-codecs-smoke.mjs && node tests/i18n-security-smoke.mjs"
+    "prepare:release": "node tools/embed-optical-codecs.mjs && node tools/prepare-release.mjs",
+    "verify:release": "node tools/verify-release.mjs",
+    "test": "node tests/v7-core-smoke.mjs && node tests/optical-codecs-smoke.mjs && node tests/i18n-security-smoke.mjs && node tests/security-audit.mjs && node tools/verify-release.mjs"
   },
   "devDependencies": {
-    "@napi-rs/canvas": "^0.1.100"
+    "@napi-rs/canvas": "0.1.100"
   }
 }

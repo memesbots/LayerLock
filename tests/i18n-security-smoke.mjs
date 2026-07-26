@@ -33,11 +33,13 @@ const cases = new Map([
   ["Создать", "Create"],
   ["Слой 4", "Layer 4"],
   ["Слой 2: пароли не совпадают.", "Layer 2: passwords do not match."],
-  ["Надежный · ~96 бит", "Strong · ~96 bits"],
+  ["Надежный", "Strong"],
   ["Контейнер найден за 302 мс. Введите мастер-ключ.", "Container found in 302 ms. Enter the master key."],
   ["Усиленная защита · стандартное восстановление · Aztec", "Hardened protection · standard recovery · Aztec"],
   ["Настройки: усиленная защита паролей, повышенное восстановление, Aztec", "Settings: hardened password protection, enhanced recovery, Aztec"],
-  ["Не удалось открыть SVG.", "Could not open the SVG file."]
+  ["Не удалось открыть SVG.", "Could not open the SVG file."],
+  ["Компактный код превышает безопасный лимит.", "The compact code exceeds the safe limit."],
+  ["Подтвердить ключ-файл", "Confirm key file"]
 ]);
 
 for (const [source, expected] of cases) {

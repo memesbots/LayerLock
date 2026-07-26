@@ -65,11 +65,17 @@ the same `vaultId` and changed plaintext under the same passwords.
 
 ## Layer Record v7
 
-Layer plaintext is one codec byte followed by the selected note representation:
+Layer plaintext is one codec byte followed by the selected note representation.
+New writers use a canonical unsigned varint containing the exact decompressed byte length
+before the note bytes:
 
-- `0`: raw UTF-8
-- `1`: gzip
-- `2`: deflate
+- `3`: length-framed raw UTF-8
+- `4`: length-framed gzip
+- `5`: length-framed deflate
+
+Readers retain private-development compatibility with legacy flags `0`, `1`, and `2`,
+which did not include the length. New compressed records are rejected when the declared
+or actual output exceeds 1 MiB, when the exact length differs, or when UTF-8 is invalid.
 
 The AES-GCM additional authenticated data is:
 

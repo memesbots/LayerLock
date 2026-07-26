@@ -16,6 +16,11 @@ LayerLock is an offline visual encrypted-container prototype. It has automated t
 - The Content Security Policy blocks network connections in the shipped HTML.
 - Argon2id runs in a local Blob Worker created from the same offline HTML; no code is fetched from a server.
 - Generated output can be stress-checked after scaling and contrast loss before it is downloaded.
+- Every stress-check candidate is fully authenticated and all expected layers are decrypted;
+  merely detecting an Aztec symbol does not count as a successful check.
+- Compressed notes are length-framed, decoded with a strict UTF-8 decoder, and capped at
+  1 MiB after decompression. Compact imports, image bytes, dimensions and pixel counts are
+  rejected before expensive rendering or scanning when they exceed fixed limits.
 - The UI rejects short/common passwords, normalized duplicates, and reuse of the master
   key as a layer password. It can generate a 144-bit random master key.
 - Secret fields, decrypted output, and cached plaintext credentials are cleared after
@@ -35,12 +40,17 @@ LayerLock is an offline visual encrypted-container prototype. It has automated t
 
 ## Release Procedure
 
-1. Run `npm test`.
-2. Confirm that `outputs/sigil-vault.html` and `dist/index.html` are byte-identical.
-3. Publish `RELEASE.sha256` with the release.
-4. Verify the GitHub Actions deployment commit.
-5. Keep a separately downloaded offline HTML and compare its SHA-256 before critical use.
-6. Verify that the ZIP contains one Aztec PNG, one Aztec SVG, one compact text container, one raw `.llc` container and `settings.txt` without secrets.
+1. Run `pnpm install --frozen-lockfile`.
+2. Run `pnpm run prepare:release` and `pnpm test`.
+3. Confirm that `outputs/sigil-vault.html` and `dist/index.html` are byte-identical.
+4. Publish `RELEASE.sha256` with the release.
+5. Verify the GitHub Actions deployment commit.
+6. Keep a separately downloaded offline HTML and compare its SHA-256 before critical use.
+7. Verify that the ZIP contains one Aztec PNG, one Aztec SVG, one compact text container, one raw `.llc` container and `settings.txt` without secrets or privacy-sensitive structure metadata.
+
+The release command generates a hash-based `script-src` policy. `unsafe-inline` is not
+allowed for scripts, all network connections are blocked by `connect-src 'none'`, and
+the release verifier checks the CSP, embedded dependencies, output mirror and checksum.
 
 ## Recommended Review Before Public Release
 

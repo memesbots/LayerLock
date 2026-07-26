@@ -32,6 +32,11 @@ exports, where it records the recovery profile and CRC. The recovery setting map
 correction levels of 25%, 33%, 40% or 50%. The bundled ZXing encoder, decoder and
 WebAssembly module are embedded in the release HTML and do not request network data.
 
+Hard limits in the current decoder are 4 KiB for encrypted container bytes, 8 KiB for
+compact text transport, 32 MiB for an input image file, 8192 pixels per side, 32 million
+decoded pixels, and 1 MiB for one decompressed note. These are parser safety limits, not
+cryptographic parameters.
+
 A candidate is accepted only after Aztec decoding and `LLE4` structure validation.
 RAW and text imports additionally require `LLC2` CRC validation. Authenticity of
 encrypted data is established by AES-GCM after

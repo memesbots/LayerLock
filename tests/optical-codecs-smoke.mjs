@@ -40,4 +40,39 @@ const renderedAztec = await globalThis.ZXingWASM.readBarcodes(new Blob([aztecCan
 });
 if (!equal(source, renderedAztec[0]?.bytes || [])) throw new Error("Rendered Aztec round-trip failed");
 
-console.log(`LayerLock optical codec: OK; Aztec ${aztec.symbol.width}x${aztec.symbol.height}`);
+async function assertDecodes(canvas, label) {
+  const decoded = await globalThis.ZXingWASM.readBarcodes(new Blob([canvas.toBuffer("image/png")]), {
+    formats: ["Aztec"],
+    tryHarder: true,
+    tryRotate: true,
+    tryInvert: true,
+    maxNumberOfSymbols: 1
+  });
+  if (!equal(source, decoded[0]?.bytes || [])) throw new Error(`${label} did not decode`);
+}
+
+for (const quarterTurns of [1, 2, 3]) {
+  const rotated = createCanvas(aztecCanvas.width, aztecCanvas.height);
+  const context = rotated.getContext("2d");
+  context.fillStyle = "#fff";
+  context.fillRect(0, 0, rotated.width, rotated.height);
+  context.translate(rotated.width / 2, rotated.height / 2);
+  context.rotate(quarterTurns * Math.PI / 2);
+  context.drawImage(aztecCanvas, -aztecCanvas.width / 2, -aztecCanvas.height / 2);
+  await assertDecodes(rotated, `${quarterTurns * 90}-degree rotation`);
+}
+
+const screenshot = createCanvas(aztecCanvas.width + 320, aztecCanvas.height + 220);
+const screenshotContext = screenshot.getContext("2d");
+screenshotContext.fillStyle = "#fff";
+screenshotContext.fillRect(0, 0, screenshot.width, screenshot.height);
+screenshotContext.drawImage(aztecCanvas, 160, 110);
+await assertDecodes(screenshot, "white screenshot background");
+
+const reduced = createCanvas(Math.round(aztecCanvas.width * 0.72), Math.round(aztecCanvas.height * 0.72));
+const reducedContext = reduced.getContext("2d");
+reducedContext.imageSmoothingEnabled = true;
+reducedContext.drawImage(aztecCanvas, 0, 0, reduced.width, reduced.height);
+await assertDecodes(reduced, "downscaled symbol");
+
+console.log(`LayerLock optical codec: OK; Aztec ${aztec.symbol.width}x${aztec.symbol.height}; rotation, white background and downscale passed`);
