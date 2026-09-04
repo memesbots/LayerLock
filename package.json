@@ -9,7 +9,7 @@
     "test:browser": "node tests/browser-flow.mjs",
     "preview": "node tools/serve.mjs",
     "verify:release": "node tools/verify-release.mjs",
-    "test": "node tools/build-source.mjs --core-only && node tests/v7-core-smoke.mjs && node tests/optical-codecs-smoke.mjs && node tests/i18n-security-smoke.mjs && node tests/security-audit.mjs && node tests/recovery-roundtrip.mjs && node tests/product-scanner.mjs && node tools/verify-release.mjs"
+    "test": "node tools/build-source.mjs --core-only && node tests/camera-hints.mjs && node tests/v7-core-smoke.mjs && node tests/optical-codecs-smoke.mjs && node tests/i18n-security-smoke.mjs && node tests/security-audit.mjs && node tests/recovery-roundtrip.mjs && node tests/product-scanner.mjs && node tools/verify-release.mjs"
   },
   "devDependencies": {
     "@napi-rs/canvas": "0.1.100",

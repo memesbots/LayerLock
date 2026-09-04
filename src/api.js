@@ -13,5 +13,6 @@
       operationTicket, cancelOperations, state, clearSensitiveData, readVault,
       resetReadImageFlow, makeVault, loadCompactContainerText, measureCapacity,
       scanRegions, verifyContainerBody, translateForLanguage,
-      scannerWorkerSource, attachKeyFile, generateKeyFile, clearKeyFile
+      scannerWorkerSource, attachKeyFile, generateKeyFile, clearKeyFile,
+      createCameraHintGate
     };

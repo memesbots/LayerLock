@@ -308,12 +308,35 @@
       [...$("cameraFrameMeter").children].forEach((dot, index) => dot.classList.toggle("ready", index < ready));
     }
 
-    function setCameraStatus(message, stage = 0) {
-      $("cameraLiveStatus").textContent = translateForLanguage(message);
+    function createCameraHintGate() {
+      let current = null;
+      let candidate = null;
+      let changedAt = -Infinity;
+      return (message, stage, now, immediate = false) => {
+        const same = item => item?.message === message && item.stage === stage;
+        if (same(current)) { candidate = null; return false; }
+        if (!immediate) {
+          if (!same(candidate)) candidate = { message, stage, since: now };
+          if (now - candidate.since < 900 || now - changedAt < 2000) return false;
+        }
+        current = { message, stage };
+        candidate = null;
+        changedAt = now;
+        return true;
+      };
+    }
+
+    let cameraHintGate = createCameraHintGate();
+
+    function setCameraStatus(message, stage = 0, immediate = true) {
+      if (!cameraHintGate(message, stage, performance.now(), immediate)) return;
+      const translated = translateForLanguage(message);
+      if ($("cameraLiveStatus").textContent !== translated) $("cameraLiveStatus").textContent = translated;
       updateCameraMeter(stage);
     }
 
     function stopLiveCamera(closeModal = true) {
+      cameraHintGate = createCameraHintGate();
       state.cameraLoopToken++;
       clearTimeout(state.cameraTimer);
       state.cameraTimer = null;
@@ -462,10 +485,9 @@
       try {
         state.cameraFrameCounter++;
         const quality = assessCameraQuality(frame);
-        setCameraStatus(quality.message, quality.blocked ? 0 : 1);
+        setCameraStatus(quality.blocked ? quality.message : "Наведите рамку на контейнер", quality.blocked ? 0 : 1, false);
         if (quality.blocked && !force && state.cameraFrameCounter % 3 !== 0) return;
 
-        setCameraStatus("Ищу Aztec", 1);
         const direct = await tryDecodeAztec(frame, !force);
         if (token !== state.cameraLoopToken) return;
         if (direct) {
@@ -482,7 +504,6 @@
             return;
           }
         }
-        setCameraStatus("Держите Aztec целиком внутри рамки", 1);
       } finally {
         if (token === state.cameraLoopToken) state.cameraBusy = false;
         if (token === state.cameraLoopToken && !state.cameraAccepted) scheduleCameraScan(token, force ? 150 : 90);
