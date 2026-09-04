@@ -1,41 +1,9 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import {core} from './load-core.mjs';
 
 const htmlUrl = new URL("../outputs/sigil-vault.html", import.meta.url);
 const html = await readFile(htmlUrl, "utf8");
-const vendorMatch = html.match(/<script\b[^>]*id="argon2VendorSource"[^>]*>([\s\S]*?)<\/script>/i);
-assert(vendorMatch, "inline Argon2 vendor source not found");
-globalThis.__LayerLockArgon2VendorSource = vendorMatch[1];
-const vendorModule = { exports: {} };
-new Function("module", "exports", vendorMatch[1])(vendorModule, vendorModule.exports);
-globalThis.hashwasm = vendorModule.exports;
-const compressionMatch = html.match(/<script\b[^>]*id="compressionVendorSource"[^>]*>([\s\S]*?)<\/script>/i);
-assert(compressionMatch, "inline compression vendor source not found");
-const compressionModule = { exports: {} };
-new Function("module", "exports", compressionMatch[1])(compressionModule, compressionModule.exports);
-globalThis.fflate = compressionModule.exports;
-globalThis.window = globalThis;
-globalThis.MutationObserver = class MutationObserver { observe() {} };
-
-const scriptMatch = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
-  .find(match => match[1].includes("const SLOT_VERSION = 7"));
-assert(scriptMatch, "inline application script not found");
-
-const hook = '    $("tabMake").addEventListener("click", () => switchTab("make"));';
-assert(scriptMatch[1].includes(hook), "audit hook moved");
-const exposed = `
-    globalThis.LayerLockAudit = {
-      PACK_VERSION, KDF_PROFILES, KEY_CONTEXT, randomBytes,
-      encryptSlot, decryptSlot, encodePack, encryptContainer, decodeBody,
-      decryptContainer, makeCompactBytes, parseCompactBytes,
-      encodeNoteText, decodeNoteText, decompress, writeVarUint,
-      validateImageDimensions, readRasterDimensions,
-      passwordScore, passwordPolicyIssue
-    };
-    return;
-`;
-new Function(scriptMatch[1].replace(hook, exposed + hook))();
-const core = globalThis.LayerLockAudit;
 
 const kdf = core.KDF_PROFILES.fast;
 const vaultId = core.randomBytes(16);
@@ -93,8 +61,8 @@ else delete globalThis.DecompressionStream;
 const oversizedCore = new Uint8Array(8 * 1024 * 1024);
 oversizedCore.set([0x4c, 0x4c, 0x45, 0x34]);
 assert.throws(() => core.makeCompactBytes(oversizedCore, "standard"), /безопасный лимит/);
-assert.throws(() => core.parseCompactBytes(new Uint8Array(8192)), /безопасный лимит/);
-assert.throws(() => core.decodeBody(new Uint8Array(4097)), /bad body/);
+assert.throws(() => core.parseCompactBytes(new Uint8Array(core.MAX_CONTAINER_BYTES + 33)), /безопасный лимит/);
+assert.throws(() => core.decodeBody(new Uint8Array(core.MAX_CONTAINER_BYTES + 1)), /bad body/);
 assert.throws(() => core.parseCompactBytes(Uint8Array.from([
   0x4c, 0x4c, 0x43, 0x32, 1, 0x81, 0x00, 0x00, 0, 0, 0, 0
 ])), /bad varint/);
@@ -108,9 +76,6 @@ const dimensions = await core.readRasterDimensions(new Blob([pngHeader], { type:
 assert.deepEqual(dimensions, { width: 100000, height: 100000 });
 assert.throws(() => core.validateImageDimensions(dimensions.width, dimensions.height), /слишком большое/);
 
-const keyFileGenerator = scriptMatch[1].match(/async function generateKeyFile\(\) \{[\s\S]*?\n    \}/)?.[0] || "";
-assert(keyFileGenerator.includes("pendingGeneratedKeyFileDigest = digest"), "generated key file must remain pending");
-assert(!keyFileGenerator.includes("createKeyFileDigest = digest"), "generated key file must not activate before confirmation");
 assert(!html.includes("External master-key file:"), "settings report leaks key-file use");
 assert(!html.includes("`Layers: ${state.lastLayerCount}`"), "settings report leaks exact layer count");
 
@@ -122,5 +87,5 @@ console.log(JSON.stringify({
   decompressionLimit: "enforced",
   compactPayloadLimit: "enforced",
   imageBombLimit: "enforced",
-  generatedKeyFileConfirmation: "enforced"
+  generatedKeyFileConfirmation: "covered by browser-flow"
 }, null, 2));

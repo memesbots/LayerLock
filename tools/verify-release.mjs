@@ -33,4 +33,13 @@ for (const [file, expected] of vendorChecksums) {
 }
 
 assert(!output.includes("cdn.jsdelivr.net"), "a jsDelivr fallback remains in the release");
+const zip = await readFile(resolve(root,'dist/offline/LayerLock-recovery.zip'));
+const zipDigest = createHash('sha256').update(zip).digest('hex');
+const sums = await readFile(resolve(root,'dist/offline/SHA256SUMS'),'utf8');
+assert.equal(sums,`${zipDigest}  LayerLock-recovery.zip\n${digest}  ../index.html\n`,'Recovery checksums are stale');
+const fflateModule = {exports:{}};
+new Function('module','exports',await readFile(resolve(root,'vendor/fflate-0.8.2.umd.js'),'utf8'))(fflateModule,fflateModule.exports);
+const recovery = fflateModule.exports.unzipSync(zip);
+assert.equal(Buffer.from(recovery['LayerLock.html']).toString('utf8'),dist,'Recovery HTML differs from release');
+assert.equal(Buffer.from(recovery['v7-public.json']).toString('utf8'),await readFile(resolve(root,'tests/fixtures/v7-public.json'),'utf8'));
 console.log(`Release verification: OK (${digest})`);

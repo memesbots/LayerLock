@@ -9,6 +9,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  attestations: write
 
 concurrency:
   group: pages
@@ -44,6 +45,18 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
+
+      - name: Browser regression tests
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm run test:browser
+
+      - name: Attest offline release
+        uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661
+        with:
+          subject-path: |
+            dist/index.html
+            dist/offline/LayerLock-recovery.zip
 
       - name: Upload publish artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa

@@ -25,6 +25,13 @@ LayerLock is an offline visual encrypted-container prototype. It has automated t
   key as a layer password. It can generate a 144-bit random master key.
 - Secret fields, decrypted output, and cached plaintext credentials are cleared after
   15 minutes of inactivity and when the page is left.
+- Clearing or replacing a container invalidates pending continuations. Argon2 and
+  scanner Workers are terminated on cancellation. Available temporary byte buffers
+  are overwritten; JavaScript strings and engine-managed copies cannot be reliably erased.
+- Scanner work runs in a separate embedded Worker. Large images use bounded,
+  overlapping native-resolution tiles after two overview passes (8-second search
+  budget, at most 64 tiles; each Worker request has a 6-second timeout). A currently
+  running request can extend the overall budget. This is not a guarantee for every photo.
 
 ## Limitations
 
@@ -42,11 +49,18 @@ LayerLock is an offline visual encrypted-container prototype. It has automated t
 
 1. Run `pnpm install --frozen-lockfile`.
 2. Run `pnpm run prepare:release` and `pnpm test`.
+   Run `pnpm exec playwright install chromium` and `pnpm run test:browser`.
 3. Confirm that `outputs/sigil-vault.html` and `dist/index.html` are byte-identical.
 4. Publish `RELEASE.sha256` with the release.
 5. Verify the GitHub Actions deployment commit.
 6. Keep a separately downloaded offline HTML and compare its SHA-256 before critical use.
 7. Verify that the ZIP contains one Aztec PNG, one Aztec SVG, one compact text container, one raw `.llc` container and `settings.txt` without secrets or privacy-sensitive structure metadata.
+   When the container exceeds optical capacity, only TXT, RAW and settings are included.
+
+See [RECOVERY.md](RECOVERY.md) for the offline archive and signed GitHub build
+provenance. Source sections live in `src/` and are assembled into one offline HTML.
+Frozen public fixtures cover all four KDF profiles and must not be regenerated
+to make a failing compatibility test pass.
 
 The release command generates a hash-based `script-src` policy. `unsafe-inline` is not
 allowed for scripts, all network connections are blocked by `connect-src 'none'`, and

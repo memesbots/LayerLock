@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-/IwO3UpeNQmtUYkKXOWOvIMSDXXz0kyzZ7TSbxNuQio=' 'sha256-BYGrX3BalW3Fua8wKDIVELgc0urGQiGGaAIj6/FXLpw=' 'sha256-4MCNLQ8O6lO/mXurB1oBCjZzDHWfmAytCaHLXqAQlkU=' 'sha256-cUhMikQQJBlH9XMvuY266PyVHOvhTpeWLyYj/dFimWc=' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-/IwO3UpeNQmtUYkKXOWOvIMSDXXz0kyzZ7TSbxNuQio=' 'sha256-BYGrX3BalW3Fua8wKDIVELgc0urGQiGGaAIj6/FXLpw=' 'sha256-4MCNLQ8O6lO/mXurB1oBCjZzDHWfmAytCaHLXqAQlkU=' 'sha256-uTzT+rk2jWS53DUcwN9o30LBChQARkjQ8RjxGkXfWM4=' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
   <title>LayerLock</title>
   <meta name="application-name" content="LayerLock">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='10' y1='7' x2='54' y2='58' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%234b83ff'/%3E%3Cstop offset='1' stop-color='%232560ff'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='17' y1='27' x2='41' y2='52' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%2386b0ff'/%3E%3Cstop offset='1' stop-color='%232f6bff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23a)' d='M32 3 57 17.5v29L32 61 7 46.5v-29L32 3Z'/%3E%3Cpath fill='%23f4f7ff' d='m32 15 15 8.7v16.6L32 49 17 40.3V23.7L32 15Z'/%3E%3Cpath fill='url(%23b)' d='m17 23.7 15 8.7V49l-15-8.7V23.7Z'/%3E%3Cpath fill='%232560ff' d='m32 32.4 15-8.7v16.6L32 49V32.4Z'/%3E%3Cpath fill='%230d0f13' d='m24 28 8-4.6 8 4.6v9.2l-8 4.6-8-4.6V28Z'/%3E%3Cpath fill='%2386b0ff' d='m24 28 8 4.6v9.2l-8-4.6V28Z'/%3E%3C/svg%3E">
@@ -3269,6 +3269,11 @@
       .bit-import-pane { padding: 18px; }
       #bitCodeInput { font-size: 16px; }
     }
+    .capacity-status { display:block; min-height:20px; color:var(--muted); font-size:12px; margin-top:12px; line-height:1.5; overflow-wrap:anywhere; }
+    .capacity-status.bad { color:#e45260; }
+    #cancelOperationBtn { display:block; margin:18px auto 0; }
+    #readWorkPane.compact-only .read-result-body { grid-template-columns:minmax(0, 1fr); }
+    .read-password-label { display:flex; align-items:center; justify-content:space-between; gap:12px; }
   </style>
 </head>
 <body>
@@ -3442,6 +3447,7 @@
               </button>
             </div>
             <div id="entries" class="stack"></div>
+            <output id="capacityStatus" class="capacity-status" aria-live="polite"></output>
             <div class="actions make-actions">
               <button id="makeBtn" class="primary" type="button">Создать</button>
             </div>
@@ -3581,7 +3587,7 @@
                   <path d="m21 16-5-5-8 8"/>
                 </svg>
               </span>
-              <h2>Изображение</h2>
+              <h2 id="outputHeading">Изображение</h2>
             </div>
             <div class="verify-actions">
               <button id="expandMakeImageBtn" class="icon preview-expand-btn" type="button" disabled aria-label="Открыть на весь экран" title="Открыть на весь экран">
@@ -3673,7 +3679,7 @@
               <span class="bit-import-icon" aria-hidden="true">&lt;&gt;</span>
               <div>
                 <strong>Компактный контейнер</strong>
-                <span>Вставьте содержимое TXT, чтобы восстановить Aztec и SVG.</span>
+                <span>Вставьте содержимое TXT, чтобы открыть контейнер.</span>
               </div>
             </div>
             <textarea id="bitCodeInput" spellcheck="false" autocomplete="off" placeholder="LAYERLOCK-COMPACT/2&#10;..."></textarea>
@@ -3699,7 +3705,7 @@
                 </div>
               </div>
               <div class="read-action-panel">
-                <div class="read-section-label read-password-label">Ввод пароля</div>
+                <div class="read-section-label read-password-label"><span>Ввод пароля</span><button id="resetCompactBtn" class="icon hidden" type="button" title="Загрузить другой контейнер" aria-label="Загрузить другой контейнер"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg></button></div>
                 <div id="readMasterField" class="field-fieldset">
                   <span class="field-legend">Мастер-ключ</span>
                   <span class="password-field">
@@ -3788,6 +3794,7 @@
       </div>
       <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
       <div id="progressText" class="progress-text">Подготовка...</div>
+      <button id="cancelOperationBtn" type="button">Отменить</button>
     </div>
   </div>
   <div id="imageModal" class="image-modal" aria-hidden="true">
@@ -3864,10 +3871,15 @@
 </script>
 
   <script>
-  (() => {
-    "use strict";
-
+function createLayerLock(mount) {
+"use strict";
+if (mount === undefined) mount = true;
     const EN_TEXT = Object.freeze({
+      "Отменить": "Cancel",
+      "Операция отменена. Секретные поля очищены.": "Operation cancelled. Secret fields cleared.",
+      "Секретные поля очищены. Создайте контейнер заново.": "Secret fields were cleared. Create the container again.",
+      "Проверяю контейнер": "Verifying container",
+      "Контейнер создан": "Container created",
       "Создать": "Create",
       "Прочитать": "Read",
       "Справка": "Help",
@@ -3969,7 +3981,8 @@
       "Камера": "Camera",
       "Код": "Code",
       "Компактный контейнер": "Compact container",
-      "Вставьте содержимое TXT, чтобы восстановить Aztec и SVG.": "Paste the TXT contents to restore Aztec and SVG.",
+      "Вставьте содержимое TXT, чтобы открыть контейнер.": "Paste the TXT contents to open the container.",
+      "Загрузить другой контейнер": "Load another container",
       "Восстановить контейнер": "Restore container",
       "Скачать восстановленный SVG": "Download restored SVG",
       "Загрузить PNG": "Upload PNG",
@@ -4247,7 +4260,6 @@
         try { localStorage.setItem("layerlock-language", currentLanguage); } catch (_) {}
       }
     }
-
     const SLOT_VERSION = 7;
     const PACK_VERSION = 7;
     const ENVELOPE_VERSION = 4;
@@ -4280,8 +4292,9 @@
     const COMPACT_TEXT_MAGIC = "LAYERLOCK-COMPACT/2";
     const FEC_PROFILE_KEYS = ["minimal", "standard", "enhanced", "maximum"];
     const KDF_PROFILE_KEYS = ["fast", "normal", "max", "ultra"];
-    const MAX_CONTAINER_BYTES = 4096;
-    const MAX_COMPACT_TEXT_CHARS = 8192;
+    const MAX_OPTICAL_BYTES = 4096;
+    const MAX_CONTAINER_BYTES = 256 * 1024;
+    const MAX_COMPACT_TEXT_CHARS = 360 * 1024;
     const MAX_NOTE_BYTES = 1024 * 1024;
     const MAX_IMAGE_FILE_BYTES = 32 * 1024 * 1024;
     const MAX_IMAGE_DIMENSION = 8192;
@@ -4397,6 +4410,7 @@
     }
 
     function handleError(id, error) {
+      if (error?.name === 'AbortError') return;
       setStatus(id, error?.message || String(error), "bad");
     }
 
@@ -4459,9 +4473,11 @@
     }
 
     async function verifyRenderCached(render = selectedRender()) {
+      const op = operationTicket();
       const key = verificationKey(render);
       if (key && state.verifyCache.has(key)) return "cached";
       await verifyRender(render);
+      op.check();
       if (key) state.verifyCache.add(key);
       return "fresh";
     }
@@ -4715,7 +4731,10 @@
       }
     }
 
+    const keyFileRevisions = {create:0,read:0};
+
     function clearKeyFile(kind) {
+      keyFileRevisions[kind]++;
       const create = kind === "create";
       const stateKey = create ? "createKeyFileDigest" : "readKeyFileDigest";
       wipeBytes(state[stateKey]);
@@ -4730,7 +4749,13 @@
     }
 
     async function attachKeyFile(kind, file) {
-      const digest = await digestKeyFile(file);
+      const op = operationTicket();
+      const revision = ++keyFileRevisions[kind];
+      const digest = await op.wait(digestKeyFile(file));
+      if (revision !== keyFileRevisions[kind]) {
+        digest.fill(0);
+        throw new DOMException('Key file selection changed','AbortError');
+      }
       if (kind === "create" && state.pendingGeneratedKeyFileDigest) {
         let matches = digest.length === state.pendingGeneratedKeyFileDigest.length;
         let difference = 0;
@@ -4764,9 +4789,15 @@
     }
 
     async function generateKeyFile() {
+      const op = operationTicket();
+      const revision = ++keyFileRevisions.create;
       const raw = randomBytes(32);
       try {
-        const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", raw));
+        const digest = new Uint8Array(await op.wait(crypto.subtle.digest("SHA-256", raw)));
+        if (revision !== keyFileRevisions.create) {
+          digest.fill(0);
+          throw new DOMException('Key file selection changed','AbortError');
+        }
         wipeBytes(state.createKeyFileDigest);
         state.createKeyFileDigest = null;
         wipeBytes(state.pendingGeneratedKeyFileDigest);
@@ -4797,8 +4828,16 @@
     }
 
     function clearSensitiveData(silent = false) {
+      cancelOperations();
+      stopLiveCamera(true);
+      setMakeButtonsState('idle');
+      hideProgress();
+      $("readBtn").disabled = false;
       clearTimeout(state.sensitiveTimer);
       state.sensitiveTimer = null;
+      clearTimeout(capacityTimer);
+      capacityRevision++;
+      $('capacityStatus').textContent = '';
       for (const input of document.querySelectorAll("#masterKey, #entries .entry-pass, #entries .entry-pass-confirm, #entries .entry-text, #readPassword, #readLayerPassword")) {
         input.value = "";
         input.removeAttribute("aria-invalid");
@@ -4817,6 +4856,7 @@
         entry.text = "";
       });
       state.lastEntries = [];
+      state.verifyCache.clear();
       state.lastMasterKey = "";
       wipeBytes(state.lastMasterKeyFileDigest);
       state.lastMasterKeyFileDigest = null;
@@ -4832,7 +4872,42 @@
         if (hasSensitiveValues()) clearSensitiveData(false);
       }, SENSITIVE_IDLE_MS);
     }
+    let operationEpoch = 0;
 
+    function operationTicket() {
+      const epoch = operationEpoch;
+      return {
+        current: () => epoch === operationEpoch,
+        check() {
+          if (epoch !== operationEpoch) throw new DOMException('Operation cancelled', 'AbortError');
+        },
+        async wait(promise) {
+          const result = await promise;
+          if (epoch !== operationEpoch) {
+            if (ArrayBuffer.isView(result)) result.fill(0);
+            if (result instanceof ArrayBuffer) new Uint8Array(result).fill(0);
+            if (result?.bytes instanceof Uint8Array) result.bytes.fill(0);
+            if (typeof result?.close === 'function') result.close();
+            throw new DOMException('Operation cancelled', 'AbortError');
+          }
+          return result;
+        }
+      };
+    }
+
+    function cancelOperations() {
+      operationEpoch++;
+      const error = new DOMException('Operation cancelled', 'AbortError');
+      state.argon2Worker?.terminate();
+      state.argon2Worker = null;
+      rejectArgon2Pending(error);
+      stopScannerWorker(error);
+      state.readDecodePromise = null;
+    }
+
+    function rethrowCancellation(error) {
+      if (error?.name === 'AbortError') throw error;
+    }
     function kdfTag(params) {
       return `${params.memory}:${params.iterations}:${params.parallelism}`;
     }
@@ -4966,6 +5041,7 @@ self.onmessage = async event => {
     }
 
     async function deriveKey(password, salt, context, params = KDF_PROFILES.normal, keyFileDigest = null) {
+      const op = operationTicket();
       if (!Object.values(KEY_CONTEXT).includes(context)) throw new Error("invalid key context");
       const plainPasswordBytes = enc.encode(normalizePassword(password));
       let passwordBytes = plainPasswordBytes;
@@ -4983,15 +5059,15 @@ self.onmessage = async event => {
       }
       let baseBytes;
       try {
-        baseBytes = await argon2idRaw(passwordBytes, salt, params);
-        const hkdfMaterial = await crypto.subtle.importKey("raw", baseBytes, "HKDF", false, ["deriveKey"]);
-        return crypto.subtle.deriveKey(
+        baseBytes = await op.wait(argon2idRaw(passwordBytes, salt, params));
+        const hkdfMaterial = await op.wait(crypto.subtle.importKey("raw", baseBytes, "HKDF", false, ["deriveKey"]));
+        return await op.wait(crypto.subtle.deriveKey(
           { name: "HKDF", hash: HKDF_HASH, salt: HKDF_SALT, info: enc.encode(context) },
           hkdfMaterial,
           { name: "AES-GCM", length: 256 },
           false,
           ["encrypt", "decrypt"]
-        );
+        ));
       } finally {
         plainPasswordBytes.fill(0);
         passwordBytes.fill(0);
@@ -5030,7 +5106,10 @@ self.onmessage = async event => {
       if (gz) choices.push({ flag: NOTE_GZIP_SIZED, bytes: gz });
       const deflated = await tryCompress(raw, "deflate");
       if (deflated) choices.push({ flag: NOTE_DEFLATE_SIZED, bytes: deflated });
-      return { ...choices.reduce((best, item) => item.bytes.length < best.bytes.length ? item : best), rawLength: raw.byteLength };
+      const best = choices.reduce((best, item) => item.bytes.length < best.bytes.length ? item : best);
+      const rawLength = raw.byteLength;
+      for (const choice of choices) if (choice !== best) choice.bytes.fill(0);
+      return { ...best, rawLength };
     }
 
     async function decodeNoteText(flag, bytes) {
@@ -5050,43 +5129,50 @@ self.onmessage = async event => {
       const data = gzip
         ? await decompress(payload, "gzip", expectedLength ?? MAX_NOTE_BYTES)
         : (deflate ? await decompress(payload, "deflate", expectedLength ?? MAX_NOTE_BYTES) : payload);
-      if (data.byteLength > MAX_NOTE_BYTES) throw new Error("Распакованный текст превышает безопасный лимит.");
-      if (expectedLength !== null && data.byteLength !== expectedLength) throw new Error("Длина распакованного текста не совпала.");
       try {
+        if (data.byteLength > MAX_NOTE_BYTES) throw new Error("Распакованный текст превышает безопасный лимит.");
+        if (expectedLength !== null && data.byteLength !== expectedLength) throw new Error("Длина распакованного текста не совпала.");
+        try {
         return dec.decode(data);
-      } catch (_) {
+        } catch (_) {
         throw new Error("Текст слоя содержит поврежденные UTF-8 данные.");
-      }
+        }
+      } finally { data.fill(0); }
     }
 
     async function encryptSlot(password, note, aadContext, kdf = KDF_PROFILES.normal) {
-      const noteData = await encodeNoteText(note);
+      const op = operationTicket();
+      const noteData = await op.wait(encodeNoteText(note));
       const lengthBytes = [];
       writeVarUint(lengthBytes, noteData.rawLength);
       const plain = concatBytes([new Uint8Array([noteData.flag]), new Uint8Array(lengthBytes), noteData.bytes]);
       const slotId = randomBytes(8);
-      const salt = await deriveDomainBytes("slot-salt", aadContext.vaultId, slotId, 16);
-      const iv = await deriveDomainBytes("slot-nonce", aadContext.vaultId, slotId, 12);
-      const key = await deriveKey(password, salt, KEY_CONTEXT.slot, kdf);
-      const ct = new Uint8Array(await crypto.subtle.encrypt({
+      try {
+      const salt = await op.wait(deriveDomainBytes("slot-salt", aadContext.vaultId, slotId, 16));
+      const iv = await op.wait(deriveDomainBytes("slot-nonce", aadContext.vaultId, slotId, 12));
+      const key = await op.wait(deriveKey(password, salt, KEY_CONTEXT.slot, kdf));
+      const ct = new Uint8Array(await op.wait(crypto.subtle.encrypt({
         name: "AES-GCM",
         iv,
         additionalData: slotAad(aadContext, slotId)
-      }, key, plain));
+      }, key, plain)));
       return { v: SLOT_VERSION, id: slotId, ct };
+      } finally { plain.fill(0); noteData.bytes.fill(0); }
     }
 
     async function decryptSlot(password, slot, aadContext, kdf = KDF_PROFILES.normal) {
+      const op = operationTicket();
       if (slot.v !== SLOT_VERSION) throw new Error("unsupported slot");
-      const salt = await deriveDomainBytes("slot-salt", aadContext.vaultId, slot.id, 16);
-      const iv = await deriveDomainBytes("slot-nonce", aadContext.vaultId, slot.id, 12);
-      const key = await deriveKey(password, salt, KEY_CONTEXT.slot, kdf);
+      const salt = await op.wait(deriveDomainBytes("slot-salt", aadContext.vaultId, slot.id, 16));
+      const iv = await op.wait(deriveDomainBytes("slot-nonce", aadContext.vaultId, slot.id, 12));
+      const key = await op.wait(deriveKey(password, salt, KEY_CONTEXT.slot, kdf));
       const params = { name: "AES-GCM", iv, additionalData: slotAad(aadContext, slot.id, slot.v) };
-      const plain = new Uint8Array(await crypto.subtle.decrypt(params, key, slot.ct));
+      const plain = new Uint8Array(await op.wait(crypto.subtle.decrypt(params, key, slot.ct)));
+      try {
       if (plain.length < 1) throw new Error("bad note");
-      return decodeNoteText(plain[0], plain.subarray(1));
+      return await op.wait(decodeNoteText(plain[0], plain.subarray(1)));
+      } finally { plain.fill(0); }
     }
-
     function passwordScore(password) {
       if (!password) return { score: 0, pct: 0, label: "Пароль не введен", cls: "" };
       const length = [...normalizePassword(password)].length;
@@ -5434,6 +5520,11 @@ self.onmessage = async event => {
     }
 
     async function createAztecRender(opticalBytes, baseRender) {
+      if (opticalBytes.length > MAX_OPTICAL_BYTES) {
+        const error = new Error('Container exceeds optical capacity');
+        error.code = 'OPTICAL_CAPACITY';
+        throw error;
+      }
       await ensureZXing();
       const recovery = baseRender.fecProfile?.ecLevel || 33;
       const result = await globalThis.ZXingWASM.writeBarcode(opticalBytes, {
@@ -5442,7 +5533,11 @@ self.onmessage = async event => {
         addQuietZones: true,
         options: `ecLevel=${recovery}%`
       });
-      if (result.error || !result.symbol?.data?.length) throw new Error(result.error || "Не удалось создать Aztec.");
+      if (result.error || !result.symbol?.data?.length) {
+        const error = new Error(result.error || "Не удалось создать Aztec.");
+        if (/too (big|large|long)|capacity|fit|encode.*data/i.test(result.error || '')) error.code = 'OPTICAL_CAPACITY';
+        throw error;
+      }
       return {
         ...baseRender,
         transport: "aztec",
@@ -5618,28 +5713,31 @@ self.onmessage = async event => {
     }
 
     async function encryptContainer(masterKey, packBytes, vaultId, kdf = KDF_PROFILES.normal, keyFileDigest = null) {
+      const op = operationTicket();
       const safeKdf = validateKdfParams(kdf);
-      const salt = await deriveDomainBytes("container-salt", vaultId, new Uint8Array(), 16);
-      const iv = await deriveDomainBytes("container-nonce", vaultId, new Uint8Array(), 12);
-      const key = await deriveKey(masterKey, salt, KEY_CONTEXT.container, safeKdf, keyFileDigest);
-      const ciphertext = new Uint8Array(await crypto.subtle.encrypt({
+      const salt = await op.wait(deriveDomainBytes("container-salt", vaultId, new Uint8Array(), 16));
+      const iv = await op.wait(deriveDomainBytes("container-nonce", vaultId, new Uint8Array(), 12));
+      const key = await op.wait(deriveKey(masterKey, salt, KEY_CONTEXT.container, safeKdf, keyFileDigest));
+      const ciphertext = new Uint8Array(await op.wait(crypto.subtle.encrypt({
         name: "AES-GCM",
         iv,
         additionalData: containerAad(vaultId, ENVELOPE_VERSION, safeKdf)
-      }, key, packBytes));
+      }, key, packBytes)));
       return encodeEnvelope(ciphertext, vaultId, safeKdf);
     }
 
     async function decryptContainer(masterKey, envelope, keyFileDigest = null) {
-      const salt = await deriveDomainBytes("container-salt", envelope.id, new Uint8Array(), 16);
-      const iv = await deriveDomainBytes("container-nonce", envelope.id, new Uint8Array(), 12);
-      const key = await deriveKey(masterKey, salt, KEY_CONTEXT.container, envelope.q, keyFileDigest);
-      const plain = new Uint8Array(await crypto.subtle.decrypt({
+      const op = operationTicket();
+      const salt = await op.wait(deriveDomainBytes("container-salt", envelope.id, new Uint8Array(), 16));
+      const iv = await op.wait(deriveDomainBytes("container-nonce", envelope.id, new Uint8Array(), 12));
+      const key = await op.wait(deriveKey(masterKey, salt, KEY_CONTEXT.container, envelope.q, keyFileDigest));
+      const plain = new Uint8Array(await op.wait(crypto.subtle.decrypt({
         name: "AES-GCM",
         iv,
         additionalData: containerAad(envelope.id, envelope.v, envelope.q)
-      }, key, envelope.ct));
-      return decodePack(plain, envelope.id, envelope.q);
+      }, key, envelope.ct)));
+      try { return decodePack(plain, envelope.id, envelope.q); }
+      finally { plain.fill(0); }
     }
 
     async function packFromBody(body, masterKey, keyFileDigest = null) {
@@ -5948,19 +6046,25 @@ self.onmessage = async event => {
     }
 
     async function buildZipFiles(render, root, stamp, generatedAt = new Date()) {
+      const op = operationTicket();
       const files = [
-        { name: `${root}/PNG (${stamp})/${root}.png`, data: await pngBytesFromRender(render) },
-        { name: `${root}/SVG (${stamp})/${root}.svg`, data: makeSvg(render) },
         { name: `${root}/${root}.layerlock.txt`, data: makeCompactText(state.lastContainerBytes, state.lastFecKey) },
         { name: `${root}/${root}.llc`, data: makeCompactBytes(state.lastContainerBytes, state.lastFecKey) }
       ];
-      files.push({ name: `${root}/settings.txt`, data: await makeSettingsReport(render, files, generatedAt) });
+      if (render) {
+        files.push({ name: `${root}/PNG (${stamp})/${root}.png`, data: await op.wait(pngBytesFromRender(render)) });
+        files.push({ name: `${root}/SVG (${stamp})/${root}.svg`, data: makeSvg(render) });
+      }
+      const meta = render || {...state.lastExportMeta,formatLabel:'None (compact only)',moduleWidth:0,moduleHeight:0,scale:0};
+      files.push({ name: `${root}/settings.txt`, data: await op.wait(makeSettingsReport(meta, files, generatedAt)) });
       return files;
     }
-
     async function makeVault(onProgress = () => {}) {
+      const op = operationTicket();
       const masterKey = collectMasterKey();
       const entries = collectEntries();
+      const capacity = await op.wait(measureCapacity(entries.map(entry=>entry.text)));
+      if (capacity.containerBytes > MAX_CONTAINER_BYTES) throw new Error('Контейнер превышает безопасный лимит. Сократите текст или число слоев.');
       const kdfProfile = selectedKdfProfile();
       onProgress(`Подготовка данных · профиль ${kdfProfile.label}`, 5);
       const slots = [];
@@ -5972,7 +6076,7 @@ self.onmessage = async event => {
         const eta = done ? ` · примерно ${Math.max(1, Math.round(((Date.now() - startedAt) / done) * (entries.length - done) / 1000))} сек` : "";
         onProgress(`Укрепляю и шифрую слой ${i + 1}/${entries.length}${eta}`, 10 + (i / entries.length) * 58);
         const e = entries[i];
-        slots.push(await encryptSlot(e.password, e.text, aadContext, kdfProfile));
+        slots.push(await op.wait(encryptSlot(e.password, e.text, aadContext, kdfProfile)));
       }
       onProgress("Упаковываю слои", 72);
       for (let i = slots.length - 1; i > 0; i--) {
@@ -5981,7 +6085,7 @@ self.onmessage = async event => {
       }
       const packageBytes = encodePack(slots);
       onProgress("Укрепляю мастер-ключ и закрываю контейнер", 76);
-      const containerBytes = await encryptContainer(masterKey, packageBytes, vaultId, kdfProfile, state.createKeyFileDigest);
+      const containerBytes = await op.wait(encryptContainer(masterKey, packageBytes, vaultId, kdfProfile, state.createKeyFileDigest));
       if (containerBytes.length > MAX_CONTAINER_BYTES) {
         throw new Error("Контейнер превышает безопасный лимит. Сократите текст или число слоев.");
       }
@@ -5996,7 +6100,13 @@ self.onmessage = async event => {
         fecProfile: { ...fecProfile }
       };
       onProgress("Строю Aztec", 82);
-      state.lastRender = await createAztecRender(opticalBytes, baseRender);
+      let render = null;
+      try { render = await op.wait(createAztecRender(opticalBytes, baseRender)); }
+      catch (error) { if (error.code !== 'OPTICAL_CAPACITY') throw error; }
+      op.check();
+      state.lastRender = render;
+      $('outputHeading').textContent = translateForLanguage(render ? 'Изображение' : 'Контейнер');
+      state.lastExportMeta = baseRender;
       state.lastContainerBytes = containerBytes.slice();
       state.lastFecKey = fecKey;
       state.lastEntries = entries.map(e => ({ ...e }));
@@ -6013,21 +6123,28 @@ self.onmessage = async event => {
       state.lastZipName = `${baseName}-${id}.zip`;
       state.verifyCache.clear();
       onProgress("Рисую изображение", 86);
-      renderSigil($("canvas"), state.lastRender);
+      if (render) renderSigil($("canvas"), render);
+      $("canvas").closest(".canvas-box").classList.toggle('hidden', !render);
       $("makeView").classList.add("has-output");
       $("makePreviewPane").classList.remove("hidden");
       $("canvas").closest(".canvas-box").classList.add("has-image");
-      onProgress(`Проверяю ${state.lastRender.formatLabel}`, 90);
-      $("downloadPngBtn").disabled = false;
-      $("downloadSvgBtn").disabled = false;
+      onProgress('Проверяю контейнер', 90);
+      $("downloadPngBtn").disabled = !render;
+      $("downloadSvgBtn").disabled = !render;
       $("downloadBitsBtn").disabled = false;
       $("downloadRawBtn").disabled = false;
       $("downloadZipBtn").disabled = false;
-      $("printBtn").disabled = false;
-      $("verifyBtn").disabled = false;
-      $("expandMakeImageBtn").disabled = false;
+      $("printBtn").disabled = !render;
+      $("verifyBtn").disabled = !render;
+      $("expandMakeImageBtn").disabled = !render;
       setVerifyButton("idle");
-      onProgress(`${state.lastRender.formatLabel} создан`, 92);
+      onProgress('Контейнер создан', 92);
+      if (!render) {
+        setStatus('makeStatus', currentLanguage === 'en'
+          ? `Container: ${containerBytes.length} bytes. Too large for one Aztec. RAW, TXT and ZIP are available.`
+          : `Контейнер: ${containerBytes.length} байт. Не помещается в один Aztec. Доступны RAW, TXT и ZIP.`, 'ok');
+        return;
+      }
       const px = renderPixelSize(state.lastRender);
       setStatusHtml("makeStatus", `<strong>Детали:</strong> ${opticalBytes.length} байт, ${entries.length} слой(я), ${state.lastRender.formatLabel}, матрица ${state.lastRender.moduleWidth} x ${state.lastRender.moduleHeight}, изображение ${px} x ${px}.`, "ok");
     }
@@ -6038,10 +6155,24 @@ self.onmessage = async event => {
       await verifyRender(state.lastRender, state.lastEntries);
     }
 
+    async function verifyCompactExport() {
+      if (!state.lastContainerBytes) throw new Error('Сначала создайте изображение.');
+      if (!state.lastMasterKey || !state.lastEntries.length) throw new Error('Секретные поля очищены. Создайте контейнер заново.');
+      await verifyContainerBody(decodeBody(state.lastContainerBytes));
+    }
+
     async function verifyCanvas(canvas, entries = state.lastEntries, masterKey = state.lastMasterKey, keyFileDigest = state.lastMasterKeyFileDigest) {
+      const op = operationTicket();
       const decoded = await decodePackageFromCanvas(canvas);
+      op.check();
       const { body } = decoded;
+      return verifyContainerBody(body, entries, masterKey, keyFileDigest);
+    }
+
+    async function verifyContainerBody(body, entries = state.lastEntries, masterKey = state.lastMasterKey, keyFileDigest = state.lastMasterKeyFileDigest) {
+      const op = operationTicket();
       const pack = await packFromBody(body, masterKey, keyFileDigest);
+      op.check();
       const aadContext = { vaultId: pack.u, packVersion: pack.v, kdf: pack.q };
       for (const entry of entries) {
         let ok = false;
@@ -6051,7 +6182,7 @@ self.onmessage = async event => {
               ok = true;
               break;
             }
-          } catch (_) {}
+          } catch (error) { rethrowCancellation(error); }
         }
         if (!ok) throw new Error("Проверка не прошла: один из слоев не открылся.");
       }
@@ -6098,15 +6229,18 @@ self.onmessage = async event => {
     }
 
     async function stressTestRender(render) {
+      const op = operationTicket();
       const total = 3;
       let passed = 0;
       await verifyRender(render);
+      op.check();
       passed++;
       for (const kind of ["scaled", "faded"]) {
         try {
           await verifyCanvas(makeDegradedRender(render, kind));
           passed++;
-        } catch (_) {}
+        } catch (error) { rethrowCancellation(error); }
+        op.check();
       }
       if (passed !== total) {
         const error = new Error(`${render.formatLabel} прошел ${passed} из ${total} сценариев качества.`);
@@ -6120,22 +6254,82 @@ self.onmessage = async event => {
       if (!state.lastRender) throw new Error("Сначала создайте изображение.");
       await verifyRenderCached(state.lastRender);
     }
+    let scannerWorker = null;
+    let scannerSequence = 0;
+    const scannerPending = new Map();
+
+    function scannerWorkerSource() {
+      const vendor = $('opticalVendorSource')?.textContent;
+      if (!vendor) throw new Error('Optical codec unavailable');
+      return `${vendor}\n
+const wasmBinary = Uint8Array.from(atob(globalThis.LAYERLOCK_ZXING_WASM_BASE64), c => c.charCodeAt(0));
+globalThis.LAYERLOCK_ZXING_WASM_BASE64 = '';
+const ready = ZXingWASM.prepareZXingModule({overrides:{wasmBinary}, fireImmediately:true});
+let queue = Promise.resolve();
+self.onmessage = event => {
+  const {id, buffer, width, height, options} = event.data;
+  queue = queue.then(async () => {
+    try {
+      await ready;
+      const results = await ZXingWASM.readBarcodes(new ImageData(new Uint8ClampedArray(buffer),width,height), options);
+      self.postMessage({id, results:results.map(r => ({bytes:r.bytes,orientation:r.orientation,position:r.position}))});
+    } catch(error) { self.postMessage({id,error:error.message || String(error)}); }
+  });
+};`;
+    }
+
+    function stopScannerWorker(error = new DOMException('Operation cancelled', 'AbortError')) {
+      scannerWorker?.terminate();
+      scannerWorker = null;
+      for (const item of scannerPending.values()) {
+        clearTimeout(item.timer);
+        item.reject(error);
+      }
+      scannerPending.clear();
+    }
+
+    async function scanPixels(image, options) {
+      if (typeof Worker !== 'function') {
+        await ensureZXing();
+        return globalThis.ZXingWASM.readBarcodes(image, options);
+      }
+      if (!scannerWorker) {
+        const url = URL.createObjectURL(new Blob([scannerWorkerSource()], {type:'text/javascript'}));
+        try { scannerWorker = new Worker(url); }
+        finally { URL.revokeObjectURL(url); }
+        scannerWorker.onmessage = ({data}) => {
+          const pending = scannerPending.get(data.id);
+          if (!pending) return;
+          scannerPending.delete(data.id);
+          clearTimeout(pending.timer);
+          if (data.error) pending.reject(new Error(data.error));
+          else pending.resolve(data.results);
+        };
+        scannerWorker.onerror = event => stopScannerWorker(new Error(event.message || 'Scanner worker failed'));
+      }
+      return new Promise((resolve, reject) => {
+        const id = ++scannerSequence;
+        const timer = setTimeout(() => stopScannerWorker(new Error('Scanner timeout')), 6000);
+        scannerPending.set(id, {resolve,reject,timer});
+        scannerWorker.postMessage({id,buffer:image.data.buffer,width:image.width,height:image.height,options}, [image.data.buffer]);
+      });
+    }
 
     async function tryDecodeAztec(source, fast = false) {
+      const op = operationTicket();
       try {
-        await ensureZXing();
         const context = source.getContext("2d", { willReadFrequently: true });
         const image = context.getImageData(0, 0, source.width, source.height);
-        const results = await globalThis.ZXingWASM.readBarcodes(image, {
+        const results = await op.wait(scanPixels(image, {
           formats: ["Aztec"],
           tryHarder: !fast,
           tryRotate: true,
           tryInvert: true,
           tryDownscale: true,
           tryDenoise: !fast,
-          maxNumberOfSymbols: 1,
+          maxNumberOfSymbols: 4,
           returnErrors: false
-        });
+        }));
         for (const result of results) {
           let body;
           try { body = decodeBody(new Uint8Array(result.bytes)); }
@@ -6148,7 +6342,7 @@ self.onmessage = async event => {
             position: result.position || null
           };
         }
-      } catch (_) {}
+      } catch (error) { rethrowCancellation(error); }
       return null;
     }
 
@@ -6167,25 +6361,56 @@ self.onmessage = async event => {
     }
 
     async function decodePackageFromCanvas(canvas) {
+      const op = operationTicket();
       const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+      let candidates = 1;
       const fastCandidate = scaledScanCanvas(canvas, 1600);
       let decoded = await tryDecodeAztec(fastCandidate, true);
       if (!decoded) {
+        op.check();
+        candidates++;
         const thoroughCandidate = scaledScanCanvas(canvas, 2400);
         decoded = await tryDecodeAztec(thoroughCandidate, false);
       }
+      // Native-resolution overlapping tiles preserve small dense symbols in large screenshots.
+      if (!decoded && Math.max(canvas.width, canvas.height) > 1600) {
+        for (const region of scanRegions(canvas.width, canvas.height)) {
+          op.check();
+          if (performance.now() - startedAt > 8000) break;
+          const tile = cropCanvas(canvas, region.x, region.y, region.width, region.height);
+          candidates++;
+          decoded = await tryDecodeAztec(tile, false);
+          if (decoded) break;
+        }
+      }
+      op.check();
       if (!decoded) {
         throw new Error("Aztec-контейнер не распознан. Проверьте обрезку, резкость и отсутствие сжатия с потерями.");
       }
       return {
         ...decoded,
         scanPath: "aztec",
-        scanCandidates: 1,
+        scanCandidates: candidates,
         scanMs: (typeof performance !== "undefined" ? performance.now() : Date.now()) - startedAt
       };
     }
 
+    function scanRegions(width, height) {
+      const size = 1280;
+      const positions = length => {
+        if (length <= size) return [0];
+        const count = Math.ceil((length - size) / 768);
+        return Array.from({length:count + 1}, (_, i) => Math.round((length - size) * i / count));
+      };
+      const regions = positions(height).flatMap(y => positions(width).map(x => ({
+        x,y,width:Math.min(size,width),height:Math.min(size,height)
+      })));
+      return regions.sort((a,b) =>
+        Math.hypot(a.x+a.width/2-width/2,a.y+a.height/2-height/2) -
+        Math.hypot(b.x+b.width/2-width/2,b.y+b.height/2-height/2)).slice(0,64);
+    }
     async function decodeReadImage() {
+      const op = operationTicket();
       if (state.readDecoded) return state.readDecoded;
       if (state.readDecodePromise) return state.readDecodePromise;
       if (!state.imageBitmap) throw new Error("Сначала загрузите изображение.");
@@ -6194,13 +6419,15 @@ self.onmessage = async event => {
       canvas.height = state.imageBitmap.height;
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(state.imageBitmap, 0, 0);
-      state.readDecodePromise = decodePackageFromCanvas(canvas)
+      const task = decodePackageFromCanvas(canvas)
         .then(result => {
+          op.check();
           state.readDecoded = result;
           return result;
         })
-        .finally(() => { state.readDecodePromise = null; });
-      return state.readDecodePromise;
+        .finally(() => { if (state.readDecodePromise === task) state.readDecodePromise = null; });
+      state.readDecodePromise = task;
+      return task;
     }
 
     function setReadMasterStage() {
@@ -6236,17 +6463,19 @@ self.onmessage = async event => {
     }
 
     async function readVault() {
-      if (!state.imageBitmap) throw new Error("Сначала загрузите изображение.");
+      const op = operationTicket();
+      if (!state.imageBitmap && !state.readDecoded) throw new Error("Сначала загрузите изображение.");
       const password = $("readPassword").value;
-      const decoded = await decodeReadImage();
+      const decoded = await op.wait(decodeReadImage());
       const { body, formatLabel, orientation } = decoded;
       const meta = { formatLabel, orientation };
       let pack = state.readPack;
       if (!pack) {
         if (!password) throw new Error("Введите мастер-ключ.");
         try {
-          pack = await decryptContainer(password, body.envelope, state.readKeyFileDigest);
-        } catch (_) {
+          pack = await op.wait(decryptContainer(password, body.envelope, state.readKeyFileDigest));
+        } catch (error) {
+          rethrowCancellation(error);
           throw new Error("Мастер-ключ не подошел.");
         }
         state.readPack = pack;
@@ -6264,14 +6493,14 @@ self.onmessage = async event => {
       const aadContext = { vaultId: pack.u, packVersion: pack.v, kdf: pack.q };
       for (const slot of pack.p) {
         try {
-          const text = await decryptSlot(layerPassword, slot, aadContext, pack.q);
+          const text = await op.wait(decryptSlot(layerPassword, slot, aadContext, pack.q));
           $("readout").textContent = text;
           $("readWorkPane").classList.add("has-result");
           $("readLayerField").classList.add("is-ok");
           setStatus("readStatusWork", "Слой открыт.", "ok");
           haptic("success");
           return;
-        } catch (_) {}
+        } catch (error) { rethrowCancellation(error); }
       }
       throw new Error("Контейнер найден, но этот пароль не открыл ни один слой.");
     }
@@ -6395,15 +6624,19 @@ self.onmessage = async event => {
     }
 
     async function activateReadImageSource(imageSource, decodedHint = null, restoredRender = null) {
+      const op = operationTicket();
       state.readDecoded = decodedHint;
       state.readDecodePromise = null;
       state.readRender = restoredRender;
       setReadMasterStage();
       state.imageBitmap = imageSource;
       const canvas = $("readCanvas");
-      canvas.width = state.imageBitmap.width;
-      canvas.height = state.imageBitmap.height;
-      canvas.getContext("2d", { willReadFrequently: true }).drawImage(state.imageBitmap, 0, 0);
+      canvas.width = state.imageBitmap?.width || 1;
+      canvas.height = state.imageBitmap?.height || 1;
+      if (state.imageBitmap) canvas.getContext("2d", { willReadFrequently: true }).drawImage(state.imageBitmap, 0, 0);
+      document.querySelector('.read-image-wrap').classList.toggle('hidden', !imageSource);
+      $('readWorkPane').classList.toggle('compact-only', !imageSource);
+      $('resetCompactBtn').classList.toggle('hidden', Boolean(imageSource));
       canvas.closest(".canvas-box").classList.add("has-image");
       $("readDropPane").closest(".read-panel").classList.add("hidden");
       $("readDropPane").classList.add("hidden");
@@ -6419,32 +6652,39 @@ self.onmessage = async event => {
       const start = Date.now();
       if (decodedHint) {
         requestAnimationFrame(() => {
+          if (!op.current()) return;
           announceDecodedImage(decodedHint, decodedHint.scanMs || (Date.now() - start));
           setReadScanning(false);
         });
         return;
       }
       setTimeout(() => {
+        if (!op.current()) return;
         decodeReadImage()
-          .then(decoded => announceDecodedImage(decoded, decoded.scanMs || (Date.now() - start)))
-          .catch(e => handleError("readStatusWork", e))
-          .finally(() => setReadScanning(false));
+          .then(decoded => { if (op.current()) announceDecodedImage(decoded, decoded.scanMs || (Date.now() - start)); })
+          .catch(e => { if (op.current()) handleError("readStatusWork", e); })
+          .finally(() => { if (op.current()) setReadScanning(false); });
       }, 30);
     }
 
     async function loadImageFile(file, decodedHint = null) {
+      cancelOperations();
+      const op = operationTicket();
       if (!file || (!file.type.startsWith("image/") && !isSvgFile(file))) {
         throw new Error("Нужен файл изображения.");
       }
-      await activateReadImageSource(await decodeImageFile(file), decodedHint, null);
+      await activateReadImageSource(await op.wait(decodeImageFile(file)), decodedHint, null);
     }
 
-    async function loadCompactContainer(compact) {
+    async function loadCompactContainer(compact, op = operationTicket()) {
+      op.check();
       const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
       const body = decodeBody(compact.containerBytes);
-      const render = await createAztecRender(compact.containerBytes, { fecProfile: { ...compact.fecProfile } });
-      const canvas = document.createElement("canvas");
-      renderSigil(canvas, render);
+      let render = null;
+      try { render = await op.wait(createAztecRender(compact.containerBytes, { fecProfile: { ...compact.fecProfile } })); }
+      catch (error) { if (error.code !== 'OPTICAL_CAPACITY') throw error; }
+      const canvas = render ? document.createElement("canvas") : null;
+      if (render) renderSigil(canvas, render);
       const decoded = {
         body,
         transport: "compact",
@@ -6460,15 +6700,18 @@ self.onmessage = async event => {
     }
 
     async function loadCompactContainerText(source) {
+      cancelOperations();
       return loadCompactContainer(parseCompactText(source));
     }
 
     async function loadCompactContainerFile(file) {
+      cancelOperations();
+      const op = operationTicket();
       const name = String(file?.name || "").toLowerCase();
       if (name.endsWith(".llc") && file.size > MAX_CONTAINER_BYTES + 32) throw new Error("Компактный контейнер превышает безопасный лимит.");
       if (!name.endsWith(".llc") && file.size > MAX_COMPACT_TEXT_CHARS) throw new Error("Компактный код превышает безопасный лимит.");
-      if (name.endsWith(".llc")) return loadCompactContainer(parseCompactBytes(new Uint8Array(await file.arrayBuffer())));
-      return loadCompactContainerText(await file.text());
+      if (name.endsWith(".llc")) return loadCompactContainer(parseCompactBytes(new Uint8Array(await op.wait(file.arrayBuffer()))), op);
+      return loadCompactContainer(parseCompactText(await op.wait(file.text())), op);
     }
 
     function updateCameraMeter(count = 0) {
@@ -6585,6 +6828,7 @@ self.onmessage = async event => {
     }
 
     async function acceptCameraCandidate(canvas, decoded) {
+      const token = state.cameraLoopToken;
       if (state.cameraAccepted) return;
       state.cameraAccepted = true;
       $("cameraGuide").classList.remove("scanning");
@@ -6599,6 +6843,7 @@ self.onmessage = async event => {
       let blob;
       try {
         blob = await canvasBlob(canvas);
+        if (token !== state.cameraLoopToken) return;
       } catch (error) {
         state.cameraAccepted = false;
         $("cameraGuide").classList.add("scanning");
@@ -6629,18 +6874,20 @@ self.onmessage = async event => {
         state.cameraFrameCounter++;
         const quality = assessCameraQuality(frame);
         setCameraStatus(quality.message, quality.blocked ? 0 : 1);
-        if (quality.blocked && !force) return;
+        if (quality.blocked && !force && state.cameraFrameCounter % 3 !== 0) return;
 
         setCameraStatus("Ищу Aztec", 1);
         const direct = await tryDecodeAztec(frame, !force);
+        if (token !== state.cameraLoopToken) return;
         if (direct) {
           await acceptCameraCandidate(frame, direct);
           return;
         }
 
-        const fractions = force ? [.66, .78, .9] : [.78, .9];
+        const fractions = force ? [.66, .82] : [.82];
         for (const fraction of fractions) {
           const result = await decodeCameraRegion(frame, centeredCameraRegion(frame, fraction), !force);
+          if (token !== state.cameraLoopToken) return;
           if (result.decoded) {
             await acceptCameraCandidate(result.candidate, result.decoded);
             return;
@@ -6648,7 +6895,7 @@ self.onmessage = async event => {
         }
         setCameraStatus("Держите Aztec целиком внутри рамки", 1);
       } finally {
-        state.cameraBusy = false;
+        if (token === state.cameraLoopToken) state.cameraBusy = false;
         if (token === state.cameraLoopToken && !state.cameraAccepted) scheduleCameraScan(token, force ? 150 : 90);
       }
     }
@@ -6696,6 +6943,8 @@ self.onmessage = async event => {
     }
 
     function resetReadImageFlow() {
+      cancelOperations();
+      $("readBtn").disabled = false;
       stopLiveCamera(true);
       state.imageBitmap = null;
       state.readDecoded = null;
@@ -6708,6 +6957,7 @@ self.onmessage = async event => {
       canvas.closest(".canvas-box").classList.remove("has-image");
       $("readout").textContent = "";
       $("readWorkPane").classList.remove("active", "has-result");
+      $("readWorkPane").classList.remove("is-reading");
       $("readDropPane").closest(".read-panel").classList.remove("hidden");
       $("readDropPane").classList.remove("hidden");
       $("replaceImageBtn").classList.add("hidden");
@@ -6809,13 +7059,82 @@ self.onmessage = async event => {
       $("themeToggle").setAttribute("aria-label", $("themeToggle").title);
       $("themeLabel").textContent = light ? "Темная" : "Светлая";
     }
+    function varUintSize(value) {
+      let size = 1;
+      while (value >= 128) { value = Math.floor(value / 128); size++; }
+      return size;
+    }
 
+    async function measureCapacity(notes) {
+      const op = operationTicket();
+      let rawBytes = 0;
+      let compressedBytes = 0;
+      let packBytes = 4 + varUintSize(notes.length);
+      for (const text of notes) {
+        const note = await encodeNoteText(text);
+        try {
+          op.check();
+          rawBytes += note.rawLength;
+          compressedBytes += note.bytes.length;
+          const slotBytes = 1 + varUintSize(note.rawLength) + note.bytes.length + 16;
+          packBytes += 8 + varUintSize(slotBytes) + slotBytes;
+        } finally { note.bytes.fill(0); }
+      }
+      const encryptedBytes = packBytes + 16;
+      const containerBytes = 22 + varUintSize(encryptedBytes) + encryptedBytes;
+      const rawFileBytes = 9 + varUintSize(containerBytes) + containerBytes;
+      return {rawBytes,compressedBytes,containerBytes,rawFileBytes};
+    }
+
+    let capacityRevision = 0;
+    let capacityTimer;
+    function scheduleCapacity() {
+      clearTimeout(capacityTimer);
+      const revision = ++capacityRevision;
+      const op = operationTicket();
+      capacityTimer = setTimeout(async () => {
+        const node = $('capacityStatus');
+        const notes = [...document.querySelectorAll('#entries .entry-text')].map(input => input.value);
+        if (!notes.some(Boolean)) { node.textContent = ''; return; }
+        try {
+          const result = await measureCapacity(notes);
+          if (revision !== capacityRevision || !op.current()) return;
+          const english = currentLanguage === 'en';
+          node.textContent = english
+            ? `Text ${result.rawBytes} B · Compressed ${result.compressedBytes} B · RAW ${result.rawFileBytes} B`
+            : `Текст ${result.rawBytes} Б · Сжатие ${result.compressedBytes} Б · RAW ${result.rawFileBytes} Б`;
+          node.classList.toggle('bad', result.containerBytes > MAX_CONTAINER_BYTES);
+        } catch (error) {
+          if (revision === capacityRevision && op.current()) node.textContent = translateForLanguage(error.message);
+        }
+      }, 600);
+    }
+    const api = {
+      SLOT_VERSION, PACK_VERSION, ENVELOPE_VERSION, KDF_ID, KDF_NAME, HKDF_HASH,
+      KEY_CONTEXT, KDF_PROFILES, FEC_PROFILES, MAX_CONTAINER_BYTES,
+      randomBytes, bytesToHex, crc32, deriveKey, deriveDomainBytes, argon2idRaw,
+      argon2WorkerSource, validateKdfParams, kdfProfileIndex, kdfProfileFromIndex,
+      passwordPolicyIssue, passwordIdentity, passwordScore,
+      encryptSlot, decryptSlot, encodePack, decodePack, encodeEnvelope,
+      decodeEnvelope, decodeBody, encryptContainer, decryptContainer, makeSvg,
+      makeCompactBytes, parseCompactBytes, makeCompactText, parseCompactText,
+      encodeNoteText, decodeNoteText, decompress, writeVarUint,
+      validateImageDimensions, readRasterDimensions, createAztecRender,
+      renderSigil, decodePackageFromCanvas,
+      operationTicket, cancelOperations, state, clearSensitiveData, readVault,
+      resetReadImageFlow, makeVault, loadCompactContainerText, measureCapacity,
+      scanRegions, verifyContainerBody, translateForLanguage,
+      scannerWorkerSource, attachKeyFile, generateKeyFile, clearKeyFile
+    };
+
+if (!mount) return api;
     $("tabMake").addEventListener("click", () => switchTab("make"));
     $("tabRead").addEventListener("click", () => switchTab("read"));
     $("addEntry").addEventListener("click", () => makeEntry(false));
     $("readLayerPassword").addEventListener("input", () => $("readLayerField").classList.remove("is-ok"));
     $("clearAll").addEventListener("click", () => {
       if (!localizedConfirm("Очистить все слои, название и сгенерированное изображение?")) return;
+      clearSensitiveData(true);
       haptic("warning");
       $("entries").textContent = "";
       makeEntry(true);
@@ -6909,7 +7228,8 @@ self.onmessage = async event => {
     });
     $("generateKeyFileBtn").addEventListener("click", async () => {
       closeKeyFileMenu();
-      await generateKeyFile();
+      try { await generateKeyFile(); }
+      catch (error) { handleError('makeStatus', error); }
     });
     $("selectMasterKeyFileBtn").addEventListener("click", () => {
       closeKeyFileMenu();
@@ -6926,11 +7246,11 @@ self.onmessage = async event => {
     });
     $("masterKeyFileInput").addEventListener("change", async ev => {
       try { await attachKeyFile("create", ev.target.files?.[0]); }
-      catch (error) { ev.target.value = ""; showToast(error.message, "bad"); }
+      catch (error) { if (error.name !== 'AbortError') { ev.target.value = ""; showToast(error.message, "bad"); } }
     });
     $("readKeyFileInput").addEventListener("change", async ev => {
       try { await attachKeyFile("read", ev.target.files?.[0]); }
-      catch (error) { ev.target.value = ""; showToast(error.message, "bad"); }
+      catch (error) { if (error.name !== 'AbortError') { ev.target.value = ""; showToast(error.message, "bad"); } }
     });
     async function runMake() {
       try {
@@ -6942,6 +7262,8 @@ self.onmessage = async event => {
         setMakeButtonsState("invalid");
         return;
       }
+      cancelOperations();
+      const op = operationTicket();
       setMakeButtonsState("busy");
       setStatus("makeStatus", "Создание...");
       showProgress("Подготовка...", 0);
@@ -6962,13 +7284,21 @@ self.onmessage = async event => {
         $("makePreviewPane").classList.add("hidden");
         setVerifyButton("idle");
         await makeVault(updateProgress);
+        op.check();
+        if (!state.lastRender) {
+          await op.wait(verifyContainerBody(decodeBody(state.lastContainerBytes)));
+          updateProgress('Готово', 100);
+          return;
+        }
         updateProgress("Проверяю качество Aztec", 95);
         try {
           const result = await stressTestRender(state.lastRender);
+          op.check();
           state.verifyCache.add(verificationKey(state.lastRender));
           setVerifyButton("ok", `${result.passed}/${result.total}`);
           updateProgress("Готово · проверка пройдена", 100);
         } catch (verificationError) {
+          rethrowCancellation(verificationError);
           setVerifyButton("bad", verificationError.verificationScore || "ошибка");
           setStatus("makeStatus", verificationError.message, "bad");
           updateProgress("Создано · проверка требует внимания", 100);
@@ -6977,10 +7307,16 @@ self.onmessage = async event => {
       }
       catch (e) { handleError("makeStatus", e); }
       finally {
+        if (op.current()) {
         setMakeButtonsState("idle");
-        setTimeout(hideProgress, 350);
+        setTimeout(() => { if (op.current()) hideProgress(); }, 350);
+        }
       }
     }
+    $('cancelOperationBtn').addEventListener('click', () => {
+      clearSensitiveData(true);
+      setStatus('makeStatus', 'Операция отменена. Секретные поля очищены.');
+    });
     $("makeBtn").addEventListener("click", runMake);
     $("mobileMakeBtn").addEventListener("click", runMake);
     document.addEventListener("keydown", ev => {
@@ -6993,15 +7329,20 @@ self.onmessage = async event => {
     });
     document.addEventListener("input", ev => {
       if (ev.target?.matches("#makeView input, #makeView textarea")) ev.target.removeAttribute("aria-invalid");
+      if (ev.target?.matches('.entry-text')) scheduleCapacity();
     });
+    new MutationObserver(scheduleCapacity).observe($('entries'), {childList:true});
+    $('languageToggle').addEventListener('click', scheduleCapacity);
     $("verifyBtn").addEventListener("click", async () => {
+      const op = operationTicket();
       setVerifyButton("checking");
       try {
-        const result = await stressTestRender(state.lastRender);
+        const result = await op.wait(stressTestRender(state.lastRender));
         state.verifyCache.add(verificationKey(state.lastRender));
         setVerifyButton("ok", `${result.passed}/${result.total}`);
         showToast("Проверено: слои открываются, масштабирование и потеря контраста пройдены.", "ok");
       } catch (e) {
+        if (!op.current()) return;
         setVerifyButton("bad", e.verificationScore || "ошибка");
         showToast(e.message, "bad");
       }
@@ -7031,18 +7372,20 @@ self.onmessage = async event => {
       }
     });
     $("downloadPngBtn").addEventListener("click", async () => {
+      const op = operationTicket();
       try {
-        await verifyRenderCached(selectedRender());
-        downloadBlob(await pngBytesFromRender(selectedRender()), "image/png", state.lastName);
+        await op.wait(verifyRenderCached(selectedRender()));
+        downloadBlob(await op.wait(pngBytesFromRender(selectedRender())), "image/png", state.lastName);
         markSaved();
       } catch (e) {
         handleError("makeStatus", e);
       }
     });
     $("downloadSvgBtn").addEventListener("click", async () => {
+      const op = operationTicket();
       try {
         if (!state.lastRender) throw new Error("Сначала создайте изображение.");
-        await verifyRenderCached(selectedRender());
+        await op.wait(verifyRenderCached(selectedRender()));
         downloadBlob(makeSvg(selectedRender()), "image/svg+xml", state.lastSvgName);
         markSaved();
       } catch (e) {
@@ -7050,9 +7393,9 @@ self.onmessage = async event => {
       }
     });
     $("downloadBitsBtn").addEventListener("click", async () => {
+      const op = operationTicket();
       try {
-        if (!state.lastRender) throw new Error("Сначала создайте изображение.");
-        await verifyRenderCached(selectedRender());
+        await op.wait(verifyCompactExport());
         downloadBlob(makeCompactText(state.lastContainerBytes, state.lastFecKey), "text/plain;charset=utf-8", state.lastBitsName);
         markSaved();
       } catch (e) {
@@ -7060,9 +7403,9 @@ self.onmessage = async event => {
       }
     });
     $("downloadRawBtn").addEventListener("click", async () => {
+      const op = operationTicket();
       try {
-        if (!state.lastRender) throw new Error("Сначала создайте изображение.");
-        await verifyRenderCached(selectedRender());
+        await op.wait(verifyCompactExport());
         downloadBlob(makeCompactBytes(state.lastContainerBytes, state.lastFecKey), "application/octet-stream", state.lastRawName);
         markSaved();
       } catch (e) {
@@ -7070,25 +7413,27 @@ self.onmessage = async event => {
       }
     });
     $("downloadZipBtn").addEventListener("click", async () => {
+      const op = operationTicket();
       try {
         setStatus("makeStatus", "Проверяю контейнер перед ZIP...");
-        await verifyRenderCached(selectedRender());
+        await op.wait(verifyCompactExport());
         const stamp = fileStamp();
         const generatedAt = new Date();
         const root = safeName(state.lastBaseName);
         const render = selectedRender();
-        const files = await buildZipFiles(render, root, stamp, generatedAt);
+        const files = await op.wait(buildZipFiles(render, root, stamp, generatedAt));
         downloadBlob(makeZip(files), "application/zip", state.lastZipName);
         markSaved();
-        setStatus("makeStatus", `ZIP собран. ${selectedRender().formatLabel || "Контейнер"} проверен.`, "ok");
+        setStatus("makeStatus", `ZIP собран. ${selectedRender()?.formatLabel || "Контейнер"} проверен.`, "ok");
       } catch (e) {
         handleError("makeStatus", e);
       }
     });
     $("printBtn").addEventListener("click", async () => {
+      const op = operationTicket();
       try {
         if (!state.lastRender) throw new Error("Сначала создайте изображение.");
-        await verifyRenderCached(selectedRender());
+        await op.wait(verifyRenderCached(selectedRender()));
         renderSigil($("printCanvas"), selectedRender());
         $("printTitle").textContent = state.lastBaseName;
         $("printMeta").textContent = `LayerLock · ${fileStamp()} · ${selectedRender().formatLabel} · ${selectedRender().moduleWidth} x ${selectedRender().moduleHeight}`;
@@ -7119,6 +7464,7 @@ self.onmessage = async event => {
       if (!localizedConfirm("Текущее изображение, введенные ключи и результат будут сброшены. Загрузить другое изображение?")) return;
       resetReadImageFlow();
     });
+    $('resetCompactBtn').addEventListener('click', () => $('replaceImageBtn').click());
     $("expandReadImageBtn").addEventListener("click", openReadImageModal);
     $("downloadReadSvgBtn").addEventListener("click", () => {
       if (!state.readRender) return;
@@ -7283,6 +7629,7 @@ self.onmessage = async event => {
       catch (e) { handleError(readStatusTarget(), e); }
     });
     $("readBtn").addEventListener("click", async () => {
+      const op = operationTicket();
       const action = state.readPack ? "Проверяю пароль слоя через Argon2id..." : (state.readDecoded ? "Проверяю мастер-ключ через Argon2id..." : "Ищу контейнер и проверяю мастер-ключ...");
       const searching = !state.readDecoded;
       setStatus("readStatusWork", action);
@@ -7293,9 +7640,11 @@ self.onmessage = async event => {
       try { await readVault(); }
       catch (e) { handleError("readStatusWork", e); }
       finally {
+        if (op.current()) {
         $("readBtn").disabled = false;
         $("readWorkPane").classList.remove("is-reading");
         if (searching) setReadScanning(false);
+        }
       }
     });
 
@@ -7521,7 +7870,11 @@ self.onmessage = async event => {
 
     makeEntry(true);
     markSaved();
-  })();
-  </script>
+
+return api;
+}
+
+createLayerLock();
+</script>
 </body>
 </html>

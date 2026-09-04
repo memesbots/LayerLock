@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import vm from "node:vm";
+import {core} from './load-core.mjs';
 
 const html = await readFile(new URL("../outputs/sigil-vault.html", import.meta.url), "utf8");
 const vendor = await readFile(new URL("../vendor/zxing-wasm-full.iife.js", import.meta.url), "utf8");
@@ -12,22 +12,7 @@ if (/https?:\/\/(?:fastly\.)?jsdelivr\.net/i.test(html + vendor)) {
   throw new Error("ZXing network fallback is present");
 }
 
-const scripts = [...html.matchAll(/<script(?: [^>]*)?>([\s\S]*?)<\/script>/g)];
-const app = scripts.at(-1)?.[1] || "";
-const i18nStart = app.indexOf("const EN_TEXT");
-const i18nEnd = app.indexOf("const SLOT_VERSION");
-if (i18nStart < 0 || i18nEnd < 0) throw new Error("Localization block not found");
-
-const context = { console };
-vm.createContext(context);
-vm.runInContext(`
-  class MutationObserver { constructor() {} }
-  class Element {}
-  const Node = {};
-  const document = {};
-  ${app.slice(i18nStart, i18nEnd)}
-  globalThis.translate = translateForLanguage;
-`, context);
+const context = {translate:core.translateForLanguage};
 
 const cases = new Map([
   ["Создать", "Create"],

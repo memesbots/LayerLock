@@ -1,0 +1,57 @@
+{
+  "warning": "PUBLIC TEST DATA. NOT SECRETS. Never use these passwords or key files.",
+  "fixtures": [
+    {
+      "profile": "fast",
+      "master": "public reference master passphrase",
+      "keyFileHex": null,
+      "layers": [
+        {
+          "password": "public layer 1 reference phrase",
+          "text": "Exact whitespace:  a  b\n\tline two\n"
+        },
+        {
+          "password": "public layer 2 reference phrase",
+          "text": "Unicode: Привет 世界 🔐 é"
+        }
+      ],
+      "rawBase64": "TExDMgGpAUxMRTQEACk3JZ2cUXvufPMeiFjT8rKRARAuXwbB5GJ1vtWj5fnhg4xzIcUlPU0DvNLhINopxJ2Wc9H97VbWQYEyfjeFEWV/CUNKcfPWolgQ7AP5Kvdek+IyDHv44uBE/Sl5/ecXcU426VwSzthDOJT2g3ARoWF5hmdOP3D7cfhQ3Yj/aV1UKyzs5bcIgwcNXq+J0opdnrc9Cm4ub9PV6SYj6DmazBpOH7WVrXJF"
+    },
+    {
+      "profile": "normal",
+      "master": "public reference master passphrase",
+      "keyFileHex": "7171717171717171717171717171717171717171717171717171717171717171",
+      "layers": [
+        {
+          "password": "public layer 1 reference phrase",
+          "text": "Public recovery reference: normal"
+        }
+      ],
+      "rawBase64": "TExDMgFoTExFNAQBBHPPH+9xDfXRj/YMsvP7CVEr6hUgAl8xGsn6Gvl4SF2ODbp1ZXgvcwblNIRGOLU1mjRZ5uhQPnzFr1o4CwiLe39rKmdADAYiq3v4O7TQ2/gR4GVx7zWWHk818Uhcbb9bz9p+5Vy9"
+    },
+    {
+      "profile": "max",
+      "master": "public reference master passphrase",
+      "keyFileHex": null,
+      "layers": [
+        {
+          "password": "public layer 1 reference phrase",
+          "text": "Public recovery reference: max"
+        }
+      ],
+      "rawBase64": "TExDMgFlTExFNAQCSbpcL0YAASJMnVCfTOApLE5Mcf5XcMa2wuvG3agd7Uy4RwcSJkG6/+8pj7HjyXNgEAKEeOn8SHUFtwVmFyY0fSW/sIM/Bz5Cd/U+X7NhYuz+5H6XbUPUkbVGAihpSI1OT1iw"
+    },
+    {
+      "profile": "ultra",
+      "master": "public reference master passphrase",
+      "keyFileHex": null,
+      "layers": [
+        {
+          "password": "public layer 1 reference phrase",
+          "text": "Public recovery reference: ultra"
+        }
+      ],
+      "rawBase64": "TExDMgFnTExFNAQDq/EAiPpK7ZMH2j87NESyelD7UnwED0WB62URx+j9jo0r5f1HFqdeRW0WvoddeIlqjEDIPPvCyBDcaAEDBk7y2G1/n3s6020UtilePwAhC6FMXKsU8cS24a/UbvPDqiz0JYi2gLc="
+    }
+  ]
+}

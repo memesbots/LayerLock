@@ -1,45 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { Worker as NodeWorker } from "node:worker_threads";
-
-const htmlUrl = new URL("../outputs/sigil-vault.html", import.meta.url);
-const html = await readFile(htmlUrl, "utf8");
-const vendorMatch = html.match(/<script\b[^>]*id="argon2VendorSource"[^>]*>([\s\S]*?)<\/script>/i);
-assert(vendorMatch, "inline Argon2 vendor source not found");
-globalThis.__LayerLockArgon2VendorSource = vendorMatch[1];
-const vendorModule = { exports: {} };
-new Function("module", "exports", vendorMatch[1])(vendorModule, vendorModule.exports);
-globalThis.hashwasm = vendorModule.exports;
-globalThis.window = globalThis;
-globalThis.MutationObserver = class MutationObserver {
-  observe() {}
-};
-
-const scriptMatch = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
-  .find(match => match[1].includes("const SLOT_VERSION = 7"));
-assert(scriptMatch, "inline application script not found");
-
-const hook = '    $("tabMake").addEventListener("click", () => switchTab("make"));';
-assert(scriptMatch[1].includes(hook), "test hook moved; update the smoke test");
-
-const exposed = `
-    globalThis.LayerLockCore = {
-      SLOT_VERSION, PACK_VERSION, ENVELOPE_VERSION, KDF_ID, KDF_NAME, HKDF_HASH,
-      KEY_CONTEXT, KDF_PROFILES, FEC_PROFILES, randomBytes, bytesToHex, crc32,
-      deriveKey, deriveDomainBytes, argon2idRaw, argon2WorkerSource,
-      validateKdfParams, kdfProfileIndex, kdfProfileFromIndex,
-      passwordPolicyIssue, passwordIdentity,
-      encryptSlot, decryptSlot, encodePack, decodePack, encodeEnvelope,
-      decodeEnvelope, decodeBody, encryptContainer, decryptContainer, makeSvg,
-      makeCompactBytes, parseCompactBytes, makeCompactText, parseCompactText
-    };
-    return;
-`;
-
-const instrumented = scriptMatch[1].replace(hook, exposed + hook);
-new Function(instrumented)();
-
-const core = globalThis.LayerLockCore;
+import {core} from './load-core.mjs';
 assert(core, "core functions were not exposed");
 assert.equal(core.SLOT_VERSION, 7);
 assert.equal(core.PACK_VERSION, 7);

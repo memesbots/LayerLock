@@ -1,0 +1,3859 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-/IwO3UpeNQmtUYkKXOWOvIMSDXXz0kyzZ7TSbxNuQio=' 'sha256-BYGrX3BalW3Fua8wKDIVELgc0urGQiGGaAIj6/FXLpw=' 'sha256-4MCNLQ8O6lO/mXurB1oBCjZzDHWfmAytCaHLXqAQlkU=' 'sha256-cUhMikQQJBlH9XMvuY266PyVHOvhTpeWLyYj/dFimWc=' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>LayerLock</title>
+  <meta name="application-name" content="LayerLock">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='10' y1='7' x2='54' y2='58' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%234b83ff'/%3E%3Cstop offset='1' stop-color='%232560ff'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='17' y1='27' x2='41' y2='52' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%2386b0ff'/%3E%3Cstop offset='1' stop-color='%232f6bff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23a)' d='M32 3 57 17.5v29L32 61 7 46.5v-29L32 3Z'/%3E%3Cpath fill='%23f4f7ff' d='m32 15 15 8.7v16.6L32 49 17 40.3V23.7L32 15Z'/%3E%3Cpath fill='url(%23b)' d='m17 23.7 15 8.7V49l-15-8.7V23.7Z'/%3E%3Cpath fill='%232560ff' d='m32 32.4 15-8.7v16.6L32 49V32.4Z'/%3E%3Cpath fill='%230d0f13' d='m24 28 8-4.6 8 4.6v9.2l-8 4.6-8-4.6V28Z'/%3E%3Cpath fill='%2386b0ff' d='m24 28 8 4.6v9.2l-8-4.6V28Z'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: dark;
+
+      /* Palette — Minimal Ink (dark) */
+      --bg-0: #0d0f13;
+      --bg-1: #111318;
+      --bg-2: #15181e;
+      --surface: #191c22;
+      --surface-solid: #191c22;
+      --panel: #191c22;
+      --panel-2: #1f232a;
+      --panel-head: #1c1f26;
+      --field: #14171c;
+      --field-solid: #14171c;
+
+      --text: #eef1f6;
+      --text-dim: #b3b9c4;
+      --muted: #6b7280;
+
+      --line: rgba(255, 255, 255, 0.06);
+      --line-strong: rgba(255, 255, 255, 0.12);
+      --soft-line: rgba(255, 255, 255, 0.04);
+
+      /* Single blue accent */
+      --accent: #2f6bff;
+      --accent-strong: #1e5bff;
+      --accent-2: #2f6bff;
+      --accent-glow: rgba(47, 107, 255, 0.28);
+      --grad-accent: linear-gradient(180deg, #3d78ff 0%, #2560ff 100%);
+      --grad-accent-soft: rgba(47, 107, 255, 0.12);
+      --grad-hero: none;
+
+      /* Logo colors — keep brand accent monochrome blue */
+      --logo-mark-1: #4b83ff;
+      --logo-mark-2: #2560ff;
+      --logo-layer-1: #6b9aff;
+      --logo-layer-2: #2f6bff;
+      --logo-side: #2560ff;
+      --logo-core: #0d0f13;
+      --logo-core-light: #6b9aff;
+
+      --danger: #ef4444;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+
+      --header-bg: rgba(13, 15, 19, 0.72);
+      --button-hover: rgba(255, 255, 255, 0.05);
+      --checker-a: rgba(255, 255, 255, 0.04);
+      --checker-bg: transparent;
+      --floating-bg: rgba(20, 23, 28, 0.9);
+
+      --radius-sm: 10px;
+      --radius: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+      --shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      --shadow-lg: 0 20px 40px -18px rgba(0, 0, 0, 0.55);
+      --shadow-glow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+
+      --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+      font-family: var(--font-sans);
+    }
+
+    body.light {
+      color-scheme: light;
+      --bg-0: #eef1f6;
+      --bg-1: #eef1f6;
+      --bg-2: #e6eaf1;
+      --surface: #ffffff;
+      --surface-solid: #ffffff;
+      --panel: #ffffff;
+      --panel-2: #f5f7fb;
+      --panel-head: #f5f7fb;
+      --field: #f2f4f8;
+      --field-solid: #ffffff;
+      --text: #0f172a;
+      --text-dim: #475569;
+      --muted: #94a3b8;
+      --line: rgba(15, 23, 42, 0.06);
+      --line-strong: rgba(15, 23, 42, 0.12);
+      --soft-line: rgba(15, 23, 42, 0.04);
+      --accent: #2560ff;
+      --accent-strong: #1a4fe0;
+      --accent-2: #2560ff;
+      --accent-glow: rgba(37, 96, 255, 0.22);
+      --grad-accent: linear-gradient(180deg, #3d78ff 0%, #2560ff 100%);
+      --grad-accent-soft: rgba(37, 96, 255, 0.1);
+      --grad-hero: none;
+      --header-bg: rgba(255, 255, 255, 0.82);
+      --button-hover: rgba(15, 23, 42, 0.05);
+      --floating-bg: rgba(255, 255, 255, 0.95);
+      --danger: #dc2626;
+      --ok: #059669;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      --shadow-lg: 0 24px 40px -18px rgba(15, 23, 42, 0.12);
+    }
+
+    /* Read mode: keep the blue, just a hint of green for status */
+    body.read-mode {
+      --accent: #22c55e;
+      --accent-strong: #16a34a;
+      --accent-2: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.25);
+      --grad-accent: linear-gradient(180deg, #34d47a 0%, #16a34a 100%);
+      --grad-accent-soft: rgba(34, 197, 94, 0.12);
+      --grad-hero: none;
+      --logo-mark-1: #34d47a;
+      --logo-mark-2: #16a34a;
+      --logo-layer-1: #86efac;
+      --logo-layer-2: #22c55e;
+      --logo-side: #16a34a;
+      --logo-core: #0d0f13;
+      --logo-core-light: #86efac;
+    }
+    body.light.read-mode {
+      --accent: #16a34a;
+      --accent-strong: #15803d;
+      --accent-2: #22c55e;
+    }
+
+
+    * { box-sizing: border-box; }
+    *::selection { background: color-mix(in oklab, var(--accent) 45%, transparent); color: var(--text); }
+
+    html, body {
+      height: 100%;
+      touch-action: pan-x pan-y;
+      overscroll-behavior-x: none;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--grad-hero), var(--bg-0);
+      background-attachment: fixed;
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color .3s ease, color .3s ease;
+      font-size: 15px;
+      line-height: 1.5;
+      letter-spacing: 0;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Backdrop kept clean — no dot-grid, no aurora */
+    body::before { content: none; }
+
+
+    /* ---------- Layout shell ---------- */
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 20px clamp(14px, 3vw, 32px) 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* ---------- Header ---------- */
+    header {
+      position: relative;
+      top: auto;
+      z-index: 40;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      background: color-mix(in oklab, var(--header-bg) 88%, transparent);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand { display: flex; align-items: center; min-width: 0; justify-self: start; }
+    .brand-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .logo {
+      width: 34px; height: 34px;
+      display: grid; place-items: center;
+      border-radius: 10px;
+      background: var(--grad-accent-soft);
+      border: 1px solid var(--line);
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+    .logo svg { width: 22px; height: 22px; display: block; }
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(15px, 2.2vw, 18px);
+      font-weight: 700;
+      letter-spacing: 0;
+      background: var(--grad-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      white-space: nowrap;
+    }
+
+    .header-actions { display: flex; justify-content: center; min-width: 0; }
+    .brand-tools { display: flex; align-items: center; gap: 8px; justify-content: flex-end; justify-self: end; }
+    .header-right-tools { display: flex; align-items: center; gap: 8px; }
+
+    /* Segmented tabs */
+    .tabs {
+      display: inline-flex;
+      padding: 4px;
+      background: color-mix(in oklab, var(--field) 85%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      gap: 2px;
+    }
+    .tab {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--text-dim);
+      padding: 8px 18px;
+      font: inherit;
+      font-weight: 600;
+      font-size: 13.5px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: color .2s ease, background .2s ease, transform .1s ease;
+      position: relative;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      color: #fff;
+      background: var(--grad-accent);
+      box-shadow: 0 6px 18px -8px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    body.light .tab.active { color: #fff; }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 30px;
+      min-width: 88px;
+      padding: 0 10px;
+      background: color-mix(in oklab, var(--field) 70%, transparent);
+      color: var(--text-dim);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 11.5px;
+      line-height: 1;
+      transition: color .2s, background .2s, border-color .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .theme-toggle:hover { color: var(--text); background: var(--button-hover); border-color: var(--line-strong); }
+    .theme-toggle svg { width: 14px; height: 14px; stroke: currentColor; pointer-events: none; }
+    .theme-toggle span { pointer-events: none; }
+    .theme-toggle .theme-icon-moon { display: none; }
+    body.light .theme-toggle .theme-icon-sun { display: none; }
+    body.light .theme-toggle .theme-icon-moon { display: block; }
+    .theme-toggle span { font-weight: 500; }
+    .header-icon-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      padding: 0;
+      background: color-mix(in oklab, var(--field) 70%, transparent);
+      color: var(--text-dim);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color .2s, background .2s, border-color .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .header-icon-btn:hover { color: var(--text); background: var(--button-hover); border-color: var(--line-strong); }
+    .header-icon-btn svg { width: 14px; height: 14px; stroke: currentColor; }
+    button#languageToggle.header-icon-btn {
+      color: var(--text-dim);
+    }
+    button#languageToggle.header-icon-btn svg { width: 16px; height: 16px; }
+
+    @media (max-width: 720px) {
+      header { grid-template-columns: auto auto; grid-template-areas: "brand tools" "tabs tabs"; padding: 10px 12px; gap: 10px; }
+      .brand { grid-area: brand; }
+      .brand-tools { grid-area: tools; }
+      .header-actions { grid-area: tabs; justify-content: stretch; }
+      .tabs { width: 100%; justify-content: stretch; }
+      .tab { flex: 1; }
+      .theme-toggle {
+        width: 32px;
+        height: 32px;
+        min-height: 32px;
+        min-width: 32px;
+        padding: 0;
+      }
+      .header-icon-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+      }
+      .theme-toggle span { display: none; }
+    }
+
+    /* ---------- Views ---------- */
+    .views { display: block; position: relative; }
+    .view-page {
+      display: grid;
+      grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .view-page:not(.active) { display: none; }
+    .view-page.active { animation: viewIn .32s cubic-bezier(.2, .7, .2, 1) both; }
+    @keyframes viewIn {
+      from { opacity: 0; transform: translateY(6px); filter: blur(4px); }
+      to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+    }
+
+    /* Make view: single-column editor; preview column appears after generation. */
+    #makeView:not(.has-output) { grid-template-columns: minmax(0, 1fr); }
+    #makeView:not(.has-output) .left-column {
+      display: block;
+    }
+    #makeView:not(.has-output) .preview-wrap { display: none; }
+    .preview-wrap.hidden { display: none; }
+
+    #readView.active { display: block; }
+    #readView > .read-panel { margin-bottom: 20px; }
+    #readView > .read-panel.hidden { display: none; margin: 0; }
+
+    @media (max-width: 960px) {
+      .view-page { grid-template-columns: minmax(0, 1fr); }
+      #makeView:not(.has-output) .left-column { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        overflow-x: clip;
+      }
+      .views {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        touch-action: pan-y;
+      }
+      .view-page.active {
+        animation: none;
+      }
+    }
+
+    .stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .left-column { min-width: 0; }
+    .preview-wrap { min-width: 0; position: sticky; top: 96px; }
+    @media (max-width: 960px) { .preview-wrap { position: static; } }
+
+    /* ---------- Panels (minimal glass) ---------- */
+    .panel {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      backdrop-filter: blur(14px) saturate(120%);
+      -webkit-backdrop-filter: blur(14px) saturate(120%);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel::before {
+      content: "";
+      position: absolute; inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 40%);
+    }
+    body.light .panel::before { background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 40%); }
+    body.light .panel > * { position: relative; z-index: 1; }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 18px;
+      background: var(--panel-head);
+      border-bottom: 1px solid var(--soft-line);
+      min-height: 56px;
+    }
+    .panel-header h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* Vault name */
+    .vault-name-label {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+    .vault-name-icon {
+      display: grid; place-items: center;
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      background: var(--grad-accent-soft);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .vault-name-icon svg { width: 15px; height: 15px; stroke: currentColor; }
+    .vault-name-label input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      font: inherit;
+      font-weight: 600;
+      font-size: 15px;
+      padding: 4px 0;
+      min-width: 0;
+      outline: none;
+      box-shadow: none;
+    }
+    .vault-name-label input[type="text"]:focus { box-shadow: none; background: transparent; }
+    .vault-name-label input::placeholder { color: var(--muted); }
+
+    .panel-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .panel-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      background: color-mix(in oklab, var(--field) 60%, transparent);
+      color: var(--text-dim);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color .2s, background .2s, border-color .2s, transform .1s;
+    }
+    .panel-action:hover { color: var(--text); background: var(--button-hover); border-color: var(--line-strong); }
+    .panel-action:active { transform: translateY(1px); }
+    .panel-action svg { width: 14px; height: 14px; stroke: currentColor; }
+    .panel-action.icon { padding: 7px; }
+    .panel-action.icon svg { width: 15px; height: 15px; }
+    .panel-action.icon span { display: none; }
+
+    /* Content body */
+    .content-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ---------- Entry cards ---------- */
+    #entries { gap: 14px; }
+    .entry {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+      background: color-mix(in oklab, var(--panel-2) 90%, transparent);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      position: relative;
+      transition: border-color .2s, transform .1s, gap .26s ease;
+    }
+    .entry:hover { border-color: var(--line-strong); }
+    .entry-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .entry-title-toggle {
+      min-width: 0;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 0;
+      color: inherit;
+      background: transparent;
+      border: 0;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .entry-chevron {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+      color: var(--muted);
+      stroke: currentColor;
+      transition: transform .2s ease, color .2s ease;
+    }
+    .entry-title-toggle:hover .entry-chevron { color: var(--text-dim); }
+    .entry-body-shell {
+      display: grid;
+      grid-template-rows: 1fr;
+      min-height: 0;
+      opacity: 1;
+      transform: translateY(0);
+      transition: grid-template-rows .26s ease, opacity .18s ease, transform .26s ease;
+    }
+    .entry-body {
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .entry.is-collapsed { gap: 0; }
+    .entry.is-collapsed .entry-body-shell {
+      grid-template-rows: 0fr;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+    }
+    .entry.is-collapsed .entry-chevron { transform: rotate(-90deg); }
+    .entry-title,
+    .entry-text-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+    }
+    .entry-title { color: var(--muted); }
+    .entry-title::before,
+    .entry-text-label::before {
+      content: "";
+      width: 6px; height: 6px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--muted) 70%, transparent);
+      box-shadow: 0 0 8px color-mix(in oklab, var(--muted) 45%, transparent);
+    }
+    .entry-text-label {
+      color: var(--muted);
+    }
+    .entry.is-active .entry-title {
+      color: var(--accent);
+    }
+    .entry.is-active .entry-title::before {
+      background: var(--grad-accent);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+    .entry:has(.is-bad, .is-duplicate) .entry-title { color: var(--danger, #ef4444); }
+    .entry:has(.is-bad, .is-duplicate) .entry-title::before {
+      background: var(--danger, #ef4444);
+      box-shadow: 0 0 8px color-mix(in oklab, var(--danger, #ef4444) 38%, transparent);
+    }
+    .master-entry.is-active .entry-title {
+      color: var(--ok);
+    }
+    .master-entry.is-active .entry-title::before {
+      background: var(--ok);
+      box-shadow: 0 0 10px color-mix(in oklab, var(--ok) 45%, transparent);
+    }
+    .entry-text-field.has-text .entry-text-label {
+      color: var(--text-dim);
+    }
+    .entry-text-field.has-text .entry-text-label::before {
+      background: color-mix(in oklab, var(--text-dim) 82%, transparent);
+      box-shadow: 0 0 8px color-mix(in oklab, var(--text-dim) 35%, transparent);
+    }
+
+    .entry-remove {
+      width: 26px; height: 26px;
+      display: grid; place-items: center;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 18px; line-height: 1;
+      cursor: pointer;
+      transition: color .2s, background .2s, border-color .2s;
+    }
+    .entry-remove:hover { color: var(--danger); background: color-mix(in oklab, var(--danger) 12%, transparent); border-color: color-mix(in oklab, var(--danger) 30%, transparent); }
+
+    /* ---------- Form primitives ---------- */
+    label, .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-dim);
+      min-width: 0;
+    }
+    .label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+    input[type="text"],
+    input[type="password"],
+    textarea,
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 100%;
+      background: var(--field);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 14px;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+      outline: none;
+    }
+    input[type="text"]::placeholder,
+    input[type="password"]::placeholder,
+    textarea::placeholder { color: var(--muted); }
+
+    input[type="text"]:hover,
+    input[type="password"]:hover,
+    textarea:hover,
+    select:hover { border-color: var(--line-strong); }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: none;
+      background: var(--field);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 84px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c88a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+    body.light select {
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+    }
+    select option { background: var(--field-solid); color: var(--text); }
+
+    /* Password field */
+    .password-field { position: relative; display: block; }
+    .password-field input { padding-right: 72px; font-family: var(--font-mono); font-size: 13px; }
+    .password-toggle {
+      position: absolute;
+      right: 6px; top: 50%;
+      transform: translateY(-50%);
+      width: 30px; height: 30px;
+      display: grid; place-items: center;
+      background: transparent;
+      color: var(--muted);
+      border: 0;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: color .2s, background .2s;
+    }
+    .password-toggle:hover { color: var(--accent); background: var(--button-hover); }
+    .password-toggle svg { width: 16px; height: 16px; stroke: currentColor; }
+    .password-generate {
+      position: absolute;
+      right: 42px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .2s ease, background .2s ease, transform .18s ease;
+    }
+    .password-generate:hover {
+      color: var(--ok);
+      background: color-mix(in oklab, var(--ok) 9%, transparent);
+    }
+    .password-generate:active { transform: translateY(-50%) scale(.92); }
+    .password-generate svg { width: 16px; height: 16px; stroke: currentColor; }
+
+    .field-check,
+    .field-danger {
+      position: absolute;
+      right: 42px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      display: none;
+      place-items: center;
+      color: var(--ok);
+      pointer-events: none;
+      opacity: .9;
+    }
+    .field-check svg,
+    .field-danger svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 2.4; }
+    .field-danger { color: var(--danger, #ef4444); }
+    .pass-fieldset.has-value:not(.is-bad):not(.is-duplicate) .field-check,
+    .confirm-fieldset.is-ok:not(.is-duplicate) .field-check,
+    #readMasterField.is-ok .field-check,
+    #readLayerField.is-ok .field-check,
+    .pass-fieldset.is-bad .field-danger,
+    .confirm-fieldset.is-bad .field-danger,
+    .pass-fieldset.is-duplicate .field-danger,
+    .confirm-fieldset.is-duplicate .field-danger { display: grid; }
+    #readMasterField.is-ok {
+      border-color: color-mix(in oklab, var(--ok) 58%, var(--line-strong));
+      box-shadow: none;
+    }
+    #readMasterField.is-ok > .field-legend { color: var(--ok); }
+    .field-fieldset.is-bad {
+      border-color: color-mix(in oklab, var(--danger, #ef4444) 70%, var(--line-strong));
+      box-shadow: none;
+    }
+    .field-fieldset.is-bad > .field-legend { color: var(--danger, #ef4444); }
+    .field-fieldset.is-duplicate {
+      border-color: color-mix(in oklab, var(--danger, #ef4444) 70%, var(--line-strong));
+      box-shadow: none;
+    }
+    .field-fieldset.is-duplicate > .field-legend { color: var(--danger, #ef4444); }
+
+    /* Strength meter */
+    .strength { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+    .strength-bar {
+      flex: 1;
+      height: 5px;
+      background: color-mix(in oklab, var(--field) 80%, transparent);
+      border: 1px solid var(--soft-line);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .strength-fill {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: var(--grad-accent);
+      border-radius: 999px;
+      transition: width .3s ease, background .3s ease;
+    }
+    .strength.easy .strength-fill { background: var(--danger); }
+    .strength.medium .strength-fill { background: var(--warn); }
+    .strength.reliable .strength-fill { background: var(--ok); }
+    .strength.complex .strength-fill { background: #3b82f6; }
+    .strength.easy .strength-text { color: var(--danger); }
+    .strength.medium .strength-text { color: var(--warn); }
+    .strength.reliable .strength-text { color: var(--ok); }
+    .strength.complex .strength-text { color: #60a5fa; }
+    .strength-text { font-family: var(--font-mono); font-size: 11px; white-space: nowrap; }
+
+    /* Password match indicator */
+    .pass-match {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--muted);
+      transition: color .2s;
+    }
+    .pass-match-dot {
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--muted) 60%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--muted) 15%, transparent);
+      transition: background .2s, box-shadow .2s;
+      flex-shrink: 0;
+    }
+    .pass-match[data-state="empty"],
+    .pass-match[data-state="ok"] { display: none; }
+    .pass-match[data-state="bad"],
+    .pass-match[data-state="duplicate"] { color: var(--danger, #ef4444); }
+    .pass-match[data-state="bad"] .pass-match-dot,
+    .pass-match[data-state="duplicate"] .pass-match-dot {
+      background: var(--danger, #ef4444);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--danger, #ef4444) 22%, transparent);
+    }
+
+    .security-tools {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      min-width: 0;
+    }
+    .master-entry .security-tools { grid-column: 1; }
+    .master-policy { grid-column: 1; }
+    .security-tool {
+      min-height: 30px;
+      padding: 6px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--soft-line);
+      border-radius: 8px;
+      background: color-mix(in oklab, var(--field) 72%, transparent);
+      color: var(--text-dim);
+      font: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+    .security-tool:hover {
+      color: var(--ok);
+      border-color: color-mix(in oklab, var(--ok) 40%, var(--line));
+      background: color-mix(in oklab, var(--ok) 9%, var(--field));
+    }
+    .security-tool:active { transform: scale(.97); }
+    .security-tool svg { width: 14px; height: 14px; stroke: currentColor; flex: 0 0 auto; }
+    .security-tool.remove:hover { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 42%, var(--line)); }
+    .keyfile-control {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+    .keyfile-main {
+      min-height: 34px;
+      padding: 7px 11px;
+      border-radius: 9px;
+    }
+    .keyfile-main .keyfile-chevron {
+      width: 13px;
+      height: 13px;
+      margin-left: 1px;
+      transition: transform .2s ease;
+    }
+    .keyfile-main[aria-expanded="true"] .keyfile-chevron { transform: rotate(180deg); }
+    .keyfile-main.active {
+      color: var(--ok);
+      border-color: color-mix(in oklab, var(--ok) 44%, var(--line));
+      background: color-mix(in oklab, var(--ok) 9%, var(--field));
+    }
+    .keyfile-menu {
+      position: absolute;
+      z-index: 40;
+      top: calc(100% + 7px);
+      left: 0;
+      width: max-content;
+      min-width: 210px;
+      padding: 6px;
+      display: grid;
+      gap: 3px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      background: var(--field-solid);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, .26);
+    }
+    .keyfile-menu-item {
+      min-height: 34px;
+      padding: 8px 9px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-dim);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: color .18s ease, background .18s ease;
+    }
+    .keyfile-menu-item:hover {
+      color: var(--ok);
+      background: color-mix(in oklab, var(--ok) 10%, var(--field));
+    }
+    .keyfile-menu-item svg { width: 15px; height: 15px; stroke: currentColor; }
+    .keyfile-remove {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 1px solid var(--soft-line);
+      border-radius: 8px;
+      background: color-mix(in oklab, var(--field) 72%, transparent);
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .keyfile-remove:hover {
+      color: var(--danger);
+      border-color: color-mix(in oklab, var(--danger) 42%, var(--line));
+      background: color-mix(in oklab, var(--danger) 8%, var(--field));
+    }
+    .keyfile-remove svg { width: 14px; height: 14px; stroke: currentColor; }
+    .keyfile-status {
+      flex: 1 1 180px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+    .keyfile-status.active { color: var(--ok); }
+    .read-keyfile-tools { margin-top: -2px; }
+    .read-keyfile-tools .security-tool:hover {
+      color: var(--read-accent, var(--ok));
+      border-color: color-mix(in oklab, var(--read-accent, var(--ok)) 42%, var(--line));
+    }
+
+    /* Paste icon inside labels */
+    .entry-copy {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      z-index: 2;
+      background: color-mix(in oklab, var(--field) 88%, transparent);
+      border-color: var(--line);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .entry-copy:hover { color: var(--accent); background: var(--button-hover); }
+    .text-area-wrap { position: relative; min-width: 0; }
+    .text-area-wrap textarea { padding-right: 44px; }
+
+    body:not(.light) .content-panel,
+    body:not(.light) .preview-panel {
+      background: color-mix(in oklab, var(--bg-1) 94%, transparent);
+      border-color: color-mix(in oklab, var(--line) 84%, transparent);
+    }
+    body:not(.light) .content-panel::before,
+    body:not(.light) .preview-panel::before {
+      content: none;
+    }
+    body:not(.light) .content-panel .panel-header,
+    body:not(.light) .preview-panel .panel-header {
+      background: color-mix(in oklab, var(--bg-1) 96%, transparent);
+      border-bottom-color: color-mix(in oklab, var(--line) 76%, transparent);
+    }
+    body:not(.light) .content-body,
+    body:not(.light) .preview-panel .preview-body {
+      background: color-mix(in oklab, var(--bg-1) 88%, transparent);
+    }
+    body:not(.light) .entry {
+      background: color-mix(in oklab, var(--field) 72%, transparent);
+      border-color: color-mix(in oklab, var(--line) 88%, transparent);
+    }
+    body:not(.light) .entry:hover {
+      border-color: color-mix(in oklab, var(--line-strong) 82%, transparent);
+    }
+    body:not(.light) .field-fieldset,
+    body:not(.light) .entry-text-field textarea,
+    body:not(.light) .readout {
+      background: color-mix(in oklab, var(--bg-0) 58%, var(--field));
+      border-color: color-mix(in oklab, var(--line) 92%, transparent);
+    }
+    body:not(.light) .read-result-card .read-result-body {
+      background: color-mix(in oklab, var(--bg-1) 88%, transparent);
+    }
+    body:not(.light) .read-panel {
+      background: color-mix(in oklab, var(--bg-1) 94%, transparent);
+      border-color: color-mix(in oklab, var(--line) 84%, transparent);
+    }
+    body:not(.light) .read-panel::before { content: none; }
+    body:not(.light) .read-drop-pane {
+      background: color-mix(in oklab, var(--bg-1) 88%, transparent);
+    }
+    body:not(.light) .drop-zone {
+      background: color-mix(in oklab, var(--accent) 6%, var(--bg-0));
+      border-color: color-mix(in oklab, var(--accent) 34%, var(--line));
+    }
+    body:not(.light) .drop-zone:hover,
+    body:not(.light) .drop-zone:focus-visible {
+      background: color-mix(in oklab, var(--accent) 9%, var(--bg-0));
+      border-color: color-mix(in oklab, var(--accent) 60%, var(--line));
+    }
+    body:not(.light) .read-copy-btn,
+    body:not(.light) .entry-copy {
+      background: color-mix(in oklab, var(--bg-0) 70%, var(--field));
+      border-color: color-mix(in oklab, var(--line) 92%, transparent);
+    }
+    body:not(.light) .preview-panel .canvas-box,
+    body:not(.light) .preview-panel .status,
+    body:not(.light) .preview-panel .download-actions button {
+      background-color: color-mix(in oklab, var(--bg-0) 58%, var(--field));
+      border-color: color-mix(in oklab, var(--line) 92%, transparent);
+    }
+
+    /* ---------- Actions & primary button ---------- */
+    .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .make-actions { justify-content: center; gap: 10px; }
+    .add-layer-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      background: color-mix(in oklab, var(--field) 70%, transparent);
+      color: var(--text-dim);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      font: inherit;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: color .18s, border-color .18s, background .18s, transform .1s;
+    }
+    .add-layer-btn:hover { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 45%, var(--line)); }
+    .add-layer-btn:active { transform: scale(.98); }
+    .add-layer-btn svg { width: 15px; height: 15px; stroke: currentColor; }
+
+    @property --primary-top {
+      syntax: "<color>";
+      inherits: true;
+      initial-value: #3d78ff;
+    }
+    @property --primary-bottom {
+      syntax: "<color>";
+      inherits: true;
+      initial-value: #2560ff;
+    }
+    button.primary {
+      --primary-top: #3d78ff;
+      --primary-bottom: #2560ff;
+      position: relative;
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 600;
+      font-size: 14.5px;
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, var(--primary-top) 0%, var(--primary-bottom) 100%);
+      box-shadow: 0 10px 30px -12px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: --primary-top .28s ease, --primary-bottom .28s ease, transform .12s ease, box-shadow .28s ease, filter .2s ease;
+      letter-spacing: 0;
+      min-width: 140px;
+    }
+    button.primary:hover { filter: brightness(1.08); box-shadow: 0 14px 36px -12px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+    button.primary:active { transform: translateY(1px); }
+    button.primary:disabled { opacity: .55; cursor: not-allowed; filter: grayscale(.3); box-shadow: none; }
+    body.read-mode button.primary {
+      --primary-top: #34d47a;
+      --primary-bottom: #16a34a;
+    }
+    button.primary.invalid {
+      --primary-top: #f05252;
+      --primary-bottom: #dc2626;
+      box-shadow: 0 10px 28px -14px rgba(220, 38, 38, .65), inset 0 1px 0 rgba(255, 255, 255, .2);
+    }
+    button.primary.invalid:hover {
+      box-shadow: 0 13px 30px -14px rgba(220, 38, 38, .72), inset 0 1px 0 rgba(255, 255, 255, .24);
+    }
+
+    /* Icon-only buttons (copy, expand, etc.) */
+    button.icon {
+      display: grid; place-items: center;
+      width: 32px; height: 32px;
+      padding: 0;
+      background: color-mix(in oklab, var(--field) 60%, transparent);
+      color: var(--text-dim);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      cursor: pointer;
+      transition: color .2s, background .2s, border-color .2s;
+    }
+    button.icon:hover { color: var(--accent); background: var(--button-hover); border-color: var(--line-strong); }
+    button.icon svg { width: 15px; height: 15px; stroke: currentColor; }
+
+    /* ---------- Settings modal ---------- */
+    .settings-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: color-mix(in oklab, var(--bg-0) 60%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity .22s ease;
+    }
+    .settings-modal.active {
+      display: flex;
+      opacity: 1;
+      animation: viewIn .22s cubic-bezier(.2,.7,.2,1);
+    }
+    .settings-modal.closing {
+      display: flex;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .settings-modal-card {
+      width: min(560px, 100%);
+      max-height: calc(100dvh - 40px);
+      display: flex;
+      flex-direction: column;
+      background: color-mix(in oklab, var(--bg-1) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      overflow: hidden;
+      min-height: 0;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .2s ease, transform .22s cubic-bezier(.4,0,.2,1);
+    }
+    .settings-modal.closing .settings-modal-card {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: none !important;
+    }
+    .settings-modal-head { flex-shrink: 0; position: sticky; top: 0; background: color-mix(in oklab, var(--bg-1) 96%, transparent); backdrop-filter: blur(6px); z-index: 1; }
+    @media (max-width: 720px) {
+      .settings-modal { padding: 24px 16px; align-items: center; justify-content: center; }
+      .settings-modal-card {
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100dvh - 48px);
+        border-radius: var(--radius-lg);
+        border-left: 1px solid var(--line);
+        border-right: 1px solid var(--line);
+      }
+      .settings-body { padding: 14px; padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+    }
+    .settings-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--soft-line);
+    }
+    .settings-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .settings-modal-title h2 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .settings-icon {
+      display: grid; place-items: center;
+      width: 30px; height: 30px;
+      border-radius: 9px;
+      background: var(--grad-accent-soft);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .settings-icon svg { width: 16px; height: 16px; stroke: currentColor; }
+
+    .settings-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow: auto;
+    }
+    .settings-body .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .settings-body .row > *:only-child { grid-column: 1 / -1; }
+    .recovery-control {
+      display: grid;
+      gap: 9px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: color-mix(in oklab, var(--field) 66%, transparent);
+    }
+    .recovery-control-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .recovery-control-head strong { color: var(--text); font-size: 13px; }
+    .recovery-control-head output { color: var(--accent); font-size: 12.5px; font-weight: 700; }
+    .recovery-control input[type="range"] {
+      --fec-progress: 33.333%;
+      appearance: none;
+      -webkit-appearance: none;
+      width: calc(100% - 52px);
+      height: 26px;
+      margin: 0 26px;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: pan-x;
+    }
+    .recovery-control input[type="range"]::-webkit-slider-runnable-track {
+      height: 7px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(
+        to right,
+        color-mix(in oklab, var(--accent) 92%, white 8%) 0 var(--fec-progress),
+        color-mix(in oklab, var(--line-strong) 68%, var(--field)) var(--fec-progress) 100%
+      );
+    }
+    .recovery-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      margin-top: -7.5px;
+      border: 3px solid var(--panel);
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 52%, transparent);
+    }
+    .recovery-control input[type="range"]::-moz-range-track {
+      height: 7px;
+      border: 0;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--line-strong) 68%, var(--field));
+    }
+    .recovery-control input[type="range"]::-moz-range-progress {
+      height: 7px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--accent) 92%, white 8%);
+    }
+    .recovery-control input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border: 3px solid var(--panel);
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 52%, transparent);
+    }
+    .recovery-control input[type="range"]:focus,
+    .recovery-control input[type="range"]:hover,
+    .recovery-control input[type="range"]:active {
+      outline: 0;
+      filter: none;
+      box-shadow: none;
+    }
+    .recovery-scale {
+      position: relative;
+      height: 14px;
+      margin: 1px 26px 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .recovery-scale span { position: absolute; top: 0; }
+    .recovery-scale span:nth-child(1) { left: 0; transform: translateX(-50%); }
+    .recovery-scale span:nth-child(2) { left: 33.333%; transform: translateX(-50%); }
+    .recovery-scale span:nth-child(3) { left: 66.667%; transform: translateX(-50%); }
+    .recovery-scale span:nth-child(4) { right: 0; transform: translateX(50%); }
+    .recovery-note { color: var(--text-dim); font-size: 11.5px; line-height: 1.4; }
+    @media (max-width: 480px) {
+      .settings-body .row { grid-template-columns: 1fr; }
+    }
+    .info-tabs {
+      display: inline-flex;
+      padding: 4px;
+      background: color-mix(in oklab, var(--field) 76%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      gap: 2px;
+      align-self: center;
+      justify-content: center;
+    }
+    .info-tabs button {
+      border: 0;
+      background: transparent;
+      color: var(--text-dim);
+      border-radius: 8px;
+      padding: 7px 13px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .info-tabs button.active {
+      color: #fff;
+      background: var(--grad-accent);
+      box-shadow: 0 4px 12px -8px var(--accent-glow);
+    }
+    .info-page { display: none; flex-direction: column; gap: 12px; }
+    .info-page.active { display: flex; }
+    .info-card {
+      padding: 13px;
+      border: 1px solid var(--soft-line);
+      border-radius: 12px;
+      background: color-mix(in oklab, var(--field) 64%, transparent);
+    }
+    .info-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .info-card p,
+    .info-card li {
+      margin: 0;
+      color: var(--text-dim);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .info-card ul,
+    .info-card ol {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 6px;
+    }
+    .info-example {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 9px;
+      background: color-mix(in oklab, var(--bg-0) 44%, transparent);
+    }
+    #infoModal {
+      align-items: flex-start;
+      padding-top: 24px;
+    }
+    #infoModal .settings-modal-card {
+      margin-top: 0;
+      max-height: calc(100dvh - 48px);
+    }
+    #infoModal.info-make-mode {
+      --accent: #2f6bff;
+      --accent-strong: #1e5bff;
+      --accent-glow: rgba(47, 107, 255, 0.28);
+      --grad-accent: linear-gradient(180deg, #3d78ff 0%, #2560ff 100%);
+      --grad-accent-soft: rgba(47, 107, 255, 0.12);
+    }
+    #infoModal.info-read-mode {
+      --accent: #22b85c;
+      --accent-strong: #159447;
+      --accent-glow: rgba(34, 184, 92, 0.28);
+      --grad-accent: linear-gradient(180deg, #34cd72 0%, #18a950 100%);
+      --grad-accent-soft: rgba(34, 184, 92, 0.12);
+    }
+    @media (max-width: 720px) {
+      #infoModal {
+        align-items: flex-start;
+        padding: 12px;
+      }
+      #infoModal .settings-modal-card {
+        max-height: calc(100dvh - 24px);
+      }
+    }
+    /* Settings launcher (gear chip in header) */
+    .panel-action.settings-launcher {
+      width: 32px;
+      min-width: 32px;
+      height: 32px;
+      max-width: none;
+      padding: 0;
+      justify-content: center;
+    }
+    .panel-action.settings-launcher svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .panel-action.settings-launcher span { display: none; }
+    .setting-note {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ---------- Preview / canvas ---------- */
+    .preview-panel .preview-body {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .canvas-box {
+      position: relative;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%) 0 0/20px 20px,
+        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%) 0 10px/20px 20px,
+        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%) 10px -10px/20px 20px,
+        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%) -10px 0/20px 20px,
+        var(--bg-1);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), var(--shadow-sm);
+    }
+    .canvas-box canvas {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      opacity: 0;
+      transition: opacity .3s ease;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .canvas-box.has-image canvas,
+    .canvas-box.read-image-box canvas,
+    .canvas-box.image-modal-box canvas { opacity: 1; }
+
+    .canvas-box:not(.has-image)::after {
+      content: "Изображение появится здесь";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-family: var(--font-mono);
+      pointer-events: none;
+      text-align: center;
+      padding: 20px;
+    }
+    body.lang-en .canvas-box:not(.has-image)::after { content: "The image will appear here"; }
+
+    /* Preview canvas + variant strip layout. */
+    .preview-canvas-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      justify-content: center;
+      width: min(100%, 520px);
+      margin: 0 auto;
+    }
+    .preview-canvas-row .canvas-box {
+      width: 100%;
+      max-width: none;
+      height: auto;
+      margin: 0;
+      align-self: start;
+      aspect-ratio: 1 / 1;
+    }
+
+    @media (max-width: 720px) {
+      .preview-canvas-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        width: 100%;
+        margin: 0;
+      }
+      .preview-canvas-row .canvas-box {
+        max-width: 340px;
+        justify-self: center;
+      }
+    }
+
+
+    /* Status */
+    .status {
+      font-size: 12.5px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      padding: 8px 12px;
+      background: color-mix(in oklab, var(--field) 55%, transparent);
+      border-radius: 8px;
+      border: 1px solid var(--soft-line);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .status.hidden { display: none; }
+    .status.ok {
+      color: color-mix(in oklab, var(--ok) 82%, var(--text));
+      background: color-mix(in oklab, var(--ok) 10%, var(--field));
+      border-color: color-mix(in oklab, var(--ok) 28%, var(--soft-line));
+    }
+    .status.bad {
+      color: color-mix(in oklab, var(--danger) 86%, var(--text));
+      background: color-mix(in oklab, var(--danger) 10%, var(--field));
+      border-color: color-mix(in oklab, var(--danger) 30%, var(--soft-line));
+    }
+    body.light .status.ok {
+      color: color-mix(in oklab, var(--ok) 76%, #111827);
+      background: color-mix(in oklab, var(--ok) 9%, #ffffff);
+    }
+    body.light .status.bad {
+      color: color-mix(in oklab, var(--danger) 78%, #111827);
+      background: color-mix(in oklab, var(--danger) 8%, #ffffff);
+    }
+
+    /* Download / verify actions */
+    .download-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .download-actions button {
+      flex: 1 1 auto;
+      min-width: 72px;
+      padding: 10px 14px;
+      background: color-mix(in oklab, var(--field) 70%, transparent);
+      color: var(--text-dim);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font: inherit;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: color .2s, border-color .2s, background .2s, transform .1s;
+    }
+    .download-actions button:hover:not(:disabled) {
+      color: var(--accent);
+      border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+      background: color-mix(in oklab, var(--accent) 8%, var(--field));
+    }
+    .download-actions button:active:not(:disabled) { transform: translateY(1px); }
+    .download-actions button:disabled { opacity: .4; cursor: not-allowed; }
+    .download-actions button svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .verify-actions { display: flex; gap: 8px; }
+    .verify-actions button:not(.icon) {
+      padding: 7px 14px;
+      background: color-mix(in oklab, var(--field) 70%, transparent);
+      color: var(--text-dim);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color .22s, border-color .22s, background .22s, box-shadow .22s;
+    }
+    .verify-actions button:not(.icon):hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+    .verify-actions button.checking { color: var(--accent); border-color: color-mix(in oklab, var(--accent) 48%, var(--line)); }
+    .verify-actions button.ok {
+      color: var(--ok);
+      border-color: color-mix(in oklab, var(--ok) 54%, var(--line));
+      background: color-mix(in oklab, var(--ok) 12%, var(--field));
+      box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ok) 10%, transparent);
+    }
+    .verify-actions button.bad {
+      color: var(--danger);
+      border-color: color-mix(in oklab, var(--danger) 58%, var(--line));
+      background: color-mix(in oklab, var(--danger) 11%, var(--field));
+    }
+    .verify-actions button.ok:not(.icon):hover:not(:disabled) {
+      color: var(--ok);
+      border-color: color-mix(in oklab, var(--ok) 62%, var(--line));
+      background: color-mix(in oklab, var(--ok) 15%, var(--field));
+    }
+    .verify-actions button.bad:not(.icon):hover:not(:disabled) {
+      color: var(--danger);
+      border-color: color-mix(in oklab, var(--danger) 64%, var(--line));
+      background: color-mix(in oklab, var(--danger) 14%, var(--field));
+    }
+    .verify-actions button:disabled { opacity: .5; cursor: not-allowed; }
+    .verify-actions button.icon { display: inline-flex; align-items: center; gap: 6px; width: auto; padding: 6px 12px; }
+    .verify-actions button.icon span { font-size: 12.5px; font-weight: 500; }
+    .verify-actions button.preview-expand-btn {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      flex: 0 0 34px;
+    }
+    .verify-actions button.preview-expand-btn svg { width: 16px; height: 16px; }
+
+    /* ---------- Read view ---------- */
+    .read-panel { padding: 0; }
+    .read-panel.empty { border-style: dashed; border-color: var(--line-strong); }
+    .read-panel.hidden { display: none; }
+
+    .read-drop-pane {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: stretch;
+    }
+    .file-input { display: none; }
+
+    .read-source-switch {
+      --source-progress: 0;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-self: center;
+      width: 315px;
+      max-width: 100%;
+      padding: 4px;
+      background: color-mix(in oklab, var(--field) 80%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      gap: 2px;
+      isolation: isolate;
+      overflow: hidden;
+    }
+    .read-source-switch::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 4px;
+      bottom: 4px;
+      left: 4px;
+      width: calc((100% - 12px) / 3);
+      border-radius: 8px;
+      background: var(--accent);
+      box-shadow: 0 4px 12px -6px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, .18);
+      transform: translateX(calc(var(--source-progress) * (100% + 2px)));
+      transition: transform .38s cubic-bezier(.22, .8, .2, 1), background-color .3s ease, box-shadow .3s ease;
+    }
+    .read-source-switch button {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      min-width: 0;
+      padding: 7px 14px;
+      background: transparent;
+      border: 0;
+      color: var(--text-dim);
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color .28s ease, transform .18s ease;
+    }
+    .read-source-switch button svg { width: 15px; height: 15px; stroke: currentColor; }
+    .source-bits-icon {
+      font: 700 11px/1 var(--font-mono);
+      letter-spacing: 0;
+    }
+    .read-source-switch button:hover { color: var(--text); }
+    .read-source-switch button.active {
+      color: #fff;
+      background: transparent;
+      box-shadow: none;
+    }
+    .drop-zone {
+      position: relative;
+      min-height: 300px;
+      padding: 32px 24px;
+      border: 1.5px dashed color-mix(in oklab, var(--accent) 30%, var(--line));
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklab, var(--accent) 4%, var(--panel-2));
+      display: grid;
+      place-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, transform .12s;
+      overflow: hidden;
+    }
+    .drop-zone::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: var(--grad-accent-soft);
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+    }
+    .drop-zone:hover,
+    .drop-zone:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      background: color-mix(in oklab, var(--accent) 8%, var(--panel-2));
+    }
+    .drop-zone.dragging {
+      border-color: var(--accent);
+      transform: scale(1.01);
+    }
+    .drop-zone.dragging::before { opacity: .3; }
+
+    .drop-zone > div { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+    .drop-icon {
+      display: grid;
+      place-items: center;
+      width: 72px; height: 72px;
+      border-radius: 20px;
+      background: var(--grad-accent-soft);
+      color: var(--accent);
+      border: 1px solid color-mix(in oklab, var(--accent) 30%, var(--line));
+      margin-bottom: 6px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    .drop-icon svg { width: 36px; height: 36px; stroke: currentColor; fill: none; }
+    .drop-icon.scan { display: none; }
+    .drop-zone.camera-mode .drop-icon.upload { display: none; }
+    .drop-zone.camera-mode .drop-icon.scan { display: grid; }
+
+    .drop-zone strong {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      button:not(:disabled) {
+        transition-property: color, background-color, border-color, box-shadow, opacity, scale;
+        transition-duration: .18s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button:not(:disabled):active {
+        scale: .97;
+        opacity: .88;
+        transition-duration: .06s;
+      }
+    }
+    #dropHint {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 340px;
+    }
+    .bit-import-pane {
+      min-height: 270px;
+      padding: 24px;
+      border: 1px solid color-mix(in oklab, var(--accent) 26%, var(--line));
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklab, var(--accent) 3%, var(--panel));
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-rows: auto minmax(150px, 1fr) auto;
+      gap: 16px;
+    }
+    .bit-import-pane.hidden { display: none; }
+    .bit-import-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .bit-import-heading > div {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .bit-import-heading strong { color: var(--text); font-size: 15px; }
+    .bit-import-heading span:not(.bit-import-icon) { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .bit-import-icon {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: var(--accent);
+      border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--line));
+      background: color-mix(in oklab, var(--accent) 9%, var(--field));
+      font: 700 14px/1 var(--font-mono);
+    }
+    #bitCodeInput {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--field);
+      color: var(--text);
+      font: 12px/1.55 var(--font-mono);
+      letter-spacing: 0;
+      outline: none;
+    }
+    #bitCodeInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 12%, transparent);
+    }
+    #restoreBitsBtn {
+      justify-self: center;
+      min-width: 210px;
+    }
+
+    /* Read grid — single column; image now lives inside the result card */
+    .read-grid {
+      display: none;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+    #readView:has(.read-panel.hidden) .read-grid,
+    .read-grid.has-result,
+    .read-grid.active { display: grid; }
+
+    .read-result-body {
+      padding: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+      gap: 22px;
+      align-items: center;
+    }
+    .read-result-main {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+    @media (max-width: 720px) {
+      .read-result-body {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        padding: 14px;
+      }
+      .read-result-main { order: 2; }
+      .read-image-wrap { order: 1; max-width: 220px; }
+    }
+    .readout {
+      background: var(--field);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 46px 14px 14px;
+      min-height: 120px;
+      max-height: 320px;
+      overflow: auto;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.55;
+    }
+    .readout-wrap { min-width: 0; }
+    .readout-box { position: relative; min-width: 0; }
+    .read-copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+      background: color-mix(in oklab, var(--field) 88%, transparent);
+      border-color: var(--line);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .read-copy-btn:hover { color: var(--accent); background: var(--button-hover); }
+    .readout:empty::before {
+      content: "Здесь появится расшифрованный текст.";
+      color: var(--muted);
+    }
+    body.lang-en .readout:empty::before { content: "Decrypted text will appear here."; }
+    .read-action-panel { display: flex; flex-direction: column; gap: 12px; }
+    .read-decrypt-actions { justify-content: center !important; }
+    .read-decrypt-actions .primary { min-width: 180px; }
+
+    /* ---------- Read image (nested inside result card) ---------- */
+    .read-image-wrap {
+      min-width: 0;
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
+      justify-self: center;
+    }
+    .read-image-wrap .read-image-box {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      aspect-ratio: 1;
+      margin: 0;
+      border-radius: var(--radius-lg);
+      background: color-mix(in oklab, var(--field) 60%, transparent);
+      border: 1px solid var(--soft-line);
+      box-shadow: var(--shadow-sm);
+    }
+    .read-image-overlay {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 6px;
+      z-index: 2;
+    }
+    .read-scan-indicator {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      z-index: 3;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      max-width: calc(100% - 24px);
+      padding: 7px 11px;
+      border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--line));
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--bg-0) 82%, transparent);
+      color: var(--text);
+      box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateX(-50%);
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .read-image-wrap.is-scanning .read-scan-indicator { display: inline-flex; }
+    .read-scan-spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid color-mix(in oklab, var(--accent) 28%, transparent);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: readScanSpin .75s linear infinite;
+    }
+    @keyframes readScanSpin { to { transform: rotate(360deg); } }
+    .icon-chip {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.04)),
+        color-mix(in oklab, var(--bg-0) 88%, transparent);
+      backdrop-filter: blur(14px) saturate(135%);
+      -webkit-backdrop-filter: blur(14px) saturate(135%);
+      color: var(--text);
+      border: 1px solid color-mix(in oklab, white 18%, var(--line));
+      box-shadow:
+        0 10px 24px -10px rgba(0, 0, 0, .72),
+        0 0 0 1px rgba(0, 0, 0, .28),
+        inset 0 1px 0 rgba(255, 255, 255, .1);
+      cursor: pointer;
+      transition: color .18s, background .18s, transform .1s, border-color .18s, box-shadow .18s;
+    }
+    .icon-chip:hover {
+      color: var(--accent);
+      border-color: color-mix(in oklab, var(--accent) 55%, var(--line));
+      box-shadow:
+        0 12px 28px -10px rgba(0, 0, 0, .78),
+        0 0 0 1px color-mix(in oklab, var(--accent) 30%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, .12);
+    }
+    .icon-chip:active { transform: scale(.94); }
+    .icon-chip svg { width: 15px; height: 15px; stroke: currentColor; }
+    .icon-chip.read-svg-btn {
+      width: auto;
+      min-width: 40px;
+      padding-inline: 7px;
+      font: 700 10px/1 var(--font-mono);
+      letter-spacing: 0;
+    }
+    .icon-chip.hidden { display: none; }
+
+    /* ---------- Mobile bottom action bar ---------- */
+    .mobile-action-bar {
+      display: none;
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(env(safe-area-inset-bottom) + 18px);
+      z-index: 50;
+      pointer-events: none;
+      width: min(78vw, 320px);
+    }
+    .mobile-action-bar button.primary {
+      pointer-events: auto;
+      width: 100%;
+      min-width: 0;
+      padding: 12px 18px;
+      font-size: 14px;
+      border-radius: 999px;
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.18) inset,
+        0 10px 28px -14px color-mix(in oklab, var(--accent) 70%, transparent),
+        0 2px 6px -2px rgba(0, 0, 0, 0.35);
+    }
+    .mobile-action-bar button.primary.invalid,
+    .mobile-action-bar button.primary.invalid:hover {
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, .16) inset,
+        0 12px 28px -14px rgba(220, 38, 38, .78),
+        0 2px 6px -2px rgba(0, 0, 0, .35);
+    }
+    @media (max-width: 720px) {
+      .mobile-action-bar { display: block; }
+      .views.read-active + .mobile-action-bar { display: none; }
+      body.read-mode ~ * .mobile-action-bar,
+      body.read-mode .mobile-action-bar { display: none; }
+      #makeView .make-actions .primary { display: none; }
+      #makeView .make-actions { justify-content: stretch; }
+      #makeView .make-actions .add-layer-btn { width: 100%; justify-content: center; padding: 12px 16px; }
+      body.settings-open .mobile-action-bar { display: none; }
+      .shell { padding-bottom: 96px; }
+      body.read-mode .shell { padding-bottom: 24px; }
+      #readWorkPane .read-action-panel .make-actions { justify-content: stretch; }
+      #readWorkPane .read-action-panel .make-actions .primary { width: 100%; }
+      .read-image-wrap { order: -1; max-width: 220px; }
+    }
+
+    /* ---------- Progress modal ---------- */
+    .progress-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: color-mix(in oklab, var(--bg-0) 70%, transparent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .progress-modal.active { display: flex; }
+    .progress-card {
+      width: 100%;
+      max-width: 400px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .progress-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .progress-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--line);
+      border-top-color: var(--accent);
+      border-radius: 999px;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-track {
+      height: 6px;
+      background: color-mix(in oklab, var(--field) 80%, transparent);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--grad-accent);
+      border-radius: 999px;
+      box-shadow: 0 0 12px var(--accent-glow);
+      transition: width .3s ease;
+    }
+    .progress-text {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ---------- Image modal ---------- */
+    .image-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: color-mix(in oklab, var(--bg-0) 82%, transparent);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .image-modal.active { display: flex; }
+    .image-modal-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: min(90vw, calc(90dvh - 48px), 760px);
+      height: auto;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .image-modal-close {
+      position: static;
+      align-self: flex-end;
+      margin-bottom: 10px;
+      z-index: 2;
+      background: color-mix(in oklab, var(--surface) 90%, transparent);
+      border-color: var(--line-strong);
+      box-shadow: 0 10px 28px -16px rgba(0, 0, 0, .7);
+    }
+    .image-modal-box {
+      width: 100%;
+      height: auto;
+      max-width: none;
+      margin: 0;
+      aspect-ratio: 1;
+      border-radius: 0;
+      border: 1.5px solid var(--line);
+      box-shadow:
+        inset 0 0 0 1px color-mix(in oklab, var(--bg-0) 55%, transparent),
+        0 18px 50px -30px rgba(0, 0, 0, 0.45);
+    }
+    .image-modal-box canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 0;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* ---------- Live camera ---------- */
+    .camera-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: #050806;
+    }
+    .camera-modal.active { display: flex; }
+    .camera-stage {
+      position: relative;
+      width: min(100%, 820px);
+      height: min(92dvh, 900px);
+      overflow: hidden;
+      border: 1px solid color-mix(in oklab, var(--ok) 28%, #273129);
+      border-radius: 22px;
+      background: #080b09;
+      box-shadow: 0 24px 70px -30px rgba(0, 0, 0, .9);
+    }
+    .camera-stage video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      background: #080b09;
+    }
+    #cameraFrameCanvas { display: none; }
+    .camera-shade {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 0 29%, rgba(0, 0, 0, .18) 66%, rgba(0, 0, 0, .48) 100%);
+    }
+    .camera-guide {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(68%, 62dvh);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border: 1px solid color-mix(in oklab, var(--ok) 32%, transparent);
+      border-radius: 8px;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, .08);
+      pointer-events: none;
+    }
+    .camera-guide::before,
+    .camera-guide::after {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: 9px;
+      pointer-events: none;
+    }
+    .camera-guide::before {
+      background:
+        linear-gradient(var(--ok), var(--ok)) 0 0 / 42px 3px no-repeat,
+        linear-gradient(var(--ok), var(--ok)) 0 0 / 3px 42px no-repeat,
+        linear-gradient(var(--ok), var(--ok)) 100% 0 / 42px 3px no-repeat,
+        linear-gradient(var(--ok), var(--ok)) 100% 0 / 3px 42px no-repeat,
+        linear-gradient(var(--ok), var(--ok)) 0 100% / 42px 3px no-repeat,
+        linear-gradient(var(--ok), var(--ok)) 0 100% / 3px 42px no-repeat,
+        linear-gradient(var(--ok), var(--ok)) 100% 100% / 42px 3px no-repeat,
+        linear-gradient(var(--ok), var(--ok)) 100% 100% / 3px 42px no-repeat;
+    }
+    .camera-guide.scanning::after {
+      inset: 6px;
+      height: 2px;
+      top: 8%;
+      background: color-mix(in oklab, var(--ok) 82%, white);
+      box-shadow: 0 0 14px color-mix(in oklab, var(--ok) 70%, transparent);
+      animation: cameraSweep 1.7s ease-in-out infinite alternate;
+    }
+    @keyframes cameraSweep { to { top: calc(92% - 2px); } }
+    .camera-topbar,
+    .camera-bottombar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+    }
+    .camera-topbar { top: 0; justify-content: space-between; }
+    .camera-bottombar { bottom: 0; justify-content: center; padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+    .camera-live-status {
+      min-width: 0;
+      padding: 9px 13px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 999px;
+      background: rgba(7, 12, 9, .72);
+      color: rgba(255, 255, 255, .9);
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .camera-close,
+    .camera-fallback,
+    .camera-capture {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 999px;
+      color: white;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .camera-close,
+    .camera-fallback {
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(255, 255, 255, .15);
+      background: rgba(7, 12, 9, .72);
+    }
+    .camera-capture {
+      width: 66px;
+      height: 66px;
+      border: 3px solid rgba(255, 255, 255, .88);
+      background: color-mix(in oklab, var(--ok) 70%, #071009);
+      box-shadow: inset 0 0 0 4px rgba(0, 0, 0, .28), 0 10px 28px -12px rgba(0, 0, 0, .8);
+    }
+    .camera-close svg,
+    .camera-fallback svg { width: 21px; height: 21px; stroke: currentColor; }
+    .camera-capture svg { width: 27px; height: 27px; stroke: currentColor; }
+    .camera-frame-meter {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 9px 12px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 999px;
+      background: rgba(7, 12, 9, .72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .camera-frame-meter span {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .25);
+      transition: background .2s, box-shadow .2s;
+    }
+    .camera-frame-meter span.ready {
+      background: var(--ok);
+      box-shadow: 0 0 9px color-mix(in oklab, var(--ok) 72%, transparent);
+    }
+    @media (max-width: 720px) {
+      .camera-modal { padding: 0; }
+      .camera-stage { width: 100%; height: 100dvh; border: 0; border-radius: 0; }
+      .camera-guide { width: min(78vw, 58dvh); }
+      .camera-topbar { padding-top: max(14px, env(safe-area-inset-top)); }
+    }
+
+    /* ---------- Toast ---------- */
+    .toast-stack {
+      position: fixed;
+      top: 88px; right: 20px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+      max-width: calc(100vw - 40px);
+    }
+    .toast-stack > div {
+      pointer-events: auto;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13.5px;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      animation: toastIn .28s ease;
+      max-width: 340px;
+    }
+    .toast-stack > div.bad { border-left-color: var(--danger); }
+    .toast-stack > div.ok { border-left-color: var(--ok); }
+    @keyframes toastIn {
+      from { transform: translateX(20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ---------- Print ---------- */
+    #printArea { display: none; }
+    @media print {
+      body { background: white; color: black; }
+      body::before { display: none; }
+      header, .mobile-action-bar, .progress-modal, .image-modal, .camera-modal, .toast-stack, .views { display: none !important; }
+      #printArea {
+        display: block !important;
+        text-align: center;
+        padding: 40px;
+      }
+      #printArea h1 { font-size: 22px; margin-bottom: 20px; color: black; }
+      #printArea canvas { max-width: 500px; width: 100%; height: auto; }
+      #printArea p { font-family: monospace; font-size: 11px; margin-top: 16px; color: #333; }
+    }
+
+    /* ---------- Utility ---------- */
+    .hidden { display: none !important; }
+
+    /* Focus rings */
+    button:focus-visible,
+    a:focus-visible,
+    [tabindex="0"]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* Light mode fine-tuning */
+    body.light .canvas-box {
+      background:
+        linear-gradient(45deg, var(--checker-a) 25%, transparent 25%) 0 0/20px 20px,
+        linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%) 0 10px/20px 20px,
+        linear-gradient(45deg, transparent 75%, var(--checker-a) 75%) 10px -10px/20px 20px,
+        linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%) -10px 0/20px 20px,
+        #fff;
+    }
+    /* ---------- Panel header title with icon ---------- */
+    .panel-header-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .panel-header-icon {
+      display: grid; place-items: center;
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      background: var(--grad-accent-soft);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .panel-header-icon svg { width: 15px; height: 15px; stroke: currentColor; }
+
+    /* ---------- Entry text field (paste button outside label) ---------- */
+    .entry-text-field { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    .entry-text-field .label-row,
+    .master-entry .entry-head {
+      min-height: 26px;
+    }
+    /* .entry-text-label shares the base text styling with .entry-title (see above) */
+
+    /* ---------- Custom select (in-theme dropdown) ---------- */
+    .field-select { position: relative; width: 100%; min-width: 0; }
+    .field-select > select {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      margin: 0;
+    }
+    .field-select-trigger {
+      appearance: none;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      background: var(--field);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    .field-select-trigger:hover { border-color: var(--line-strong); }
+    .field-select.open .field-select-trigger,
+    .field-select-trigger:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: none;
+    }
+    .field-select-trigger .field-select-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .field-select-trigger .field-select-caret {
+      display: grid; place-items: center;
+      width: 22px; height: 22px;
+      color: var(--accent);
+      transition: transform .2s ease;
+      flex-shrink: 0;
+    }
+    .field-select.open .field-select-trigger .field-select-caret { transform: rotate(180deg); }
+    .field-select-trigger .field-select-caret svg { width: 14px; height: 14px; stroke: currentColor; fill: currentColor; }
+
+    .field-select-menu {
+      position: absolute;
+      left: 0; right: 0;
+      top: calc(100% + 6px);
+      background: var(--field-solid, var(--surface));
+      border: 1px solid color-mix(in oklab, var(--line) 90%, var(--accent) 10%);
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.55), 0 2px 8px -2px rgba(0, 0, 0, 0.25);
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 200;
+      display: none;
+      animation: fsMenuIn .16s ease;
+    }
+    .field-select-menu.open { display: block; }
+    @keyframes fsMenuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .field-select-option {
+      display: flex; align-items: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+      transition: background .12s, color .12s;
+      user-select: none;
+    }
+    .field-select-option:hover { background: color-mix(in oklab, var(--accent) 10%, transparent); }
+    .field-select-option.selected {
+      background: color-mix(in oklab, var(--accent) 16%, transparent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    body.light .field-select-menu { box-shadow: 0 20px 40px -18px rgba(15, 23, 42, 0.25), 0 2px 8px -2px rgba(15, 23, 42, 0.12); }
+
+    /* ---------- Password / floating-label fieldset ---------- */
+    .field-fieldset { 
+      position: relative;
+      border: 1.5px solid var(--line-strong);
+      border-radius: 14px;
+      padding: 22px 14px 10px;
+      background: var(--field);
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .field-fieldset:hover { border-color: color-mix(in oklab, var(--accent) 35%, var(--line-strong)); }
+    .field-fieldset:focus-within {
+      border-color: var(--accent);
+      box-shadow: none;
+    }
+    .field-fieldset > .field-legend {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 0 6px;
+      margin-left: -6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      background: transparent;
+      letter-spacing: 0;
+      text-transform: none;
+      line-height: 1;
+      pointer-events: none;
+      transition: top .18s ease, transform .18s ease, font-size .18s ease, color .18s ease, background .18s ease, font-weight .18s ease;
+    }
+    .field-fieldset:focus-within > .field-legend,
+    .field-fieldset:has(input:not(:placeholder-shown)) > .field-legend {
+      top: 8px;
+      transform: none;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: transparent;
+      padding: 0;
+      margin-left: 0;
+    }
+    .field-fieldset:focus-within,
+    .field-fieldset:has(input:not(:placeholder-shown)) { padding-top: 24px; padding-bottom: 8px; }
+    .field-fieldset:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend { color: var(--text-dim); }
+    .field-fieldset.valid {
+      border-color: color-mix(in oklab, var(--accent) 70%, var(--line-strong));
+      box-shadow: none;
+    }
+    .field-fieldset.valid > .field-legend,
+    .field-fieldset.valid:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
+      color: var(--accent);
+    }
+    .master-entry .field-fieldset:focus-within,
+    .master-entry .field-fieldset.valid {
+      border-color: var(--ok);
+    }
+    .master-entry .field-fieldset:focus-within > .field-legend,
+    .master-entry .field-fieldset.valid > .field-legend,
+    .master-entry .field-fieldset.valid:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
+      color: var(--ok);
+    }
+    #makeView .field-fieldset.valid:not(:focus-within) {
+      border-color: var(--line-strong);
+    }
+    body:not(.light) #makeView .field-fieldset.valid:not(:focus-within) {
+      border-color: color-mix(in oklab, var(--line) 92%, transparent);
+    }
+    #makeView .field-fieldset.valid:not(:focus-within) > .field-legend,
+    #makeView .field-fieldset.valid:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
+      color: var(--text-dim);
+    }
+    #makeView .entry:not(.master-entry) .field-fieldset:focus-within,
+    #makeView .entry:not(.master-entry) .field-fieldset.valid:focus-within {
+      border-color: var(--accent);
+    }
+    #makeView .entry:not(.master-entry) .field-fieldset:focus-within > .field-legend,
+    #makeView .entry:not(.master-entry) .field-fieldset.valid:focus-within > .field-legend {
+      color: var(--accent);
+    }
+    #makeView .master-entry .field-fieldset:focus-within,
+    #makeView .master-entry .field-fieldset.valid:focus-within {
+      border-color: var(--ok);
+    }
+    #readMasterField.is-ok,
+    #readLayerField.is-ok,
+    body:not(.light) #readMasterField.is-ok {
+      border-color: color-mix(in oklab, var(--ok) 58%, var(--line-strong));
+      box-shadow: none;
+    }
+    #readMasterField.is-ok > .field-legend,
+    #readLayerField.is-ok > .field-legend,
+    #readMasterField.is-ok:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend,
+    #readLayerField.is-ok:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
+      color: var(--ok);
+    }
+    .confirm-fieldset.is-bad,
+    .confirm-fieldset.is-bad.valid {
+      border-color: color-mix(in oklab, var(--danger, #ef4444) 76%, var(--line-strong));
+    }
+    .confirm-fieldset.is-bad > .field-legend,
+    .confirm-fieldset.is-bad.valid > .field-legend,
+    .confirm-fieldset.is-bad:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
+      color: var(--danger, #ef4444);
+    }
+    #makeView .field-fieldset.is-bad,
+    #makeView .field-fieldset.is-bad.valid,
+    body:not(.light) #makeView .field-fieldset.is-bad.valid {
+      border-color: color-mix(in oklab, var(--danger, #ef4444) 76%, var(--line-strong));
+    }
+    #makeView .field-fieldset.is-bad > .field-legend,
+    #makeView .field-fieldset.is-bad.valid > .field-legend,
+    #makeView .field-fieldset.is-bad:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
+      color: var(--danger, #ef4444);
+    }
+    #makeView .field-fieldset.is-duplicate,
+    #makeView .field-fieldset.is-duplicate.valid,
+    body:not(.light) #makeView .field-fieldset.is-duplicate.valid {
+      border-color: color-mix(in oklab, var(--danger, #ef4444) 76%, var(--line-strong));
+    }
+    #makeView .field-fieldset.is-duplicate > .field-legend,
+    #makeView .field-fieldset.is-duplicate.valid > .field-legend,
+    #makeView .field-fieldset.is-duplicate:has(input:not(:placeholder-shown)):not(:focus-within) > .field-legend {
+      color: var(--danger, #ef4444);
+    }
+    .field-fieldset > input,
+    .field-fieldset > .password-field > input {
+      background: transparent !important;
+      border: 0 !important;
+      padding: 1px 0 1px 2px !important;
+      box-shadow: none !important;
+      width: 100%;
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 28px;
+      font-size: 14px;
+      line-height: 1.4;
+      letter-spacing: 0;
+      caret-color: var(--accent);
+      outline: none;
+    }
+    .master-entry .field-fieldset > .password-field > input { caret-color: var(--ok); }
+    .field-fieldset:focus-within > .password-field > input {
+      text-shadow: 0 0 0 currentColor;
+    }
+    .field-fieldset > .password-field > input:read-only { color: var(--text-dim); }
+    .field-fieldset > .password-field { display: block; padding-right: 72px; position: static; }
+    .master-entry .field-fieldset > .password-field { padding-right: 104px; }
+    .master-entry .field-check,
+    .master-entry .field-danger { right: 76px; }
+    /* Anchor the eye button to the fieldset itself (not the inner input line),
+       so it stays vertically centered regardless of floating-label padding shifts. */
+    .field-fieldset > .password-field .password-toggle {
+      position: absolute;
+      right: 8px;
+      top: 0;
+      bottom: 0;
+      margin: auto 0;
+      transform: none;
+      background: transparent;
+      color: var(--muted);
+    }
+    .field-fieldset > .password-field .password-toggle:hover { color: var(--accent); }
+    .field-fieldset > .password-field .password-generate {
+      right: 42px;
+      top: 0;
+      bottom: 0;
+      margin: auto 0;
+      transform: none;
+    }
+    .field-fieldset > .password-field .password-generate:active { transform: scale(.92); }
+
+    /* ---------- Responsive form polish: identical paddings, widths, line-height on mobile ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    input[type="text"],
+    input[type="password"],
+    textarea,
+    select,
+    .field-select-trigger { line-height: 1.4; }
+    .entry-text-field { gap: 10px; }
+    label,
+    .field-group { gap: 6px; }
+
+    @media (max-width: 720px) {
+      /* Keep panel/entry paddings identical to desktop so field widths match visually */
+      .content-body { padding: 16px; gap: 14px; }
+      .entry { padding: 14px; gap: 12px; }
+
+      /* Lock input metrics: identical padding, radius, font-size, line-height as desktop */
+      input[type="text"],
+      input[type="password"],
+      textarea,
+      select,
+      .field-select-trigger {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .password-field input { padding-right: 72px; font-size: 14px; }
+      textarea { min-height: 84px; font-size: 13px; line-height: 1.55; }
+
+      /* Floating-label fieldset: same paddings across breakpoints */
+      .field-fieldset { padding: 22px 14px 10px; border-radius: 14px; }
+      .field-fieldset:focus-within,
+      .field-fieldset:has(input:not(:placeholder-shown)) { padding: 24px 14px 8px; }
+      .field-fieldset > input,
+      .field-fieldset > .password-field > input { font-size: 14px; line-height: 1.4; }
+
+      /* Uniform label spacing */
+      label, .field-group { gap: 6px; font-size: 12.5px; }
+    }
+
+
+    /* ---------- Product UX refinement ---------- */
+    :root {
+      --muted: #808896;
+    }
+    body.light {
+      --muted: #718096;
+    }
+    #makeView input[aria-invalid="true"],
+    #makeView textarea[aria-invalid="true"] {
+      border-color: var(--danger);
+    }
+    #makeView .field-fieldset:has(input[aria-invalid="true"]) {
+      border-color: var(--danger);
+    }
+
+    header {
+      position: sticky;
+      top: 12px;
+    }
+
+    #makeView:not(.has-output) .left-column {
+      width: min(100%, 760px);
+      margin-inline: auto;
+    }
+    #makeView.has-output {
+      grid-template-columns: minmax(0, 510px) minmax(0, 1fr);
+    }
+
+    .content-body {
+      padding: 14px;
+      gap: 12px;
+    }
+    .entry {
+      gap: 10px;
+      padding: 12px;
+      background: color-mix(in oklab, var(--field) 45%, transparent);
+      border-color: var(--soft-line);
+      border-radius: 12px;
+    }
+    body:not(.light) .entry {
+      background: color-mix(in oklab, var(--field) 48%, transparent);
+      border-color: var(--soft-line);
+    }
+    .entry:hover,
+    body:not(.light) .entry:hover {
+      border-color: var(--line);
+    }
+    .master-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: stretch;
+      gap: 10px;
+      padding: 12px;
+    }
+    .master-entry .entry-head {
+      min-width: 0;
+    }
+    .master-entry .field-fieldset {
+      min-width: 0;
+    }
+
+    .layers-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 36px;
+      padding: 2px 2px 0;
+    }
+    .layers-heading {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .layers-count {
+      display: grid;
+      place-items: center;
+      min-width: 20px;
+      height: 20px;
+      padding-inline: 6px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--accent) 11%, var(--field));
+      color: var(--accent);
+      font-size: 11px;
+      letter-spacing: 0;
+    }
+    .add-layer-btn.compact {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 999px;
+    }
+    .add-layer-btn.compact svg {
+      width: 16px;
+      height: 16px;
+    }
+    .make-actions {
+      padding-top: 2px;
+    }
+    #makeView .make-actions .primary {
+      min-width: 168px;
+    }
+
+    .preview-canvas-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+      width: min(100%, 520px);
+      max-width: 520px;
+      align-items: stretch;
+      justify-items: center;
+    }
+    .preview-canvas-row .canvas-box {
+      align-self: stretch;
+      justify-self: center;
+    }
+    .download-actions {
+      justify-content: center;
+      flex-wrap: nowrap;
+    }
+    .download-actions button {
+      flex: 0 1 auto;
+      min-width: 64px;
+      padding: 9px 14px;
+    }
+    #printBtn {
+      width: 38px;
+      min-width: 38px;
+      padding-inline: 0;
+    }
+
+    #settingsModal {
+      justify-content: flex-end;
+      align-items: stretch;
+      padding: 12px;
+    }
+    #settingsModal .settings-modal-card {
+      width: min(440px, 100%);
+      max-height: calc(100dvh - 24px);
+      border-radius: 18px;
+      animation: settingsIn .24s cubic-bezier(.2,.75,.2,1) both;
+    }
+    #settingsModal.closing .settings-modal-card { transform: translateX(18px); }
+    @keyframes settingsIn {
+      from { opacity: 0; transform: translateX(18px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    #readView > .read-panel {
+      width: min(100%, 760px);
+      margin: 0 auto 20px;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+    #readView > .read-panel::before {
+      content: none;
+    }
+    body:not(.light) #readView > .read-panel,
+    body:not(.light) #readView > .read-panel .read-drop-pane {
+      background: transparent;
+      border-color: transparent;
+    }
+    .read-drop-pane {
+      padding: 0;
+    }
+    .drop-zone {
+      min-height: 270px;
+      background: color-mix(in oklab, var(--accent) 3%, var(--panel));
+      box-shadow: var(--shadow);
+    }
+    body:not(.light) .drop-zone {
+      background: color-mix(in oklab, var(--accent) 4%, var(--bg-1));
+    }
+
+    #readWorkPane .read-result-card {
+      max-width: 900px;
+      margin-inline: auto;
+    }
+    .read-result-body {
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 270px);
+      gap: 18px;
+      align-items: start;
+    }
+    .read-result-main {
+      gap: 14px;
+    }
+    .read-action-panel {
+      order: 1;
+    }
+    .readout-wrap {
+      display: none;
+      order: 2;
+    }
+    #readWorkPane.has-result .readout-wrap {
+      display: block;
+      animation: resultIn .24s ease both;
+    }
+    @keyframes resultIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .read-section-label {
+      margin: 2px 0 8px;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .read-image-wrap,
+    .read-image-wrap .read-image-box {
+      max-width: 270px;
+    }
+    .readout {
+      min-height: 104px;
+    }
+
+    @media (max-width: 960px) {
+      #makeView.has-output {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      #makeView.has-output .left-column,
+      #makeView.has-output .preview-wrap {
+        width: min(100%, 760px);
+        margin-inline: auto;
+      }
+    }
+
+    @media (max-width: 720px) {
+      header {
+        top: 8px;
+      }
+      .shell {
+        gap: 16px;
+        padding-inline: 12px;
+      }
+      .panel-header {
+        min-height: 52px;
+        padding: 12px 14px;
+      }
+      .panel-action.settings-launcher {
+        width: 32px;
+        min-width: 32px;
+        height: 32px;
+        padding: 0;
+        justify-content: center;
+      }
+      .panel-action.settings-launcher span { display: none; }
+      .content-body {
+        padding: 12px;
+        gap: 11px;
+      }
+      .master-entry {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+      }
+      .master-entry .security-tools { grid-column: 1; }
+      .master-policy { grid-column: 1; }
+      .security-tool { flex: 1 1 auto; }
+      .keyfile-control { flex: 0 1 auto; max-width: 100%; }
+      .keyfile-main { max-width: 100%; }
+      .keyfile-menu { min-width: min(230px, calc(100vw - 56px)); }
+      .keyfile-status { flex-basis: 100%; }
+      .entry {
+        padding: 12px;
+      }
+      .entry-text-field textarea {
+        min-height: 92px;
+      }
+      #makeView .make-actions {
+        display: none;
+      }
+      .layers-toolbar {
+        min-height: 34px;
+      }
+      .add-layer-btn.compact {
+        width: 34px;
+        height: 34px;
+      }
+      .preview-canvas-row {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 360px;
+        margin-inline: auto;
+      }
+      .preview-canvas-row .canvas-box {
+        width: min(100%, 320px);
+        justify-self: center;
+      }
+      .download-actions {
+        gap: 6px;
+      }
+      .download-actions button {
+        min-width: 56px;
+        padding: 9px 11px;
+      }
+      #settingsModal {
+        align-items: flex-end;
+        justify-content: stretch;
+        padding: 0;
+      }
+      #settingsModal .settings-modal-card {
+        width: 100%;
+        max-width: none;
+        max-height: 88dvh;
+        border-radius: 20px 20px 0 0;
+        border-bottom: 0;
+        animation-name: settingsUp;
+      }
+      #settingsModal.closing .settings-modal-card { transform: translateY(24px); }
+      @keyframes settingsUp {
+        from { opacity: 0; transform: translateY(24px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      #settingsModal .settings-modal-head::before {
+        content: "";
+        position: absolute;
+        top: 7px;
+        left: 50%;
+        width: 34px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--line-strong);
+        transform: translateX(-50%);
+      }
+      #settingsModal .settings-modal-head {
+        padding-top: 18px;
+      }
+      #readWorkPane .read-result-card {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        overflow: visible;
+      }
+      #readWorkPane .read-result-card::before {
+        content: none;
+      }
+      body:not(.light) #readWorkPane .read-result-card .read-result-body {
+        background: transparent;
+      }
+      .read-result-body {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 0;
+        gap: 14px;
+      }
+      .read-image-wrap,
+      .read-image-wrap .read-image-box {
+        width: 100%;
+        max-width: 280px;
+      }
+      .read-action-panel {
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: color-mix(in oklab, var(--panel) 92%, transparent);
+      }
+      .readout-wrap {
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: color-mix(in oklab, var(--panel) 92%, transparent);
+      }
+      .drop-zone {
+        min-height: 300px;
+        padding: 26px 18px;
+      }
+    }
+
+    /* Load webfonts (system fallback works if offline) */
+    @font-face { font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap;
+      src: local("Inter"), local("Inter Variable"); }
+    @font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 700; font-display: swap;
+      src: local("JetBrains Mono"); }
+
+    /* ---------- Motion and compact mobile header ---------- */
+    @property --fec-progress {
+      syntax: "<percentage>";
+      inherits: true;
+      initial-value: 33.333%;
+    }
+    header {
+      top: max(8px, env(safe-area-inset-top));
+    }
+    .tabs,
+    .info-tabs {
+      --tab-progress: 0;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      isolation: isolate;
+      overflow: hidden;
+    }
+    .tabs { width: 250px; }
+    .tabs::before,
+    .info-tabs::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      top: 4px;
+      bottom: 4px;
+      left: 4px;
+      width: calc((100% - 10px) / 2);
+      border-radius: 9px;
+      background: var(--accent);
+      box-shadow: 0 6px 18px -8px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, .2);
+      transform: translateX(calc(var(--tab-progress) * (100% + 2px)));
+      transition: transform .38s cubic-bezier(.22, .8, .2, 1), background-color .3s ease, box-shadow .3s ease;
+    }
+    .info-tabs {
+      --tab-progress: var(--info-progress, 0);
+      width: 250px;
+      max-width: 100%;
+      flex: 0 0 auto;
+    }
+    .tab,
+    .info-tabs button {
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-width: 0;
+      text-align: center;
+      transition: color .28s ease, transform .18s ease;
+    }
+    .tab.active,
+    .info-tabs button.active {
+      background: transparent;
+      box-shadow: none;
+    }
+    .view-page.active {
+      animation: viewIn .38s cubic-bezier(.22, .8, .2, 1) both;
+    }
+    .info-page.active {
+      animation: infoPageIn .3s cubic-bezier(.22, .8, .2, 1) both;
+    }
+    @keyframes infoPageIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .recovery-slider-shell {
+      --fec-progress: 33.333%;
+      position: relative;
+      height: 30px;
+      margin: 0 26px;
+      transition: --fec-progress .34s cubic-bezier(.22, .8, .2, 1);
+    }
+    .recovery-slider-visual {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(
+        to right,
+        color-mix(in oklab, var(--accent) 92%, white 8%) 0 var(--fec-progress),
+        color-mix(in oklab, var(--line-strong) 68%, var(--field)) var(--fec-progress) 100%
+      );
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .recovery-slider-visual span {
+      position: absolute;
+      left: var(--fec-progress);
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      border: 3px solid var(--panel);
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 52%, transparent);
+      transform: translate(-50%, -50%);
+      transition: transform .18s ease, box-shadow .22s ease;
+    }
+    .recovery-slider-shell:active .recovery-slider-visual span {
+      transform: translate(-50%, -50%) scale(.94);
+    }
+    .recovery-slider-shell input[type="range"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+      touch-action: pan-x;
+    }
+
+    @media (max-width: 720px) {
+      .shell { padding-top: max(10px, env(safe-area-inset-top)); }
+      header {
+        position: sticky;
+        grid-template-columns: 40px minmax(0, 1fr) 72px;
+        grid-template-areas: "theme brand info" "tabs tabs tabs";
+        padding: 12px 12px 10px;
+        min-height: 100px;
+      }
+      .brand { grid-area: brand; justify-self: center; }
+      .brand-main { gap: 9px; }
+      .logo { width: 38px; height: 38px; border-radius: 11px; }
+      .logo svg { width: 25px; height: 25px; }
+      .brand h1 { font-size: 18px; }
+      .brand-tools { display: contents; }
+      #themeToggle {
+        grid-area: theme;
+        justify-self: start;
+      }
+      #openInfoBtn {
+        justify-self: end;
+      }
+      .header-right-tools { grid-area: info; justify-self: end; }
+      .header-actions { width: min(100%, 430px); justify-self: center; }
+      .tabs { width: min(100%, 430px); }
+      .view-page.active { animation: viewIn .34s cubic-bezier(.22, .8, .2, 1) both; }
+    }
+
+    @media (min-width: 721px) {
+      #readWorkPane .read-result-card { width: min(100%, 900px); }
+      #readWorkPane .read-result-body {
+        grid-template-columns: minmax(0, 1fr) minmax(220px, 270px);
+        align-items: start;
+      }
+      #readWorkPane .read-result-main { display: contents; }
+      #readWorkPane .read-action-panel {
+        grid-column: 1;
+        grid-row: 1;
+        min-width: 0;
+        align-self: stretch;
+      }
+      #readWorkPane .read-image-wrap {
+        grid-column: 2;
+        grid-row: 1;
+      }
+      #readWorkPane .readout-wrap {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        width: 100%;
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      #readWorkPane,
+      #readWorkPane .read-result-card,
+      #readWorkPane .read-result-body,
+      #readWorkPane .read-result-main,
+      #readWorkPane .read-action-panel,
+      #readWorkPane .readout-wrap {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+      }
+      #readWorkPane .read-action-panel input { font-size: 16px; }
+      #readStatusWork { min-height: 42px; }
+      .read-source-switch { width: min(100%, 330px); }
+      .bit-import-pane { padding: 18px; }
+      #bitCodeInput { font-size: 16px; }
+    }
+    .capacity-status { display:block; min-height:20px; color:var(--muted); font-size:12px; margin-top:12px; line-height:1.5; overflow-wrap:anywhere; }
+    .capacity-status.bad { color:#e45260; }
+    #cancelOperationBtn { display:block; margin:18px auto 0; }
+    #readWorkPane.compact-only .read-result-body { grid-template-columns:minmax(0, 1fr); }
+    .read-password-label { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  </style>
+</head>
+<body>
+  <div id="toastStack" class="toast-stack" aria-live="polite" aria-atomic="true"></div>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-main">
+          <div class="logo" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img">
+              <defs>
+                <linearGradient id="markBlue" x1="12" y1="8" x2="52" y2="58" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="var(--logo-mark-1)"/>
+                  <stop offset="1" stop-color="var(--logo-mark-2)"/>
+                </linearGradient>
+                <linearGradient id="layerCyan" x1="18" y1="28" x2="40" y2="51" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stop-color="var(--logo-layer-1)"/>
+                  <stop offset="1" stop-color="var(--logo-layer-2)"/>
+                </linearGradient>
+              </defs>
+              <path fill="url(#markBlue)" d="M32 4 56 18v28L32 60 8 46V18L32 4Z"/>
+              <path fill="#f0f6fc" d="M32 16 46 24v16L32 48 18 40V24l14-8Z"/>
+              <path fill="url(#layerCyan)" d="M18 24 32 32v16L18 40V24Z"/>
+              <path fill="var(--logo-side)" d="M32 32 46 24v16L32 48V32Z"/>
+              <path fill="var(--logo-core)" d="M24 28 32 23.5 40 28v9l-8 4.5-8-4.5v-9Z"/>
+              <path fill="var(--logo-core-light)" d="M24 28 32 32.5v9L24 37v-9Z"/>
+            </svg>
+          </div>
+          <h1>LayerLock</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="tabs" role="tablist">
+          <button class="tab active" id="tabMake" type="button">Создать</button>
+          <button class="tab" id="tabRead" type="button">Прочитать</button>
+        </div>
+      </div>
+      <div class="brand-tools">
+        <button id="themeToggle" class="theme-toggle" type="button" aria-label="Светлая тема" title="Светлая тема">
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+          <span id="themeLabel">Тема</span>
+        </button>
+        <div class="header-right-tools">
+          <button id="openInfoBtn" class="header-icon-btn" type="button" aria-label="Справка" title="Справка">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 11v5"/>
+              <path d="M12 8h.01"/>
+            </svg>
+          </button>
+          <button id="languageToggle" class="header-icon-btn language-toggle" type="button" aria-label="Switch language" title="Switch language">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m5 8 6 6"/>
+              <path d="m4 14 6-6 2-3"/>
+              <path d="M2 5h12"/>
+              <path d="M7 2h1"/>
+              <path d="m22 22-5-10-5 10"/>
+              <path d="M14 18h6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div id="views" class="views">
+    <main id="makeView" class="view-page active">
+      <section class="left-column stack">
+        <div class="panel content-panel">
+          <div class="panel-header">
+            <label class="vault-name-label" aria-label="Название">
+              <span class="vault-name-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 7h16"/>
+                  <path d="M4 12h10"/>
+                  <path d="M4 17h7"/>
+                </svg>
+              </span>
+              <input id="vaultName" type="text" value="" placeholder="Введите название...">
+
+            </label>
+            <div class="panel-actions">
+              <button id="openSettingsBtn" class="panel-action settings-launcher" type="button" aria-label="Настройки" title="Настройки">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+                </svg>
+                <span id="settingsSummary">Надежно · 8 цветов</span>
+              </button>
+              <button id="clearAll" class="panel-action icon" type="button" aria-label="Очистить все" title="Очистить все">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 6h18"/>
+                  <path d="M8 6V4h8v2"/>
+                  <path d="M19 6l-1 14H6L5 6"/>
+                  <path d="M10 11v5"/>
+                  <path d="M14 11v5"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="content-body">
+            <div class="entry master-entry">
+              <div class="entry-head">
+                <div class="entry-title">Контейнер</div>
+              </div>
+              <div class="field-fieldset pass-fieldset">
+                <span class="field-legend">Мастер-ключ</span>
+                <span class="password-field">
+                  <input id="masterKey" class="entry-pass" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
+                  <button id="generateMasterKeyBtn" class="password-generate" type="button" aria-label="Сгенерировать мастер-ключ" title="Сгенерировать мастер-ключ">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14Z"/><path d="M5 14v7"/><path d="M2 17.5h6"/></svg>
+                  </button>
+                  <button class="password-toggle" type="button" data-target="masterKey" aria-label="Показать ключ" title="Показать ключ">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </span>
+                <span class="field-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>
+                </span>
+                <span class="field-danger" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 17h.01"/></svg>
+                </span>
+              </div>
+              <div id="masterPolicy" class="pass-match master-policy" data-state="empty" aria-live="polite">
+                <span class="pass-match-dot" aria-hidden="true"></span>
+                <span class="pass-match-text"></span>
+              </div>
+              <div class="security-tools">
+                <input id="masterKeyFileInput" type="file" hidden>
+                <div class="keyfile-control">
+                  <button id="keyFileMenuBtn" class="security-tool keyfile-main" type="button" aria-haspopup="menu" aria-expanded="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><circle cx="11" cy="15" r="2"/><path d="m12.5 13.5 2-2"/></svg>
+                    <span id="keyFileMenuLabel">Добавить ключ-файл</span>
+                    <svg class="keyfile-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+                  </button>
+                  <div id="keyFileMenu" class="keyfile-menu hidden" role="menu">
+                    <button id="generateKeyFileBtn" class="keyfile-menu-item" type="button" role="menuitem">
+                      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+                      <span>Создать новый</span>
+                    </button>
+                    <button id="selectMasterKeyFileBtn" class="keyfile-menu-item" type="button" role="menuitem">
+                      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h5l2 2h11v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 10h18"/></svg>
+                      <span>Выбрать существующий</span>
+                    </button>
+                  </div>
+                  <button id="removeMasterKeyFileBtn" class="keyfile-remove hidden" type="button" aria-label="Убрать ключ-файл" title="Убрать ключ-файл">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+                  </button>
+                </div>
+                <span id="masterKeyFileStatus" class="keyfile-status">Опционально: файл становится вторым фактором и не сохраняется в контейнере.</span>
+              </div>
+            </div>
+            <div class="layers-toolbar">
+              <div class="layers-heading">
+                <span>Слои</span>
+                <span id="layerCount" class="layers-count">1</span>
+              </div>
+              <button id="addEntry" class="add-layer-btn compact" type="button" aria-label="Добавить слой" title="Добавить слой">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 5v14"/>
+                  <path d="M5 12h14"/>
+                </svg>
+              </button>
+            </div>
+            <div id="entries" class="stack"></div>
+            <output id="capacityStatus" class="capacity-status" aria-live="polite"></output>
+            <div class="actions make-actions">
+              <button id="makeBtn" class="primary" type="button">Создать</button>
+            </div>
+          </div>
+        </div>
+
+    <div id="settingsModal" class="settings-modal" aria-hidden="true" role="dialog" aria-labelledby="settingsModalTitle">
+      <div class="settings-modal-card">
+        <div class="settings-modal-head">
+          <div class="settings-modal-title">
+            <span class="settings-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+              </svg>
+            </span>
+            <h2 id="settingsModalTitle">Настройки</h2>
+          </div>
+          <button id="closeSettingsBtn" class="icon" type="button" aria-label="Закрыть" title="Закрыть">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="settings-body">
+
+          <label>Защита паролей
+            <select id="kdfProfile">
+              <option value="fast">Обычная</option>
+              <option value="normal" selected>Усиленная</option>
+              <option value="max">Максимальная</option>
+              <option value="ultra">Экстремальная</option>
+            </select>
+            <span id="kdfNote" class="setting-note">Argon2id + HKDF-SHA-256 · 64 MiB · 3 прохода</span>
+          </label>
+          <div class="recovery-control">
+            <div class="recovery-control-head">
+              <strong>Восстановление повреждений</strong>
+              <output id="fecLevelValue" for="fecLevel">Стандартное</output>
+            </div>
+            <div class="recovery-slider-shell">
+              <div class="recovery-slider-visual" aria-hidden="true"><span></span></div>
+              <input id="fecLevel" type="range" min="0" max="3" step="1" value="1" aria-label="Запас восстановления">
+            </div>
+            <div class="recovery-scale" aria-hidden="true">
+              <span>Минимум</span><span>Стандарт</span><span>Повышенный</span><span>Максимум</span>
+            </div>
+            <span id="fecNote" class="recovery-note">Добавляет умеренный запас данных для восстановления частично поврежденного изображения.</span>
+            <select id="fecProfile" class="hidden" aria-hidden="true" tabindex="-1">
+              <option value="minimal">Минимальное</option>
+              <option value="standard" selected>Стандартное</option>
+              <option value="enhanced">Повышенное</option>
+              <option value="maximum">Максимальное</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="infoModal" class="settings-modal" aria-hidden="true" role="dialog" aria-labelledby="infoModalTitle">
+      <div class="settings-modal-card">
+        <div class="settings-modal-head">
+          <div class="settings-modal-title">
+            <span class="settings-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 11v5"/>
+                <path d="M12 8h.01"/>
+              </svg>
+            </span>
+            <h2 id="infoModalTitle">Как работает</h2>
+          </div>
+          <button id="closeInfoBtn" class="icon" type="button" aria-label="Закрыть" title="Закрыть">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/>
+              <path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="settings-body">
+          <div class="info-tabs" role="tablist" aria-label="Раздел справки">
+            <button id="infoMakeTab" class="active" type="button">Создать</button>
+            <button id="infoReadTab" type="button">Прочитать</button>
+          </div>
+          <div id="infoMakePage" class="info-page active">
+            <div class="info-card">
+              <h3>Что заполнять</h3>
+              <ol>
+                <li>Введите название. Оно используется для имен файлов и ZIP-папки.</li>
+                <li>В блоке “Контейнер” задайте мастер-ключ. Он открывает контейнер и скрывает структуру слоев.</li>
+                <li>При необходимости подключите ключ-файл. Он не попадает в контейнер: для чтения понадобится этот же файл, а его потеря необратима.</li>
+                <li>Добавьте слой: пароль слоя и текст, который нужно получить при этом пароле.</li>
+              </ol>
+            </div>
+            <div class="info-card">
+              <h3>Как создается изображение</h3>
+              <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” управляет встроенной коррекцией Aztec для камеры и печати.</p>
+              <p>Мастер-ключ должен содержать не менее 16 символов, пароль слоя — не менее 12. Одинаковые, распространенные и предсказуемые пароли отклоняются. Секретные поля и открытый результат очищаются после 15 минут бездействия.</p>
+            </div>
+            <div class="info-card">
+              <h3>Скачивание</h3>
+              <p>PNG и SVG скачивают Aztec-контейнер. Компактные TXT и RAW сохраняют зашифрованное ядро до оптической коррекции и позволяют заново построить Aztec и SVG. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, TXT, RAW и “settings.txt”. Ключи и пароли туда не записываются.</p>
+              <div class="info-example">Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip</div>
+            </div>
+          </div>
+          <div id="infoReadPage" class="info-page">
+            <div class="info-card">
+              <h3>Как загрузить</h3>
+              <p>Выберите “Файл”, “Камера”, перетащите картинку в зону загрузки или вставьте ее через Ctrl+V. Сканер ищет Aztec, проверяет оптическую оболочку и коррекцию ошибок, после чего предлагает мастер-ключ. Камера подсказывает проблемы со светом и резкостью. Видео остается только в памяти устройства.</p>
+            </div>
+            <div class="info-card">
+              <h3>Два этапа доступа</h3>
+              <ol>
+                <li>Введите мастер-ключ, чтобы открыть контейнер. До этого слои и их количество не раскрываются.</li>
+                <li>Если контейнер создавался с ключ-файлом, выберите тот же файл до открытия. Сам контейнер не сообщает, использовался ли второй фактор.</li>
+                <li>После успешного открытия появится поле “Пароль слоя”. Введите пароль нужного слоя, и текст появится в результате.</li>
+              </ol>
+            </div>
+            <div class="info-card">
+              <h3>Если не открывается</h3>
+              <p>Проверьте мастер-ключ, пароль слоя, обрезку изображения и сжатие с потерями. Для бумажной копии лучше сохранить четкий контраст и не закрывать углы изображения.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      </section>
+
+      <section id="makePreviewPane" class="preview-wrap hidden">
+        <div class="panel preview-panel">
+          <div class="panel-header">
+            <div class="panel-header-title">
+              <span class="panel-header-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="3"/>
+                  <circle cx="9" cy="10" r="2"/>
+                  <path d="m21 16-5-5-8 8"/>
+                </svg>
+              </span>
+              <h2 id="outputHeading">Изображение</h2>
+            </div>
+            <div class="verify-actions">
+              <button id="expandMakeImageBtn" class="icon preview-expand-btn" type="button" disabled aria-label="Открыть на весь экран" title="Открыть на весь экран">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M15 3h6v6"/>
+                  <path d="M21 3l-7 7"/>
+                  <path d="M9 21H3v-6"/>
+                  <path d="M3 21l7-7"/>
+                </svg>
+              </button>
+              <button id="verifyBtn" type="button" disabled>Проверить</button>
+            </div>
+          </div>
+          <div class="preview-body">
+            <div class="preview-canvas-row">
+              <div class="canvas-box"><canvas id="canvas" width="800" height="800"></canvas></div>
+            </div>
+            <div id="makeStatus" class="status">Изображение еще не создано.</div>
+            <div class="download-actions">
+              <button id="downloadPngBtn" type="button" disabled title="Скачать PNG" aria-label="Скачать PNG">PNG</button>
+              <button id="downloadSvgBtn" type="button" disabled title="Скачать SVG" aria-label="Скачать SVG">SVG</button>
+              <button id="downloadBitsBtn" type="button" disabled title="Скачать компактный TXT" aria-label="Скачать компактный TXT">TXT</button>
+              <button id="downloadRawBtn" type="button" disabled title="Скачать компактный RAW" aria-label="Скачать компактный RAW">RAW</button>
+              <button id="downloadZipBtn" type="button" disabled title="Скачать ZIP" aria-label="Скачать ZIP">ZIP</button>
+              <button id="printBtn" type="button" disabled title="Печать" aria-label="Печать">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M6 9V3h12v6"/>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                  <path d="M6 14h12v7H6z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <main id="readView" class="view-page">
+      <section class="panel read-panel empty">
+        <div id="readDropPane" class="form-body read-drop-pane">
+          <input id="fileIn" class="file-input" type="file" accept="image/*,.svg,.llc,.txt">
+          <input id="cameraIn" class="file-input" type="file" accept="image/*" capture="environment">
+          <div class="read-source-switch" role="group" aria-label="Источник изображения">
+            <button id="uploadSourceBtn" class="active" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="M17 8 12 3 7 8"/>
+                <path d="M12 3v12"/>
+              </svg>
+              <span>Файл</span>
+            </button>
+            <button id="cameraSourceBtn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+              <span>Камера</span>
+            </button>
+            <button id="bitsSourceBtn" type="button">
+              <span class="source-bits-icon" aria-hidden="true">&lt;&gt;</span>
+              <span>Код</span>
+            </button>
+          </div>
+          <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Загрузить PNG">
+            <div>
+              <span class="drop-icon upload" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11.5 18.5A6.5 6.5 0 0 1 18 12h28A6.5 6.5 0 0 1 52.5 18.5v27A6.5 6.5 0 0 1 46 52H18a6.5 6.5 0 0 1-6.5-6.5v-27Z"/>
+                  <path d="M17.5 43.5 27.5 34l7 6.5 5.5-5.5 6.5 7"/>
+                  <circle cx="42.5" cy="24.5" r="3.5"/>
+                </svg>
+              </span>
+              <span class="drop-icon scan" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12h-5a4 4 0 0 0-4 4v5"/>
+                  <path d="M43 12h5a4 4 0 0 1 4 4v5"/>
+                  <path d="M52 43v5a4 4 0 0 1-4 4h-5"/>
+                  <path d="M21 52h-5a4 4 0 0 1-4-4v-5"/>
+                  <path d="M22 32h20"/>
+                  <path d="M32 22v20"/>
+                </svg>
+              </span>
+              <strong id="dropTitle">Отправьте изображение</strong>
+              <span id="dropHint">Или нажмите, выберите файл, либо вставьте через Ctrl+V.</span>
+            </div>
+          </div>
+          <div id="bitImportPane" class="bit-import-pane hidden">
+            <div class="bit-import-heading">
+              <span class="bit-import-icon" aria-hidden="true">&lt;&gt;</span>
+              <div>
+                <strong>Компактный контейнер</strong>
+                <span>Вставьте содержимое TXT, чтобы открыть контейнер.</span>
+              </div>
+            </div>
+            <textarea id="bitCodeInput" spellcheck="false" autocomplete="off" placeholder="LAYERLOCK-COMPACT/2&#10;..."></textarea>
+            <button id="restoreBitsBtn" class="primary" type="button">Восстановить контейнер</button>
+          </div>
+          <div id="readStatus" class="status hidden"></div>
+        </div>
+      </section>
+      <div id="readWorkPane" class="read-grid">
+        <div class="panel content-panel read-result-card">
+          <div class="read-result-body">
+            <div class="read-result-main">
+              <div class="readout-wrap">
+                <div class="read-section-label">Результат</div>
+                <div class="readout-box">
+                  <div id="readout" class="readout"></div>
+                  <button id="copyReadoutBtn" class="icon read-copy-btn" type="button" aria-label="Скопировать" title="Скопировать">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="11" height="11" rx="2"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="read-action-panel">
+                <div class="read-section-label read-password-label"><span>Ввод пароля</span><button id="resetCompactBtn" class="icon hidden" type="button" title="Загрузить другой контейнер" aria-label="Загрузить другой контейнер"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg></button></div>
+                <div id="readMasterField" class="field-fieldset">
+                  <span class="field-legend">Мастер-ключ</span>
+                  <span class="password-field">
+                    <input id="readPassword" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
+                    <button class="password-toggle" type="button" data-target="readPassword" aria-label="Показать мастер-ключ" title="Показать мастер-ключ">
+                      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </button>
+                  </span>
+                  <span class="field-check" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>
+                  </span>
+                </div>
+                <div class="security-tools read-keyfile-tools">
+                  <input id="readKeyFileInput" type="file" hidden>
+                  <button id="selectReadKeyFileBtn" class="security-tool" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M12 12v6"/></svg>
+                    <span>Подключить ключ-файл</span>
+                  </button>
+                  <button id="removeReadKeyFileBtn" class="security-tool remove hidden" type="button">Убрать ключ-файл</button>
+                  <span id="readKeyFileStatus" class="keyfile-status">Выберите тот же файл, если он использовался при создании.</span>
+                </div>
+                <div id="readLayerField" class="field-fieldset hidden">
+                  <span class="field-legend">Пароль слоя</span>
+                  <span class="password-field">
+                    <input id="readLayerPassword" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder=" ">
+                    <button class="password-toggle" type="button" data-target="readLayerPassword" aria-label="Показать пароль слоя" title="Показать пароль слоя">
+                      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    </button>
+                  </span>
+                  <span class="field-check" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>
+                  </span>
+                </div>
+                <div id="readStatusWork" class="status">Введите мастер-ключ.</div>
+                <div class="actions make-actions read-decrypt-actions">
+                  <button id="readBtn" class="primary" type="button">Открыть контейнер</button>
+                </div>
+              </div>
+            </div>
+            <div class="read-image-wrap">
+              <div class="canvas-box read-image-box"><canvas id="readCanvas" width="800" height="800"></canvas></div>
+              <div id="readScanIndicator" class="read-scan-indicator" role="status" aria-live="polite">
+                <span class="read-scan-spinner" aria-hidden="true"></span>
+                <span>Ищу контейнер</span>
+              </div>
+              <div class="read-image-overlay">
+                <button id="expandReadImageBtn" class="icon-chip hidden" type="button" aria-label="Увеличить" title="Увеличить">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 3h6v6"/>
+                    <path d="M21 3l-7 7"/>
+                    <path d="M9 21H3v-6"/>
+                    <path d="M3 21l7-7"/>
+                  </svg>
+                </button>
+                <button id="downloadReadSvgBtn" class="icon-chip read-svg-btn hidden" type="button" aria-label="Скачать восстановленный SVG" title="Скачать восстановленный SVG">SVG</button>
+                <button id="replaceImageBtn" class="icon-chip hidden" type="button" aria-label="Заменить" title="Заменить">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12a9 9 0 0 1-15.3 6.4"/>
+                    <path d="M3 12A9 9 0 0 1 18.3 5.6"/>
+                    <path d="M6 18H3v3"/>
+                    <path d="M18 6h3V3"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    </div>
+    <div class="mobile-action-bar" aria-hidden="false">
+      <button id="mobileMakeBtn" class="primary" type="button">Создать</button>
+    </div>
+  </div>
+  <div id="progressModal" class="progress-modal" role="status" aria-live="polite" aria-atomic="true">
+    <div class="progress-card">
+      <div class="progress-head">
+        <h2 class="progress-title">Создание</h2>
+        <span class="spinner" aria-hidden="true"></span>
+      </div>
+      <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+      <div id="progressText" class="progress-text">Подготовка...</div>
+      <button id="cancelOperationBtn" type="button">Отменить</button>
+    </div>
+  </div>
+  <div id="imageModal" class="image-modal" aria-hidden="true">
+    <div class="image-modal-card">
+      <button id="closeImageModal" class="icon image-modal-close" type="button" aria-label="Закрыть" title="Закрыть">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6 6 18"/>
+          <path d="m6 6 12 12"/>
+        </svg>
+      </button>
+      <div class="canvas-box image-modal-box"><canvas id="modalCanvas" width="800" height="800"></canvas></div>
+    </div>
+  </div>
+  <div id="cameraModal" class="camera-modal" aria-hidden="true" role="dialog" aria-label="Сканирование камерой">
+    <div class="camera-stage">
+      <video id="cameraVideo" autoplay muted playsinline></video>
+      <canvas id="cameraFrameCanvas" width="960" height="720" aria-hidden="true"></canvas>
+      <div class="camera-shade" aria-hidden="true"></div>
+      <div id="cameraGuide" class="camera-guide scanning" aria-hidden="true"></div>
+      <div class="camera-topbar">
+        <div id="cameraLiveStatus" class="camera-live-status" role="status" aria-live="polite">Запускаю камеру...</div>
+        <button id="closeCameraBtn" class="camera-close" type="button" aria-label="Закрыть камеру" title="Закрыть">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="camera-bottombar">
+        <button id="cameraFallbackBtn" class="camera-fallback" type="button" aria-label="Сделать системный снимок" title="Системная камера">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+        </button>
+        <button id="cameraCaptureBtn" class="camera-capture" type="button" aria-label="Сканировать текущий кадр" title="Сканировать">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7V4h3"/><path d="M17 4h3v3"/><path d="M20 17v3h-3"/><path d="M7 20H4v-3"/><path d="M8 12h8"/><path d="M12 8v8"/>
+          </svg>
+        </button>
+        <div id="cameraFrameMeter" class="camera-frame-meter" aria-label="Накопленные кадры">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <section id="printArea" aria-hidden="true">
+    <div>
+      <h1 id="printTitle">LayerLock</h1>
+      <canvas id="printCanvas" width="800" height="800"></canvas>
+      <p id="printMeta"></p>
+    </div>
+  </section>
+
+<!-- BEGIN LAYERLOCK OPTICAL CODECS -->
+<!-- END LAYERLOCK OPTICAL CODECS -->
+<!-- BEGIN LAYERLOCK COMPRESSION CODEC -->
+<!-- END LAYERLOCK COMPRESSION CODEC -->
+  <script id="argon2VendorSource"></script>
+
+  <!-- LAYERLOCK APPLICATION -->
+</body>
+</html>
