@@ -325,4 +325,3 @@
       updateStrength(wrap);
       syncLayerList();
     }
-
