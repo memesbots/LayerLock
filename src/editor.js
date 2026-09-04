@@ -3,8 +3,7 @@
       const length = [...normalizePassword(password)].length;
       const classes = [/[a-zа-я]/i, /[A-ZА-Я]/, /[0-9]/, /[^\p{L}\p{N}]/u].filter(pattern => pattern.test(password)).length;
       const uniqueRatio = new Set([...password]).size / Math.max(length, 1);
-      const policyIssue = passwordPolicyIssue(password, length >= 16 ? "master" : "layer");
-      if (policyIssue) return { score: 12, pct: 12, label: "Легкий", cls: "easy" };
+      if (length < 6 || isPredictablePassword(password)) return { score: 12, pct: 12, label: "Легкий", cls: "easy" };
       const score = Math.min(100, Math.round(length * 3 + classes * 8 + uniqueRatio * 18));
       if (length >= 24 && classes >= 3 && score >= 90) return { score, pct: 100, label: "Сложный", cls: "complex" };
       if ((length >= 18 && classes >= 3) || length >= 24) return { score, pct: 78, label: "Надежный", cls: "reliable" };

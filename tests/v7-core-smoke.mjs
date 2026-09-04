@@ -100,8 +100,14 @@ await assert.rejects(core.decryptContainer("master-pass", keyFileBody.envelope, 
 const keyFileOpenedPack = await core.decryptContainer("master-pass", keyFileBody.envelope, keyFileDigest);
 assert.equal(keyFileOpenedPack.p.length, 1);
 
-assert.match(core.passwordPolicyIssue("123123", "master"), /16 символов|распространен/);
-assert.match(core.passwordPolicyIssue("123456789012", "layer"), /распространен|угадывается/);
+for (const role of ["master", "layer"]) {
+  for (const password of ["", "12345", "abc", "😀".repeat(5)]) {
+    assert.match(core.passwordPolicyIssue(password, role), /6 символов/);
+  }
+  for (const password of ["123123", "111111", "qwerty", "пароль", "123456789012", "😀".repeat(6)]) {
+    assert.equal(core.passwordPolicyIssue(password, role), "");
+  }
+}
 assert.equal(core.passwordPolicyIssue("four calm words form a strong layer passphrase", "layer"), "");
 assert.equal(core.passwordIdentity("ＡＢＣ  "), "abc");
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-/IwO3UpeNQmtUYkKXOWOvIMSDXXz0kyzZ7TSbxNuQio=' 'sha256-BYGrX3BalW3Fua8wKDIVELgc0urGQiGGaAIj6/FXLpw=' 'sha256-4MCNLQ8O6lO/mXurB1oBCjZzDHWfmAytCaHLXqAQlkU=' 'sha256-pm0abblDIPwMzTOuRgNL0R/VJHGRPEbna+4K/XWtIHM=' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-/IwO3UpeNQmtUYkKXOWOvIMSDXXz0kyzZ7TSbxNuQio=' 'sha256-BYGrX3BalW3Fua8wKDIVELgc0urGQiGGaAIj6/FXLpw=' 'sha256-4MCNLQ8O6lO/mXurB1oBCjZzDHWfmAytCaHLXqAQlkU=' 'sha256-MsuEJ4k3oX/voTqk7HUG5PODgdhySuqKLzrHK5p+0kE=' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob:; worker-src blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
   <title>LayerLock</title>
   <meta name="application-name" content="LayerLock">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='10' y1='7' x2='54' y2='58' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%234b83ff'/%3E%3Cstop offset='1' stop-color='%232560ff'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='17' y1='27' x2='41' y2='52' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%2386b0ff'/%3E%3Cstop offset='1' stop-color='%232f6bff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23a)' d='M32 3 57 17.5v29L32 61 7 46.5v-29L32 3Z'/%3E%3Cpath fill='%23f4f7ff' d='m32 15 15 8.7v16.6L32 49 17 40.3V23.7L32 15Z'/%3E%3Cpath fill='url(%23b)' d='m17 23.7 15 8.7V49l-15-8.7V23.7Z'/%3E%3Cpath fill='%232560ff' d='m32 32.4 15-8.7v16.6L32 49V32.4Z'/%3E%3Cpath fill='%230d0f13' d='m24 28 8-4.6 8 4.6v9.2l-8 4.6-8-4.6V28Z'/%3E%3Cpath fill='%2386b0ff' d='m24 28 8 4.6v9.2l-8-4.6V28Z'/%3E%3C/svg%3E">
@@ -3545,7 +3545,7 @@
             <div class="info-card">
               <h3>Как создается изображение</h3>
               <p>Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” управляет встроенной коррекцией Aztec для камеры и печати.</p>
-              <p>Мастер-ключ должен содержать не менее 16 символов, пароль слоя — не менее 12. Одинаковые, распространенные и предсказуемые пароли отклоняются. Секретные поля и открытый результат очищаются после 15 минут бездействия.</p>
+              <p>Мастер-ключ и каждый пароль слоя должны содержать не менее 6 символов. Оценка сложности служит подсказкой и не мешает созданию. Короткие и предсказуемые пароли легче подобрать: для важных данных используйте длинные случайные пароли. Пароли разных слоев и мастер-ключ должны различаться. Секретные поля и открытый результат очищаются после 15 минут бездействия.</p>
             </div>
             <div class="info-card">
               <h3>Скачивание</h3>
@@ -3926,9 +3926,8 @@ if (mount === undefined) mount = true;
       "Ключ-файл должен содержать не менее 16 байт.": "The key file must contain at least 16 bytes.",
       "Ключ-файл слишком большой. Максимум — 16 MiB.": "The key file is too large. The maximum is 16 MiB.",
       "Ключ-файл не выбран.": "No key file was selected.",
-      "Мастер-ключ слишком короткий: используйте не менее 16 символов.": "The master key is too short: use at least 16 characters.",
-      "Пароль слоя слишком короткий: используйте не менее 12 символов.": "The layer password is too short: use at least 12 characters.",
-      "Этот пароль слишком распространен или легко угадывается.": "This password is too common or easy to guess.",
+      "Мастер-ключ слишком короткий: используйте не менее 6 символов.": "The master key is too short: use at least 6 characters.",
+      "Пароль слоя слишком короткий: используйте не менее 6 символов.": "The layer password is too short: use at least 6 characters.",
       "Мастер-ключ не должен совпадать с паролем слоя.": "The master key must not match a layer password.",
       "Секретные поля и расшифрованный результат очищены после 15 минут бездействия.": "Secret fields and the decrypted result were cleared after 15 minutes of inactivity.",
       "Скопировано. Помните: системный буфер обмена находится вне контроля LayerLock.": "Copied. Remember: the system clipboard is outside LayerLock's control.",
@@ -3953,7 +3952,7 @@ if (mount === undefined) mount = true;
       "Добавьте слой: пароль слоя и текст, который нужно получить при этом пароле.": "Add a layer with its password and the text that should be revealed by that password.",
       "Как создается изображение": "How the image is created",
       "Текст слоя нормализуется, сжимается и шифруется AES-GCM своим изолированным ключом. Пароли укрепляются Argon2id; настройка “Защита паролей” меняет память и число проходов. Контейнер отдельно закрывается мастер-ключом. “Восстановление повреждений” управляет встроенной коррекцией Aztec для камеры и печати.": "Each layer's text is normalized, compressed, and encrypted with AES-GCM using an isolated key. Passwords are hardened with Argon2id; “Password protection” controls memory usage and the number of passes. The container is separately locked with the master key. “Damage recovery” controls Aztec's built-in error correction for cameras and printing.",
-      "Мастер-ключ должен содержать не менее 16 символов, пароль слоя — не менее 12. Одинаковые, распространенные и предсказуемые пароли отклоняются. Секретные поля и открытый результат очищаются после 15 минут бездействия.": "The master key must contain at least 16 characters and each layer password at least 12. Duplicate, common, and predictable passwords are rejected. Secret fields and decrypted results are cleared after 15 minutes of inactivity.",
+      "Мастер-ключ и каждый пароль слоя должны содержать не менее 6 символов. Оценка сложности служит подсказкой и не мешает созданию. Короткие и предсказуемые пароли легче подобрать: для важных данных используйте длинные случайные пароли. Пароли разных слоев и мастер-ключ должны различаться. Секретные поля и открытый результат очищаются после 15 минут бездействия.": "The master key and each layer password must contain at least 6 characters. The strength rating is advisory and does not block creation. Short and predictable passwords are easier to guess: use long random passwords for important data. Layer passwords and the master key must differ. Secret fields and decrypted results are cleared after 15 minutes of inactivity.",
       "Скачивание": "Downloads",
       "PNG и SVG скачивают Aztec-контейнер. Компактные TXT и RAW сохраняют зашифрованное ядро до оптической коррекции и позволяют заново построить Aztec и SVG. ZIP повторно проверяет контейнер и сохраняет PNG, SVG, TXT, RAW и “settings.txt”. Ключи и пароли туда не записываются.": "PNG and SVG download the Aztec container. Compact TXT and RAW store the encrypted core before optical error correction and can rebuild Aztec and SVG. ZIP verifies the container and saves PNG, SVG, TXT, RAW, and settings.txt. Keys and passwords are never written to it.",
       "Пример: название “Документы” -> Документы-xxxxxx.png / Документы-xxxxxx.zip": "Example: name “Documents” -> Documents-xxxxxx.png / Documents-xxxxxx.zip",
@@ -4134,8 +4133,7 @@ if (mount === undefined) mount = true;
       [/^Слой (\d+): введите пароль\.$/, (_, n) => `Layer ${n}: enter a password.`],
       [/^Слой (\d+): пароли не совпадают\.$/, (_, n) => `Layer ${n}: passwords do not match.`],
       [/^Слой (\d+): введите текст\.$/, (_, n) => `Layer ${n}: enter text.`],
-      [/^Слой (\d+): Пароль слоя слишком короткий: используйте не менее 12 символов\.$/, (_, n) => `Layer ${n}: the layer password is too short; use at least 12 characters.`],
-      [/^Слой (\d+): Этот пароль слишком распространен или легко угадывается\.$/, (_, n) => `Layer ${n}: this password is too common or easy to guess.`],
+      [/^Слой (\d+): Пароль слоя слишком короткий: используйте не менее 6 символов\.$/, (_, n) => `Layer ${n}: the layer password is too short; use at least 6 characters.`],
       [/^Слои (.+): одинаковые пароли запрещены\.$/, (_, list) => `Layers ${list.replace(/ и /g, " and ")}: duplicate passwords are not allowed.`],
       [/^Argon2id \+ HKDF-SHA-256 · (.+) MiB · (\d+) прохода$/, (_, memory, passes) => `Argon2id + HKDF-SHA-256 · ${memory} MiB · ${passes} passes`],
       [/^Проверено · (.+)$/, (_, detail) => `Verified · ${detail}`],
@@ -4648,13 +4646,16 @@ if (mount === undefined) mount = true;
 
     function passwordPolicyIssue(password, role = "layer") {
       const normalized = normalizePassword(password);
-      const identity = passwordIdentity(normalized);
-      const minLength = role === "master" ? 16 : 12;
-      if ([...normalized].length < minLength) {
+      if ([...normalized].length < 6) {
         return role === "master"
-          ? "Мастер-ключ слишком короткий: используйте не менее 16 символов."
-          : "Пароль слоя слишком короткий: используйте не менее 12 символов.";
+          ? "Мастер-ключ слишком короткий: используйте не менее 6 символов."
+          : "Пароль слоя слишком короткий: используйте не менее 6 символов.";
       }
+      return "";
+    }
+
+    function isPredictablePassword(password) {
+      const identity = passwordIdentity(password);
       const compact = identity.replace(/\s+/g, "");
       const commonToken = /(?:password|qwerty|admin|letmein|welcome|iloveyou|master|layerlock|пароль)/i;
       const sequenceSource = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -4663,13 +4664,12 @@ if (mount === undefined) mount = true;
         const fragment = compact.slice(index, index + 4);
         return fragment.length === 4 && (sequenceSource.includes(fragment) || reverseSequenceSource.includes(fragment));
       });
-      const predictable = COMMON_PASSWORDS.has(identity)
+      return COMMON_PASSWORDS.has(identity)
         || (/^\d+$/.test(compact) && compact.length < 20)
         || /^(.)\1+$/.test(compact)
         || /^(.{1,12})\1+$/.test(compact)
         || (commonToken.test(compact) && compact.length < 32)
         || hasSequence;
-      return predictable ? "Этот пароль слишком распространен или легко угадывается." : "";
     }
 
     function wipeBytes(bytes) {
@@ -5178,8 +5178,7 @@ self.onmessage = async event => {
       const length = [...normalizePassword(password)].length;
       const classes = [/[a-zа-я]/i, /[A-ZА-Я]/, /[0-9]/, /[^\p{L}\p{N}]/u].filter(pattern => pattern.test(password)).length;
       const uniqueRatio = new Set([...password]).size / Math.max(length, 1);
-      const policyIssue = passwordPolicyIssue(password, length >= 16 ? "master" : "layer");
-      if (policyIssue) return { score: 12, pct: 12, label: "Легкий", cls: "easy" };
+      if (length < 6 || isPredictablePassword(password)) return { score: 12, pct: 12, label: "Легкий", cls: "easy" };
       const score = Math.min(100, Math.round(length * 3 + classes * 8 + uniqueRatio * 18));
       if (length >= 24 && classes >= 3 && score >= 90) return { score, pct: 100, label: "Сложный", cls: "complex" };
       if ((length >= 18 && classes >= 3) || length >= 24) return { score, pct: 78, label: "Надежный", cls: "reliable" };

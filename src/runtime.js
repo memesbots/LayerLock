@@ -386,13 +386,16 @@
 
     function passwordPolicyIssue(password, role = "layer") {
       const normalized = normalizePassword(password);
-      const identity = passwordIdentity(normalized);
-      const minLength = role === "master" ? 16 : 12;
-      if ([...normalized].length < minLength) {
+      if ([...normalized].length < 6) {
         return role === "master"
-          ? "Мастер-ключ слишком короткий: используйте не менее 16 символов."
-          : "Пароль слоя слишком короткий: используйте не менее 12 символов.";
+          ? "Мастер-ключ слишком короткий: используйте не менее 6 символов."
+          : "Пароль слоя слишком короткий: используйте не менее 6 символов.";
       }
+      return "";
+    }
+
+    function isPredictablePassword(password) {
+      const identity = passwordIdentity(password);
       const compact = identity.replace(/\s+/g, "");
       const commonToken = /(?:password|qwerty|admin|letmein|welcome|iloveyou|master|layerlock|пароль)/i;
       const sequenceSource = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -401,13 +404,12 @@
         const fragment = compact.slice(index, index + 4);
         return fragment.length === 4 && (sequenceSource.includes(fragment) || reverseSequenceSource.includes(fragment));
       });
-      const predictable = COMMON_PASSWORDS.has(identity)
+      return COMMON_PASSWORDS.has(identity)
         || (/^\d+$/.test(compact) && compact.length < 20)
         || /^(.)\1+$/.test(compact)
         || /^(.{1,12})\1+$/.test(compact)
         || (commonToken.test(compact) && compact.length < 32)
         || hasSequence;
-      return predictable ? "Этот пароль слишком распространен или легко угадывается." : "";
     }
 
     function wipeBytes(bytes) {

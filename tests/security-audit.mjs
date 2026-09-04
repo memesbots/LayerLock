@@ -36,7 +36,7 @@ assert.throws(() => core.decodeBody(trailing), /bad envelope/);
 
 const weakHumanPassword = "PasswordPassword1!";
 const weakEstimate = core.passwordScore(weakHumanPassword);
-assert.match(core.passwordPolicyIssue(weakHumanPassword, "layer"), /распространен|угадывается/);
+assert.equal(core.passwordPolicyIssue(weakHumanPassword, "layer"), "", "strength is advisory, not a creation restriction");
 assert.equal(weakEstimate.cls, "easy", "predictable password must be rated weak");
 
 const compressibleText = "A".repeat(1024 * 1024);

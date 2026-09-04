@@ -20,8 +20,9 @@ try {
   page.on('dialog',dialog=>dialog.accept());
   await page.goto(url);
   await page.waitForSelector('.entry-pass');
-  const master='Seven separate words make my master stronger!';
-  const layer='Layer password: calm river orbit 862!';
+  // Minimum-length predictable passwords must work; strength is advisory.
+  const master='123123';
+  const layer='qwerty';
   const note='Line one  exact spacing\n\tПривет 世界 🔐\n';
   await page.locator('#vaultName').fill('Recovery test');
   await page.locator('#masterKey').fill(master);
